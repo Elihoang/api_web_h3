@@ -1,9 +1,53 @@
+﻿using System.Text;
+using API_WebH3.Data;
+using API_WebH3.Repositories;
+using API_WebH3.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+// 🔹 Lấy chuỗi kết nối từ appsettings.json
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// 🔹 Đăng ký DbContext với PostgreSQL
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// Cấu hình JWT
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+// 🔹 Thêm bộ nhớ cache phân tán trong RAM
+builder.Services.AddDistributedMemoryCache(); // Thêm dòng này để cung cấp IDistributedCache
+
+// Đăng ký dịch vụ phiên (Session)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Thời gian chờ phiên
+    options.Cookie.HttpOnly = true; // Bảo mật
+    options.Cookie.IsEssential = true; // Tuân thủ GDPR
+});
+
+// Đăng ký các repository và service
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<AuthService>();
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Cấu hình Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -18,8 +62,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+// Sắp xếp middleware theo thứ tự đúng
+app.UseRouting(); // 1. Định tuyến
+app.UseAuthentication(); // 2. Xác thực (JWT)
+app.UseAuthorization(); // 3. Phân quyền
+app.UseSession(); // 4. Phiên (Session)
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers(); // 5. Định nghĩa điểm cuối
+});
 
 app.Run();
