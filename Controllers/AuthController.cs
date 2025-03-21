@@ -32,4 +32,9 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
+    [HttpGet("test")]
+    public IActionResult TestApi()
+    {
+        return Ok(new { message = "API is running" });
+    }
 }

@@ -40,7 +40,7 @@ namespace API_WebH3.Services
                 FullName = registerDto.FullName,
                 Email = registerDto.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
-                BirthDate = registerDto.BirthDate,
+                BirthDate = registerDto.BirthDate ?? null,
                 ProfileImage = registerDto.ProfileImage,
                 Role = registerDto.Role
             };
