@@ -9,16 +9,10 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace API_WebH3.Services
 {
-    public class AuthService
+    public class AuthService(IUserRepository userRepository, IConfiguration configuration)
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IConfiguration _configuration;
-
-        public AuthService(IUserRepository userRepository, IConfiguration configuration)
-        {
-            _userRepository = userRepository;
-            _configuration = configuration;
-        }
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IConfiguration _configuration = configuration;
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)
         {

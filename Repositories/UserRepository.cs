@@ -27,5 +27,10 @@ namespace API_WebH3.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> ExistsAsync(Guid userId)
+        {
+            return await _context.Users.AnyAsync(u => u.Id == userId);
+        }
     }
 }

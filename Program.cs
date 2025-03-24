@@ -55,6 +55,9 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<AuthService>();
 
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<CourseService>();
+
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -70,6 +73,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // Cho phép truy cập wwwroot/uploads
 
 // Sắp xếp middleware theo thứ tự đúng
 app.UseRouting(); // 1. Định tuyến

@@ -3,7 +3,7 @@ using API_WebH3.Services;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;

@@ -1,7 +1,10 @@
-﻿namespace API_WebH3.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace API_WebH3.Models
 {
     public class User
     {
+        [Key]
         public Guid Id { get; set; }
         public required string FullName { get; set; }
         public required string Email { get; set; }

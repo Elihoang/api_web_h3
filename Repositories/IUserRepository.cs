@@ -7,6 +7,7 @@ namespace API_WebH3.Repositories
         Task<User?> GetByEmailAsync(string email);
         Task AddUserAsync(User user);
         Task SaveChangesAsync();
+        Task<bool> ExistsAsync(Guid userId);
     }
 
 }
