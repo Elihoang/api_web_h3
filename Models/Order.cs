@@ -9,7 +9,7 @@ public class Order
     public Guid Id { get; set; }
     
     [ForeignKey("User")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
     
     [Required]
     [Column(TypeName = "decimal(10, 2)")]

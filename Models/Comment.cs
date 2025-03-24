@@ -10,13 +10,13 @@ public class Comment
     public int Id { get; set; }
     
     [ForeignKey("User")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
     
     [ForeignKey("Post")]
-    public int PostId { get; set; }
+    public Guid PostId { get; set; }
     
     [Required]
-    public string Content { get; set; }
+    public required string Content { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     

@@ -3,15 +3,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API_WebH3.Models;
 
-public class OrderDetails
+public class OrderDetail
 {
     public Guid Id { get; set; }
     
     [ForeignKey("Order")]
-    public int OrderId { get; set; }
+    public Guid OrderId { get; set; }
     
     [ForeignKey("Course")]
-    public int CourseId { get; set; }
+    public Guid CourseId { get; set; }
     
     [Required]
     [Column(TypeName = "decimal(10, 2)")]

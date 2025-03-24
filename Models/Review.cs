@@ -10,10 +10,10 @@ public class Review
     public int Id { get; set; }
     
     [ForeignKey("User")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
     
     [ForeignKey("Course")]
-    public int CourseId { get; set; }
+    public Guid CourseId { get; set; }
     
     [Range(1,5)]
     public int Rating { get; set; }

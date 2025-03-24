@@ -9,10 +9,10 @@ public class Lesson
     public Guid Id { get; set; }
     
     [ForeignKey("Course")]
-    public int CourseId { get; set; }
+    public Guid CourseId { get; set; }
     
     [Required]
-    public string Title { get; set; }
+    public required string Title { get; set; }
     
     public string? Content { get; set; }
     

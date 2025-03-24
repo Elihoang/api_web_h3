@@ -9,10 +9,10 @@ public class Progress
     public Guid Id { get; set; }
     
     [ForeignKey("User")]
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
     
     [ForeignKey("Lesson")]
-    public int LessonId { get; set; }
+    public Guid LessonId { get; set; }
     
     public string Status { get; set; } = "not started";
     
