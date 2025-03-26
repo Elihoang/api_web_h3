@@ -62,5 +62,25 @@ namespace API_WebH3.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+        public async Task<AccountUserDto> GetUserDetailsAsync(string email)
+        {
+            // Correctly awaiting the result of GetByEmailAsync to get the User object
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null)
+            {   
+                throw new Exception("User not found");
+            }
+
+            // Map the user entity to the DTO
+            return new AccountUserDto
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                ProfileImage = user.ProfileImage,
+                BirthDate = user.BirthDate // Accessing BirthDate after awaiting
+            };
+        }
+
     }
 }

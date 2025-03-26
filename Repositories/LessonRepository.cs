@@ -16,16 +16,16 @@ public class LessonRepository : ILessonRepository
         
     public async Task<IEnumerable<Lesson>> GetAllAsync()
     {
-        return await _context.Lessons.ToListAsync();
+        return await _context.Lessons.Include(l => l.Course).ToListAsync();
     }
 
     public async Task<Lesson> GetByIdAsync(Guid id)
     {
-        return await _context.Lessons.FirstOrDefaultAsync(l=>l.Id == id);  
+        return await _context.Lessons.Include(l => l.Course).FirstOrDefaultAsync(l => l.Id == id);
     }
     public async Task<IEnumerable<Lesson>> GetByCourseIdAsync(Guid courseId)
     {
-        return await _context.Lessons.Where(c => c.CourseId == courseId).ToListAsync();
+        return await _context.Lessons.Where(l => l.CourseId == courseId).ToListAsync();
     }
 
     public async Task<Lesson> CreateAsync(Lesson lesson)

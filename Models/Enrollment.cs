@@ -16,7 +16,9 @@ public class Enrollment
     public Guid CourseId { get; set; }
 
     public DateTime EnrolledAt { get; set; } = DateTime.Now;
-    
+
+    public string Status { get; set; } = "Enrolled"; // Enrolled, Completed, Failed
+
     public virtual User User { get; set; }
     
     public virtual Course Course { get; set; }
