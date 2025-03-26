@@ -8,8 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 // 🔹 Lấy chuỗi kết nối từ appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -17,15 +15,20 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// 🔹 Thêm Controllers (Fix lỗi InvalidOperationException)
+builder.Services.AddControllers();
+
+// 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
-        policy.WithOrigins("http://localhost:5173") 
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
 });
-// Cấu hình JWT
+
+// 🔹 Cấu hình JWT Authentication
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -40,10 +43,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 🔹 Thêm bộ nhớ cache phân tán trong RAM
-builder.Services.AddDistributedMemoryCache(); // Thêm dòng này để cung cấp IDistributedCache
+// 🔹 Thêm Authorization (Fix lỗi thiếu Authorization)
+builder.Services.AddAuthorization();
 
-// Đăng ký dịch vụ phiên (Session)
+// 🔹 Thêm bộ nhớ cache phân tán trong RAM (hỗ trợ session)
+builder.Services.AddDistributedMemoryCache();
+
+// 🔹 Đăng ký Session (hỗ trợ lưu trạng thái người dùng)
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Thời gian chờ phiên
@@ -51,43 +57,52 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true; // Tuân thủ GDPR
 });
 
-// Đăng ký các repository và service
+// 🔹 Đăng ký các Repository & Service
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<CourseService>();
 
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<PostService>();
+
+// 🔹 Cấu hình Swagger/OpenAPI
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<LessonService>();
 
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddSingleton<EmailService>();
 var app = builder.Build();
+
+// 🔹 Middleware xử lý CORS
 app.UseCors("AllowReactApp");
-// Configure the HTTP request pipeline.
+
+// 🔹 Cấu hình Swagger khi ở môi trường Development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// 🔹 Các Middleware quan trọng (theo thứ tự chuẩn)
 app.UseHttpsRedirection();
 app.UseStaticFiles(); // Cho phép truy cập wwwroot/uploads
 
-// Sắp xếp middleware theo thứ tự đúng
-app.UseRouting(); // 1. Định tuyến
-app.UseAuthentication(); // 2. Xác thực (JWT)
-app.UseAuthorization(); // 3. Phân quyền
-app.UseSession(); // 4. Phiên (Session)
+app.UseRouting();         // 1️⃣ Định tuyến
+app.UseAuthentication();  // 2️⃣ Xác thực (JWT)
+app.UseAuthorization();   // 3️⃣ Phân quyền
+app.UseSession();         // 4️⃣ Phiên (Session)
 
 
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapControllers(); // 5. Định nghĩa điểm cuối
+    endpoints.MapControllers(); // 5️⃣ Định nghĩa API controllers
 });
 
+// 🔹 Chạy ứng dụng
 app.Run();
