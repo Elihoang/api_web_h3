@@ -37,4 +37,17 @@ public class AuthController : ControllerBase
     {
         return Ok(new { message = "API is running" });
     }
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetUserProfile([FromQuery] string email)
+    {
+        try
+        {
+            var userDetails = await _authService.GetUserDetailsAsync(email);
+            return Ok(userDetails);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }
