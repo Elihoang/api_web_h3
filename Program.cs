@@ -61,6 +61,12 @@ builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<LessonService>();
 
+builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
+builder.Services.AddScoped<ProgressService>();
+
+builder.Services.AddScoped<IEnrollementRepository, EnrollementRepository>();
+builder.Services.AddScoped<EnrollementService>();
+
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
