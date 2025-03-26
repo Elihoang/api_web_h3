@@ -58,6 +58,9 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<CourseService>();
 
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+builder.Services.AddScoped<LessonService>();
+
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -80,6 +83,7 @@ app.UseRouting(); // 1. Định tuyến
 app.UseAuthentication(); // 2. Xác thực (JWT)
 app.UseAuthorization(); // 3. Phân quyền
 app.UseSession(); // 4. Phiên (Session)
+
 
 app.UseEndpoints(endpoints =>
 {
