@@ -68,6 +68,12 @@ builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<PostService>();
 
 // 🔹 Cấu hình Swagger/OpenAPI
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+builder.Services.AddScoped<LessonService>();
+
+builder.Services.AddControllers();
+// Cấu hình Swagger/OpenAPI
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<EmailService>();
@@ -91,6 +97,7 @@ app.UseRouting();         // 1️⃣ Định tuyến
 app.UseAuthentication();  // 2️⃣ Xác thực (JWT)
 app.UseAuthorization();   // 3️⃣ Phân quyền
 app.UseSession();         // 4️⃣ Phiên (Session)
+
 
 app.UseEndpoints(endpoints =>
 {
