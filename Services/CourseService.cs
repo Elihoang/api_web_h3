@@ -27,6 +27,7 @@ public class CourseService
             Description = c.Description,
             Price = c.Price,
             InstructorId = c.InstructorId,
+            UrlImage = c.UrlImage,
             CreatedAt = c.CreatedAt
         }).ToList();
     }
