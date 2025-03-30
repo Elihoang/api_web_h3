@@ -77,6 +77,19 @@ builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<IEnrollementRepository, EnrollementRepository>();
 builder.Services.AddScoped<EnrollementService>();
 
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<ReviewService>();
+
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<CommentService>();
+
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<VnpayService>();
+
+
+
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
 
