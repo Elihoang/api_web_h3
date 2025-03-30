@@ -5,14 +5,26 @@ using System.Text;
 using API_WebH3.Repositories;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Collections.Concurrent;
 
 
 namespace API_WebH3.Services
 {
-    public class AuthService(IUserRepository userRepository, IConfiguration configuration)
+    public class AuthService
     {
-        private readonly IUserRepository _userRepository = userRepository;
-        private readonly IConfiguration _configuration = configuration;
+        private readonly IUserRepository _userRepository;
+        private readonly IConfiguration _configuration;
+        private readonly EmailService _emailService;
+
+        private static readonly ConcurrentDictionary<string, (string ResetCode, DateTime ExpiryTime)> _resetCodes = new();
+
+
+        public AuthService(IUserRepository userRepository, IConfiguration configuration, EmailService emailService)
+        {
+            _userRepository = userRepository;
+            _configuration = configuration;
+            _emailService = emailService;
+        }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)
         {
@@ -27,7 +39,7 @@ namespace API_WebH3.Services
         public async Task<bool> RegisterAsync(RegisterDto registerDto)
         {
             if (await _userRepository.GetByEmailAsync(registerDto.Email) != null)
-                return false; // Email đã tồn tại
+                return false; 
 
             var user = new User
             {
@@ -78,9 +90,55 @@ namespace API_WebH3.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 ProfileImage = user.ProfileImage,
-                BirthDate = user.BirthDate // Accessing BirthDate after awaiting
+                BirthDate = user.BirthDate 
             };
         }
 
+        public async Task<bool> ForgotPasswordAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null) return false;
+
+            var resetCode = new Random().Next(100000, 999999).ToString();
+            _resetCodes[email] = (resetCode, DateTime.UtcNow.AddMinutes(10));
+
+            Console.WriteLine($" OTP: {_resetCodes[email].ResetCode}  email: {email}");
+
+            string subject = "Khôi phục mật khẩu";
+            string body = $"Mã OTP của bạn là: <b>{resetCode}</b>. Mã có hiệu lực trong 10 phút.";
+            await _emailService.SendPasswordResetEmailAsync(email, subject, body);
+
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordAsync(string email, string resetCode, string newPassword)
+        {
+            if (!_resetCodes.TryGetValue(email, out var storedCode))
+            {
+                Console.WriteLine($" OTP : {email}");
+                return false;
+            }
+
+            Console.WriteLine($"{storedCode.ResetCode} -  {resetCode}");
+
+            if (storedCode.ResetCode != resetCode || storedCode.ExpiryTime < DateTime.UtcNow)
+            {
+                Console.WriteLine($" Mã OTP không hợp lệ hoặc đã hết hạn cho email: {email}");
+                return false;
+            }
+
+            // ✅ Xóa mã OTP sau khi sử dụng
+            _resetCodes.TryRemove(email, out _);
+
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null) return false;
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _userRepository.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
+
+
