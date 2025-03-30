@@ -8,7 +8,6 @@ namespace API_WebH3.Repositories
         Task AddUserAsync(User user);
         Task SaveChangesAsync();
         Task<bool> ExistsAsync(Guid userId);
-
     }
 
 }

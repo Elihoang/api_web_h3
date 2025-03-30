@@ -22,7 +22,6 @@ public class EnrollementService
             UserId = e.UserId,
             CourseId = e.CourseId,
             EnrolledAt = e.EnrolledAt,
-            Status = e.Status
         }).ToList();
     }
 

@@ -50,23 +50,4 @@ public class AuthController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
-    [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
-    {
-        bool success = await _authService.ForgotPasswordAsync(forgotPasswordDto.Email);
-        if (!success)
-            return NotFound(new { message = "Không tìm thấy email trong hệ thống!" });
-
-        return Ok(new { message = "Mã OTP đã được gửi qua email!" });
-    }
-
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
-    {
-        bool success = await _authService.ResetPasswordAsync(resetPasswordDto.Email, resetPasswordDto.ResetCode, resetPasswordDto.NewPassword);
-        if (!success)
-            return BadRequest(new { message = "Mã xác nhận không hợp lệ hoặc đã hết hạn!" });
-
-        return Ok(new { message = "Mật khẩu đã được cập nhật thành công!" });
-    }
 }

@@ -20,6 +20,6 @@ public class Lesson
     
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     
-    public virtual Course? Course { get; set; }
+    public virtual Course Course { get; set; }
     
 }
