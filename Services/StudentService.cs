@@ -30,7 +30,7 @@ namespace API_WebH3.Services
             FullName = s.FullName,
             Email = s.Email,
             BirthDate = s.BirthDate.HasValue
-            ? s.BirthDate.Value.ToString("dd-MM-yyyy")
+            ? s.BirthDate.Value.ToString("dd/MM/yyyy")
             : null,
             ProfileImage = s.ProfileImage,
             Role = s.Role
@@ -42,62 +42,72 @@ namespace API_WebH3.Services
          var user = await _studentRepository.GetByIdAsync(id);
          return new StudentDto
          {
+            Id = user.Id.ToString(),
             FullName = user.FullName,
             Email = user.Email,
             BirthDate = user.BirthDate.HasValue
-            ? user.BirthDate.Value.ToString("dd-MM-yyyy")
+            ? user.BirthDate.Value.ToString("yyyy-MM-dd")
             : null,
-            ProfileImage = user.ProfileImage
+            ProfileImage = user.ProfileImage,
+            Role = user.Role
          };
       }
 
-      public async Task<StudentDto> CreateStudentAsync(User user)
+      public async Task<StudentDto> CreateStudentAsync(CreateStudentDto user)
       {
          var newStudent = new User
          {
             FullName = user.FullName,
             Email = user.Email,
-            BirthDate = user.BirthDate,
-            ProfileImage = user.ProfileImage,
             Password = user.Password,
             Role = user.Role
          };
+
+         if (user.BirthDate != null && user.BirthDate != "")
+         {
+            newStudent.BirthDate = DateTime.Parse(user.BirthDate);
+         }
+         
          await _studentRepository.CreateAsync(newStudent);
          return new StudentDto
          {
+            Id = newStudent.Id.ToString(),
             FullName = newStudent.FullName,
             Email = newStudent.Email,
             BirthDate = newStudent.BirthDate.HasValue
-             ? newStudent.BirthDate.Value.ToString("dd-MM-yyyy")
+             ? newStudent.BirthDate.Value.ToString("yyyy-MM-dd")
              : null,
-            ProfileImage = newStudent.ProfileImage
+            ProfileImage = newStudent.ProfileImage,
+            Role = newStudent.Role
          };
       }
 
-      public async Task<StudentDto> UpdateStudentAsync(User user)
+      public async Task<UpdateStudentDto> UpdateStudentAsync(UpdateStudentDto updateStudentDto, string id)
       {
-         var existingStudent = await _studentRepository.GetByIdAsync(user.Id.ToString());
+         var existingStudent = await _studentRepository.GetByIdAsync(id);
          if (existingStudent == null)
          {
             throw new Exception("Student not found");
          }
-         existingStudent.FullName = user.FullName;
-         existingStudent.Email = user.Email;
-         existingStudent.BirthDate = user.BirthDate;
-         existingStudent.ProfileImage = user.ProfileImage;
-         existingStudent.Password = user.Password;
-         existingStudent.Role = user.Role;
+         existingStudent.FullName = updateStudentDto.FullName;
+         existingStudent.Email = updateStudentDto.Email;
+         if (updateStudentDto.BirthDate != null)
+         {
+            existingStudent.BirthDate = DateTime.Parse(updateStudentDto.BirthDate);
+         }
+         if (updateStudentDto.Password != null)
+         {
+            existingStudent.Password = updateStudentDto.Password;
+         }
          await _studentRepository.UpdateAsync(existingStudent);
-         return new StudentDto
+         return new UpdateStudentDto
          {
             FullName = existingStudent.FullName,
             Email = existingStudent.Email,
             BirthDate = existingStudent.BirthDate.HasValue
-            ? existingStudent.BirthDate.Value.ToString("dd-MM-yyyy")
-            : null,
-            ProfileImage = existingStudent.ProfileImage
+            ? existingStudent.BirthDate.Value.ToString("yyyy-MM-dd")
+            : null
          };
-
       }
 
       public async Task<bool> DeleteStudentAsync(string id)

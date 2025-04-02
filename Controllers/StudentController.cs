@@ -2,6 +2,7 @@ using API_WebH3.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using API_WebH3.Models;
+using API_WebH3.DTOs.User;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -32,16 +33,16 @@ public class StudentController : ControllerBase
 
    [HttpPost]
    [Authorize(Roles = "Admin")]
-   public async Task<IActionResult> CreateStudent(User user)
+   public async Task<IActionResult> CreateStudent(CreateStudentDto model)
    {
-      var student = await _studentService.CreateStudentAsync(user);
+      var student = await _studentService.CreateStudentAsync(model);
       return Ok(student);
    }
 
    [HttpPut("{id}")]
-   public async Task<IActionResult> UpdateStudent(string id, User user)
+   public async Task<IActionResult> UpdateStudent(UpdateStudentDto updateStudentDto, string id)
    {
-      var student = await _studentService.UpdateStudentAsync(user);
+      var student = await _studentService.UpdateStudentAsync(updateStudentDto, id);
       return Ok(student);
    }
 
