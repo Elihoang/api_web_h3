@@ -1,5 +1,6 @@
 using API_WebH3.DTOs.Course;
 using API_WebH3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,6 +38,7 @@ namespace API_WebH3.Controllers
 
         // ✅ Tạo mới khóa học
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateCourse([FromBody] CreateCourseDto courseDto)
         {
             if (courseDto == null)
@@ -48,6 +50,7 @@ namespace API_WebH3.Controllers
 
         // ✅ Cập nhật khóa học
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateCourse(Guid id, [FromBody] CreateCourseDto courseDto)
         {
             if (courseDto == null)
@@ -63,6 +66,7 @@ namespace API_WebH3.Controllers
 
         // ✅ Xóa khóa học
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCourse(Guid id)
         {
             var course = await _courseService.GetCourseByIdAsync(id);
@@ -73,10 +77,11 @@ namespace API_WebH3.Controllers
             return Ok(new { message = "Xóa khóa học thành công!" });
         }
 
-        [HttpPost("{courseId}/upload-image")]
-        public async Task<IActionResult> UploadImage(Guid courseId, IFormFile file)
+        [HttpPost("upload-image/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UploadImage(string id, IFormFile file)
         {
-            var imageUrl = await _courseService.UploadImageAsync(courseId, file);
+            var imageUrl = await _courseService.UploadImageAsync(Guid.Parse(id), file);
             if (imageUrl == null)
                 return BadRequest("Upload failed or Course not found.");
 

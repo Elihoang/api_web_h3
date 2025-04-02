@@ -65,6 +65,7 @@ namespace API_WebH3.Services
          {
             Subject = new ClaimsIdentity(new[]
             {
+               new Claim("id", user.Id.ToString()),
                new Claim(ClaimTypes.Email, user.Email),
                new Claim(ClaimTypes.Role, user.Role),
                new Claim(ClaimTypes.Name, user.FullName)
