@@ -87,4 +87,15 @@ public class EnrollementService
     {
         return await _enrollementRepository.DeleteAsync(id);
     }
+    public async Task<List<EnrollmentDto>> GetByUserIdAsync(Guid userId)
+    {
+        var enrollments = await _enrollementRepository.GetByUserIdAsync(userId);
+        return enrollments.Select(e => new EnrollmentDto
+        {
+            Id = e.Id,
+            UserId = e.UserId,
+            CourseId = e.CourseId,
+            EnrolledAt = e.EnrolledAt,
+        }).ToList();
+    }
 }

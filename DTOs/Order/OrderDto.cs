@@ -8,5 +8,5 @@ public class OrderDto
     public string Status { get; set; }
     public DateTime CreatedAt { get; set; }
     
-    public List<OrderDetailsDto> OrderDetails { get; set; }
+    public List<OrderDetailsDto>? OrderDetails { get; set; }
 }

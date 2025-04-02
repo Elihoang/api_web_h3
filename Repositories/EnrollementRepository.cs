@@ -50,4 +50,12 @@ public class EnrollementRepository : IEnrollementRepository
         await _context.SaveChangesAsync();
         return true;
     }
+    public async Task<List<Enrollment>> GetByUserIdAsync(Guid userId)
+    {
+        return await _context.Enrollments
+            .Where(e => e.UserId == userId) // L?c theo userId
+            .Include(u => u.User) // Bao g?m thông tin User
+            .Include(c => c.Course) // Bao g?m thông tin Course
+            .ToListAsync();
+    }
 }

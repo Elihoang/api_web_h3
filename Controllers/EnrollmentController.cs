@@ -60,4 +60,10 @@ public class EnrollmentController : Controller
         }
         return Ok(enrollment);
     }
+    [HttpGet("user/{userId}")]
+    public async Task<ActionResult<List<EnrollmentDto>>> GetByUserIdAsync(Guid userId)
+    {
+        var enrollments = await _enrollementService.GetByUserIdAsync(userId);
+        return Ok(enrollments);
+    }
 }

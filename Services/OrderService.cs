@@ -19,6 +19,7 @@ public class OrderService
         // Tạo đơn hàng
         var orders = new Order
         {
+            Id = Guid.NewGuid(),
             UserId = order.UserId,
             TotalAmount = order.TotalAmount,
             Status = "Pending",
@@ -43,6 +44,7 @@ public class OrderService
             {
                 var orderDetails = new OrderDetail
                 {
+                    Id = Guid.NewGuid(),
                     OrderId = orders.Id,
                     CourseId = detail.CourseId,
                     Price = detail.Price,

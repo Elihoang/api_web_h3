@@ -19,9 +19,22 @@ public class PaymentController : Controller
     [HttpPost("create-payment-url")]
     public IActionResult CreatePaymentUrl([FromBody] OrderDto orderDto)
     {
-        var url = _vnPayService.CreatePaymentUrl(orderDto, HttpContext);
-        return Ok(new { PaymentUrl = url });
+        try
+        {
+            var url = _vnPayService.CreatePaymentUrl(orderDto, HttpContext);
+
+            // In ra log ?? ki?m tra
+            Console.WriteLine("Generated Payment URL: " + url);
+
+            return Ok(new { PaymentUrl = url });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error creating payment URL: " + ex.Message);
+            return BadRequest(new { Error = "Failed to create payment URL", Details = ex.Message });
+        }
     }
+
 
     [HttpGet("payment-callback")]
     public async Task<IActionResult> PaymentCallback()
