@@ -54,8 +54,8 @@ public class EnrollementRepository : IEnrollementRepository
     {
         return await _context.Enrollments
             .Where(e => e.UserId == userId) // L?c theo userId
-            .Include(u => u.User) // Bao g?m thÙng tin User
-            .Include(c => c.Course) // Bao g?m thÙng tin Course
+            .Include(u => u.User) // Bao g?m th√¥ng tin User
+            .Include(c => c.Course) // Bao g?m th√¥ng tin Course
             .ToListAsync();
     }
 }

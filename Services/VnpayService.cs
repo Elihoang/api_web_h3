@@ -1,8 +1,11 @@
+// API_WebH3/Services/VnpayService.cs
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using API_WebH3.DTOs.Order;
 using API_WebH3.Repositories;
+using API_WebH3.DTOs.Enrollment;
+using API_WebH3.Models; // Thêm namespace cho Enrollment
 
 namespace API_WebH3.Services;
 
@@ -10,15 +13,26 @@ public class VnpayService
 {
     private readonly IConfiguration _configuration;
     private readonly IOrderRepository _orderRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly EmailPaymentService _emailPaymentService;
+    private readonly IEnrollementRepository _enrollementRepository; // Thêm EnrollementRepository
     private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
     private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
-    
-    
-    public VnpayService(IConfiguration configuration, IOrderRepository orderRepository)
+
+    public VnpayService(
+        IConfiguration configuration,
+        IOrderRepository orderRepository,
+        IUserRepository userRepository,
+        EmailPaymentService emailPaymentService,
+        IEnrollementRepository enrollementRepository)
     {
         _configuration = configuration;
         _orderRepository = orderRepository;
+        _userRepository = userRepository;
+        _emailPaymentService = emailPaymentService;
+        _enrollementRepository = enrollementRepository;
     }
+
     public string CreatePaymentUrl(OrderDto orderDto, HttpContext context)
     {
         var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById(_configuration["TimeZoneId"]);
@@ -32,10 +46,10 @@ public class VnpayService
         _requestData.Add("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
         _requestData.Add("vnp_IpAddr", GetIpAddress(context));
         _requestData.Add("vnp_Locale", _configuration["Vnpay:Locale"]);
-        _requestData.Add("vnp_OrderInfo", $"Thanh toán đơn hàng #{orderDto.Id}"); 
+        _requestData.Add("vnp_OrderInfo", $"Thanh toán đơn hàng #{orderDto.Id}");
         _requestData.Add("vnp_OrderType", "billpayment");
         _requestData.Add("vnp_ReturnUrl", _configuration["Vnpay:PaymentBackReturnUrl"]);
-        _requestData.Add("vnp_TxnRef", orderDto.Id.ToString()); // Dùng Id từ OrderDto
+        _requestData.Add("vnp_TxnRef", orderDto.Id.ToString());
 
         var paymentUrl = CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
         return paymentUrl;
@@ -51,7 +65,7 @@ public class VnpayService
             }
         }
 
-        var orderId = Guid.Parse(GetResponseData("vnp_TxnRef")); // Chuyển về Guid từ vnp_TxnRef
+        var orderId = Guid.Parse(GetResponseData("vnp_TxnRef"));
         var vnpResponseCode = GetResponseData("vnp_ResponseCode");
         var vnpSecureHash = collections["vnp_SecureHash"];
         var orderInfo = GetResponseData("vnp_OrderInfo");
@@ -63,7 +77,6 @@ public class VnpayService
             return new OrderDto { Status = "Failed" };
         }
 
-        // Chuyển đổi Order sang OrderDto
         var orderDto = new OrderDto
         {
             Id = order.Id,
@@ -73,23 +86,66 @@ public class VnpayService
             CreatedAt = order.CreatedAt
         };
 
-        // Cập nhật trạng thái đơn hàng nếu thanh toán thành công
         if (vnpResponseCode == "00")
         {
             order.Status = "Paid";
             await _orderRepository.UpdateAsync(order);
             orderDto.Status = "Paid";
-        }
-        else
-        {
-            orderDto.Status = "Failed";
-        }
-        
-        if (vnpResponseCode == "00")
-        {
-            order.Status = "Paid";
-            await _orderRepository.UpdateAsync(order);
-            orderDto.Status = "Paid";
+
+            // Tự động ghi danh người dùng vào khóa học
+            if (orderDto.OrderDetails != null && orderDto.OrderDetails.Any())
+            {
+                foreach (var detail in orderDto.OrderDetails)
+                {
+                    var enrollment = new Enrollment
+                    {
+                        UserId = order.UserId,
+                        CourseId = detail.CourseId,
+                        EnrolledAt = DateTime.UtcNow,
+                        Status = "Active"
+                    };
+                    await _enrollementRepository.CreateAsync(enrollment);
+                }
+            }
+
+            // Lấy email của người dùng qua UserRepository
+            var user = await _userRepository.GetByIdAsync(order.UserId);
+            if (user != null)
+            {
+                Console.WriteLine($"User found: ID={user.Id}, Email={user.Email}");
+            }
+            else
+            {
+                Console.WriteLine($"User with ID {order.UserId} not found.");
+            }
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                // Tạo nội dung email
+                var subject = "Thanh toán thành công - Đơn hàng #" + order.Id;
+                var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
+                            <p>Cảm ơn bạn đã đăng kí khóa học của chúng tôi.</p>
+                            <p><strong>Thông tin đơn hàng:</strong></p>
+                            <ul>
+                                <li>Mã đơn hàng: {order.Id}</li>
+                                <li>Tổng tiền: {order.TotalAmount:N0} VND</li>
+                                <li>Thời gian: {order.CreatedAt}</li>
+                            </ul>
+                            <p>Trân trọng,<br>H3 xin cảm ơn</p>";
+
+                // Gửi email
+                try
+                {
+                    await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send email to {user.Email}: {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"User with ID {order.UserId} not found or email is empty.");
+            }
         }
         else if (vnpResponseCode == "24")
         {
@@ -146,7 +202,7 @@ public class VnpayService
                 data.Append(WebUtility.UrlEncode(k) + "=" + WebUtility.UrlEncode(v) + "&");
             }
 
-            if (data.Length > 0) data.Length -= 1; // Xóa "&" cuối cùng
+            if (data.Length > 0) data.Length -= 1;
             return data.ToString();
         }
         return _responseData.TryGetValue(key, out var retValue) ? retValue : string.Empty;

@@ -91,7 +91,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<VnpayService>();
 
-
+builder.Services.AddScoped<EmailPaymentService>();
 
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
