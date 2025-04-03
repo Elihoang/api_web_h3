@@ -32,5 +32,10 @@ namespace API_WebH3.Repositories
         {
             return await _context.Users.AnyAsync(u => u.Id == userId);
         }
+        
+        public async Task<User> GetByIdAsync(Guid id)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        }
     }
 }
