@@ -15,4 +15,6 @@ public class CourseDto
     public string? UrlImage { get; set; }
     
     public string CreatedAt { get; set; }
+    public List<string>? Contents { get; set; }
+
 }
