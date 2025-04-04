@@ -6,7 +6,7 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ProgressController : Controller
+public class ProgressController : ControllerBase
 {
     private readonly ProgressService _progressService;
 

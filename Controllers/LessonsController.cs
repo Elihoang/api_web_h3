@@ -9,7 +9,7 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class LessonsController : Controller
+public class LessonsController : ControllerBase
 {
     
     private readonly LessonService _lessonService;

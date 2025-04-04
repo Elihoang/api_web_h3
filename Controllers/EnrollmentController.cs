@@ -7,7 +7,8 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class EnrollmentController : Controller
+public class EnrollmentController : ControllerBase
+
 {
     private readonly EnrollementService _enrollementService;
 
