@@ -1,4 +1,4 @@
-using API_WebH3.DTOs.Review;
+﻿using API_WebH3.DTOs.Review;
 using API_WebH3.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +6,7 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ReviewController : Controller
+public class ReviewController : ControllerBase
 {
     
     private readonly ReviewService _reviewService;
@@ -64,8 +64,15 @@ public class ReviewController : Controller
         {
             return BadRequest(ModelState);
         }
-        var review = await _reviewService.CreateReview(createReviewDto);
-        return CreatedAtAction("GetReviewById", new { id = review.Id }, review);
+        try
+        {
+            var review = await _reviewService.CreateReview(createReviewDto);
+            return CreatedAtAction("GetReviewById", new { id = review.Id }, review);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message }); // Trả về lỗi 409 Conflict
+        }
     }
 
     [HttpPut("{id}")]

@@ -1,4 +1,4 @@
-using API_WebH3.DTOs.Review;
+﻿using API_WebH3.DTOs.Review;
 using API_WebH3.Models;
 using API_WebH3.Repositories;
 
@@ -75,6 +75,11 @@ public class ReviewService
     }
     public async Task<ReviewDto> CreateReview(CreateReviewDto createReviewDto)
     {
+        var existingReview = await _reviewRepository.GetReviewByUserIdAndCourseId(createReviewDto.UserId, createReviewDto.CourseId);
+        if (existingReview != null)
+        {
+            throw new InvalidOperationException("User has already reviewed this course.");
+        }
         var reviews = new Review
         {
             UserId = createReviewDto.UserId,
@@ -106,7 +111,7 @@ public class ReviewService
         
         reviews.Rating = updateReviewDto.Rating;
         reviews.Comment = updateReviewDto.Comment;
-        reviews.CreatedAt = DateTime.Now;
+        reviews.CreatedAt = DateTime.UtcNow;
          var updateReview = await _reviewRepository.UpdateReviewAsync(reviews);
          return new ReviewDto
          {
@@ -123,4 +128,5 @@ public class ReviewService
     {
         return await _reviewRepository.DeleteReviewAsync(id);
     }
+
 }

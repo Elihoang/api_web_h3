@@ -1,5 +1,6 @@
 using API_WebH3.DTOs.Enrollment;
 using API_WebH3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_WebH3.Controllers;
@@ -61,6 +62,7 @@ public class EnrollmentController : Controller
         return Ok(enrollment);
     }
     [HttpGet("user/{userId}")]
+    [Authorize]
     public async Task<ActionResult<List<EnrollmentDto>>> GetByUserIdAsync(Guid userId)
     {
         var enrollments = await _enrollementService.GetByUserIdAsync(userId);

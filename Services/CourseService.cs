@@ -28,7 +28,8 @@ public class CourseService
             Price = c.Price,
             InstructorId = c.InstructorId,
             UrlImage = c.UrlImage,
-            CreatedAt = c.CreatedAt
+            CreatedAt = c.CreatedAt,
+            Contents = c.Contents
         }).ToList();
     }
     
@@ -75,7 +76,8 @@ public class CourseService
             Price = course.Price,
             UrlImage = course.UrlImage,
             InstructorId = course.InstructorId,
-            CreatedAt = course.CreatedAt
+            CreatedAt = course.CreatedAt,
+            Contents = course.Contents
         };
     }
     

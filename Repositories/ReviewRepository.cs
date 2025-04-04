@@ -66,4 +66,11 @@ public class ReviewRepository : IReviewRepository
         await _context.SaveChangesAsync();
         return true;
     }
+    public async Task<Review?> GetReviewByUserIdAndCourseId(Guid userId, Guid courseId)
+    {
+        return await _context.Reviews
+            .FirstOrDefaultAsync(r => r.UserId == userId && r.CourseId == courseId);
+    }
+
+   
 }
