@@ -8,7 +8,7 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class OrderController : Controller
+public class OrderController : ControllerBase
 {
     
     private readonly OrderService _orderService;

@@ -7,7 +7,7 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class PaymentController : Controller
+public class PaymentController : ControllerBase
 {
     private readonly VnpayService _vnPayService;
 
@@ -40,6 +40,6 @@ public class PaymentController : Controller
     public async Task<IActionResult> PaymentCallback()
     {
         var response = await _vnPayService.PaymentExecuteAsync(Request.Query);
-        return Ok(response);
+        return response;
     }
 }

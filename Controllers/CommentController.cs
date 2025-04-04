@@ -7,7 +7,7 @@ namespace API_WebH3.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CommentController : Controller
+public class CommentController : ControllerBase
 {
     private readonly CommentService _commentService;
 
