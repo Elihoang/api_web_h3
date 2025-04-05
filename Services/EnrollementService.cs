@@ -52,6 +52,7 @@ public class EnrollementService
             UserId = createEnrollmenDto.UserId,
             CourseId = createEnrollmenDto.CourseId,
             EnrolledAt = DateTime.UtcNow,
+            Status = createEnrollmenDto.Status ?? "Active"
             
         };
         var createEnrollment=await _enrollementRepository.CreateAsync(enrollment);
@@ -61,6 +62,7 @@ public class EnrollementService
             UserId = createEnrollment.UserId,
             CourseId = createEnrollment.CourseId,
             EnrolledAt = createEnrollment.EnrolledAt,
+            Status = createEnrollment.Status
            
         };
         
@@ -75,6 +77,7 @@ public class EnrollementService
         }
         enrollment.UserId = updateEnrollmentDto.UserId;
         enrollment.CourseId = updateEnrollmentDto.CourseId;
+        enrollment.Status = updateEnrollmentDto.Status ?? enrollment.Status;
         var updateEnrollment = await _enrollementRepository.UpdateAsync(enrollment);
 
         return new EnrollmentDto
@@ -82,7 +85,8 @@ public class EnrollementService
             Id = updateEnrollment.Id,
             UserId = updateEnrollment.UserId,
             CourseId = updateEnrollment.CourseId,
-            EnrolledAt = updateEnrollment.EnrolledAt
+            EnrolledAt = updateEnrollment.EnrolledAt,
+            Status = updateEnrollment.Status
 
         };
     }

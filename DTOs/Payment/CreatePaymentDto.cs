@@ -7,4 +7,6 @@ public class CreatePaymentDto
     public decimal Amount { get; set; }
     public string PaymentMethod { get; set; }
     public string Status { get; set; } = "pending";
+    public decimal TotalAmount { get; set; }
+
 } 

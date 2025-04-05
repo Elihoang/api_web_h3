@@ -77,6 +77,7 @@ public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collection
         return new RedirectResult("/payment-failure");
     }
 
+    var orderDetails = await _orderRepository.GetOrderDetailsByOrderIdAsync(orderId);
     var orderDto = new OrderDto
     {
         Id = order.Id,
@@ -84,6 +85,7 @@ public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collection
         TotalAmount = order.TotalAmount,
         Status = order.Status,
         CreatedAt = order.CreatedAt,
+        OrderDetails = orderDetails // Gán danh sách OrderDetailsDto
     };
 
     string redirectUrl;
@@ -105,8 +107,20 @@ public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collection
                     EnrolledAt = DateTime.UtcNow,
                     Status = "Active"
                 };
-                await _enrollementRepository.CreateAsync(enrollment);
+                try
+                {
+                    await _enrollementRepository.CreateAsync(enrollment);
+                    Console.WriteLine($"Enrollment created: UserId={order.UserId}, CourseId={detail.CourseId}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to create enrollment: {ex.Message}");
+                }
             }
+        }
+        else
+        {
+            Console.WriteLine("OrderDetails is null or empty. No enrollments created.");
         }
 
         // Gửi email thông báo
@@ -134,7 +148,6 @@ public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collection
             }
         }
 
-        // Chuẩn bị URL redirect cho trang thành công
         redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{order.Id}" +
                      $"?vnp_Amount={(int)(order.TotalAmount * 100)}" +
                      $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
@@ -155,7 +168,6 @@ public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collection
         redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
     }
 
-    // Log redirectUrl để kiểm tra
     Console.WriteLine("Redirect URL: " + redirectUrl);
     return new RedirectResult(redirectUrl);
 }
