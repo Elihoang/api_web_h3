@@ -1,4 +1,5 @@
 using API_WebH3.Data;
+using API_WebH3.DTOs.Order;
 using API_WebH3.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,10 +45,14 @@ public class OrderRepository : IOrderRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(Guid orderId)
+    public async Task<List<OrderDetailsDto>> GetOrderDetailsByOrderIdAsync(Guid orderId)
     {
-        return await _context.OrderDetails
+        var details = await _context.OrderDetails
             .Where(od => od.OrderId == orderId)
-            .ToListAsync();
+            .Select(od=> new OrderDetailsDto
+            {
+                CourseId = od.CourseId,
+            }).ToListAsync();
+        return details;
     }
 }
