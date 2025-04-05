@@ -8,7 +8,6 @@ namespace API_WebH3.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class EnrollmentController : ControllerBase
-
 {
     private readonly EnrollementService _enrollementService;
 
@@ -36,13 +35,22 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Student")]
     public async Task<ActionResult<EnrollmentDto>> CreateAsync(CreateEnrollmentDto createEnrollmentDto)
     {
+        // Kiểm tra xem người dùng đã đăng ký khóa học này chưa
+        var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(createEnrollmentDto.UserId, createEnrollmentDto.CourseId.ToString());
+        if (existingEnrollment != null)
+        {
+            return BadRequest("Bạn đã đăng ký khóa học này rồi");
+        }
+
         var enrollment = await _enrollementService.CreateAsync(createEnrollmentDto);
         return CreatedAtAction(nameof(GetById), new {id = enrollment.Id}, enrollment);
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<EnrollmentDto>> UpdateAsync(int id, CreateEnrollmentDto updateEnrollmentDto)
     {
         var enrollment = await _enrollementService.UpdateAsync(id, updateEnrollmentDto);
@@ -52,6 +60,7 @@ public class EnrollmentController : ControllerBase
         }
         return Ok(enrollment);
     }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAsync(int id)
     {
@@ -62,8 +71,9 @@ public class EnrollmentController : ControllerBase
         }
         return Ok(enrollment);
     }
+
     [HttpGet("user/{userId}")]
-    [Authorize]
+    [Authorize] 
     public async Task<ActionResult<List<EnrollmentDto>>> GetByUserIdAsync(Guid userId)
     {
         var enrollments = await _enrollementService.GetByUserIdAsync(userId);

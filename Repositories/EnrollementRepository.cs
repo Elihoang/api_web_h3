@@ -58,4 +58,13 @@ public class EnrollementRepository : IEnrollementRepository
             .Include(c => c.Course) // Bao g?m thông tin Course
             .ToListAsync();
     }
+
+    public async Task<Enrollment?> GetByUserAndCourseAsync(Guid userId, string courseId)
+    {
+        return await _context.Enrollments
+            .Where(e => e.UserId == userId && e.CourseId == Guid.Parse(courseId))
+            .Include(u => u.User)
+            .Include(c => c.Course)
+            .FirstOrDefaultAsync();
+    }
 }
