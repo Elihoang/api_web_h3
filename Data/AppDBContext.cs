@@ -18,4 +18,5 @@ public class AppDbContext:DbContext
     public DbSet<Post>  Posts { get; set; }
     public DbSet<Progress>  Progresses { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<Payment> Payments { get; set; }
 }

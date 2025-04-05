@@ -1,45 +1,118 @@
-using API_WebH3.DTOs.Order;
+using API_WebH3.DTOs.Payment;
 using API_WebH3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_WebH3.Controllers;
-
 
 [Route("api/[controller]")]
 [ApiController]
 public class PaymentController : ControllerBase
 {
-    private readonly VnpayService _vnPayService;
+    private readonly PaymentService _paymentService;
 
-    public PaymentController(VnpayService vnPayService)
+    public PaymentController(PaymentService paymentService)
     {
-        _vnPayService = vnPayService;
+        _paymentService = paymentService;
     }
 
-    [HttpPost("create-payment-url")]
-    public IActionResult CreatePaymentUrl([FromBody] OrderDto orderDto)
+    /// <summary>
+    /// Lấy tất cả thanh toán
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<List<PaymentDto>>> GetAllAsync()
     {
-        try
-        {
-            var url = _vnPayService.CreatePaymentUrl(orderDto, HttpContext);
-
-            // In ra log ?? ki?m tra
-            Console.WriteLine("Generated Payment URL: " + url);
-
-            return Ok(new { PaymentUrl = url });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error creating payment URL: " + ex.Message);
-            return BadRequest(new { Error = "Failed to create payment URL", Details = ex.Message });
-        }
+        var payments = await _paymentService.GetAllAsync();
+        return Ok(payments);
     }
 
-
-    [HttpGet("payment-callback")]
-    public async Task<IActionResult> PaymentCallback()
+    /// <summary>
+    /// Lấy thanh toán theo ID
+    /// </summary>
+    [HttpGet("{id}")]
+    [Authorize]
+    public async Task<ActionResult<PaymentDto>> GetByIdAsync(Guid id)
     {
-        var response = await _vnPayService.PaymentExecuteAsync(Request.Query);
-        return response;
+        var payment = await _paymentService.GetByIdAsync(id);
+        if (payment == null)
+        {
+            return NotFound();
+        }
+        return Ok(payment);
+    }
+
+    /// <summary>
+    /// Tạo thanh toán mới
+    /// </summary>
+    [HttpPost]
+    [Authorize]
+    public async Task<ActionResult<PaymentDto>> CreateAsync(CreatePaymentDto createPaymentDto)
+    {
+        var payment = await _paymentService.CreateAsync(createPaymentDto);
+        return CreatedAtAction(nameof(GetByIdAsync), new { id = payment.Id }, payment);
+    }
+
+    /// <summary>
+    /// Cập nhật thanh toán
+    /// </summary>
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<PaymentDto>> UpdateAsync(Guid id, UpdatePaymentDto updatePaymentDto)
+    {
+        var payment = await _paymentService.UpdateAsync(id, updatePaymentDto);
+        if (payment == null)
+        {
+            return NotFound();
+        }
+        return Ok(payment);
+    }
+
+    /// <summary>
+    /// Xóa thanh toán
+    /// </summary>
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> DeleteAsync(Guid id)
+    {
+        var result = await _paymentService.DeleteAsync(id);
+        if (!result)
+        {
+            return NotFound();
+        }
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Lấy thanh toán của một người dùng
+    /// </summary>
+    [HttpGet("user/{userId}")]
+    [Authorize]
+    public async Task<ActionResult<List<PaymentDto>>> GetByUserIdAsync(Guid userId)
+    {
+        var payments = await _paymentService.GetByUserIdAsync(userId);
+        return Ok(payments);
+    }
+
+    /// <summary>
+    /// Lấy thanh toán của một khóa học
+    /// </summary>
+    [HttpGet("course/{courseId}")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<ActionResult<List<PaymentDto>>> GetByCourseIdAsync(Guid courseId)
+    {
+        var payments = await _paymentService.GetByCourseIdAsync(courseId);
+        return Ok(payments);
+    }
+
+    /// <summary>
+    /// Lấy thanh toán theo trạng thái
+    /// </summary>
+    [HttpGet("status/{status}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<List<PaymentDto>>> GetByStatusAsync(string status)
+    {
+        var payments = await _paymentService.GetByStatusAsync(status);
+        return Ok(payments);
     }
 }

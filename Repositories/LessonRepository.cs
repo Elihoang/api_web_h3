@@ -12,20 +12,19 @@ public class LessonRepository : ILessonRepository
     {
         _context = context;
     }
-        
-        
-    public async Task<IEnumerable<Lesson>> GetAllAsync()
+
+    public async Task<List<Lesson>> GetAllAsync()
     {
-        return await _context.Lessons.Include(l => l.Course).ToListAsync();
+        return await _context.Lessons
+            .Include(l => l.Course)
+            .ToListAsync();
     }
 
-    public async Task<Lesson> GetByIdAsync(Guid id)
+    public async Task<Lesson?> GetByIdAsync(Guid id)
     {
-        return await _context.Lessons.Include(l => l.Course).FirstOrDefaultAsync(l => l.Id == id);
-    }
-    public async Task<IEnumerable<Lesson>> GetByCourseIdAsync(Guid courseId)
-    {
-        return await _context.Lessons.Where(l => l.CourseId == courseId).ToListAsync();
+        return await _context.Lessons
+            .Include(l => l.Course)
+            .FirstOrDefaultAsync(l => l.Id == id);
     }
 
     public async Task<Lesson> CreateAsync(Lesson lesson)
@@ -35,19 +34,46 @@ public class LessonRepository : ILessonRepository
         return lesson;
     }
 
-    public async Task<Lesson> UpdateAsync(Lesson lesson)
+    public async Task<Lesson?> UpdateAsync(Lesson lesson)
     {
-       _context.Lessons.Update(lesson);
-       await _context.SaveChangesAsync();
-       return lesson;
+        var existingLesson = await _context.Lessons.FindAsync(lesson.Id);
+        if (existingLesson == null)
+        {
+            return null;
+        }
+
+        _context.Entry(existingLesson).CurrentValues.SetValues(lesson);
+        await _context.SaveChangesAsync();
+        return lesson;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var lesson =await GetByIdAsync(id);
-        if (lesson == null) return false;
+        var lesson = await _context.Lessons.FindAsync(id);
+        if (lesson == null)
+        {
+            return false;
+        }
+
         _context.Lessons.Remove(lesson);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<List<Lesson>> GetByCourseIdAsync(Guid courseId)
+    {
+        return await _context.Lessons
+            .Where(l => l.CourseId == courseId)
+            .Include(l => l.Course)
+            .OrderBy(l => l.OrderNumber)
+            .ToListAsync();
+    }
+
+    public async Task<Lesson?> GetByCourseIdAndOrderAsync(Guid courseId, int orderNumber)
+    {
+        return await _context.Lessons
+            .Where(l => l.CourseId == courseId && l.OrderNumber == orderNumber)
+            .Include(l => l.Course)
+            .FirstOrDefaultAsync();
     }
 }

@@ -8,5 +8,7 @@ public class ProgressDto
     public Guid LessonId { get; set; }
     
     public string Status { get; set; }
-    public DateTime LastUpdate { get; set; }
+    public int CompletionPercentage { get; set; }
+    public string? Notes { get; set; }
+    public string LastUpdate { get; set; }
 }

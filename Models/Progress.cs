@@ -11,15 +11,20 @@ public class Progress
     [ForeignKey("User")]
     public Guid UserId { get; set; }
     
-    [ForeignKey("Lesson")]
+    [ForeignKey("Lesson")] 
     public Guid LessonId { get; set; }
     
-    public string Status { get; set; } = "not started";
+    [Required]
+    public string Status { get; set; } = "not started"; // Trạng thái: not started, in progress, completed
     
-    public DateTime LastUpdate { get; set; } = DateTime.Now;
+    public int CompletionPercentage { get; set; } = 0; // Phần trăm hoàn thành
+    
+    public string? Notes { get; set; } // Ghi chú của người học
+    
+    [Required]
+    public string LastUpdate { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     
     public virtual User User { get; set; }
     
     public virtual Lesson Lesson { get; set; }
-    
 }

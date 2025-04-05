@@ -102,4 +102,22 @@ public class EnrollementService
             Status = e.Status
         }).ToList();
     }
+
+    public async Task<EnrollmentDto> GetByUserAndCourseAsync(Guid userId, string courseId)
+    {
+        var enrollment = await _enrollementRepository.GetByUserAndCourseAsync(userId, courseId);
+        if (enrollment == null)
+        {
+            return null;
+        }
+
+        return new EnrollmentDto
+        {
+            Id = enrollment.Id,
+            UserId = enrollment.UserId,
+            CourseId = enrollment.CourseId,
+            EnrolledAt = enrollment.EnrolledAt,
+            Status = enrollment.Status
+        };
+    }
 }

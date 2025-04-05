@@ -3,30 +3,30 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API_WebH3.Models;
 
-public class Lesson
+public class Payment
 {
     [Key]
     public Guid Id { get; set; }
+    
+    [ForeignKey("User")]
+    public Guid UserId { get; set; }
     
     [ForeignKey("Course")]
     public Guid CourseId { get; set; }
     
     [Required]
-    public required string Title { get; set; }
+    public decimal Amount { get; set; }
     
     [Required]
-    public required string Description { get; set; }
+    public string PaymentMethod { get; set; } // Phương thức thanh toán (VNPay, MoMo, COD...)
     
-    public string? Content { get; set; }
-    
-    public string? VideoUrl { get; set; }
-    
-    public int Duration { get; set; } // Thời lượng bài học (phút)
-    
-    public int OrderNumber { get; set; } // Số thứ tự bài học trong khóa học
+    [Required]
+    public string Status { get; set; } = "pending"; // Trạng thái: pending, completed, failed, refunded
     
     [Required]
     public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     
+    public virtual User User { get; set; }
+    
     public virtual Course Course { get; set; }
-}
+} 
