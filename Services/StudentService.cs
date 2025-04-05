@@ -82,35 +82,42 @@ namespace API_WebH3.Services
          };
       }
 
-      public async Task<UpdateStudentDto> UpdateStudentAsync(UpdateStudentDto updateStudentDto, string id)
-      {
-         var existingStudent = await _studentRepository.GetByIdAsync(id);
-         if (existingStudent == null)
-         {
-            throw new Exception("Student not found");
-         }
-         existingStudent.FullName = updateStudentDto.FullName;
-         existingStudent.Email = updateStudentDto.Email;
-         if (updateStudentDto.BirthDate != null)
-         {
-            existingStudent.BirthDate = DateTime.Parse(updateStudentDto.BirthDate);
-         }
-         if (updateStudentDto.Password != null)
-         {
-            existingStudent.Password = updateStudentDto.Password;
-         }
-         await _studentRepository.UpdateAsync(existingStudent);
-         return new UpdateStudentDto
-         {
-            FullName = existingStudent.FullName,
-            Email = existingStudent.Email,
-            BirthDate = existingStudent.BirthDate.HasValue
-            ? existingStudent.BirthDate.Value.ToString("yyyy-MM-dd")
-            : null
-         };
-      }
+        public async Task<UpdateStudentDto> UpdateStudentAsync(UpdateStudentDto updateStudentDto, string id)
+        {
+            var existingStudent = await _studentRepository.GetByIdAsync(id);
+            if (existingStudent == null)
+            {
+                throw new Exception("Student not found");
+            }
 
-      public async Task<bool> DeleteStudentAsync(string id)
+            existingStudent.FullName = updateStudentDto.FullName;
+            existingStudent.Email = updateStudentDto.Email;
+
+            if (updateStudentDto.BirthDate != null)
+            {
+                // Phân tích chuỗi thời gian và chuyển sang UTC
+                var parsedDate = DateTime.Parse(updateStudentDto.BirthDate);
+                existingStudent.BirthDate = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
+            }
+
+            // Chỉ cập nhật mật khẩu nếu có giá trị mới và mã hóa nó
+            if (!string.IsNullOrEmpty(updateStudentDto.Password))
+            {
+                existingStudent.Password = BCrypt.Net.BCrypt.HashPassword(updateStudentDto.Password);
+            }
+
+            await _studentRepository.UpdateAsync(existingStudent);
+
+            return new UpdateStudentDto
+            {
+                FullName = existingStudent.FullName,
+                Email = existingStudent.Email,
+                BirthDate = existingStudent.BirthDate.HasValue
+                    ? existingStudent.BirthDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    : null
+            };
+        }
+        public async Task<bool> DeleteStudentAsync(string id)
       {
          return await _studentRepository.DeleteAsync(id);
       }
