@@ -40,6 +40,7 @@ public class EnrollementService
             UserId = enrollment.UserId,
             CourseId = enrollment.CourseId,
             EnrolledAt = enrollment.EnrolledAt,
+            Status = enrollment.Status
 
         };
     }
@@ -50,7 +51,8 @@ public class EnrollementService
         {
             UserId = createEnrollmenDto.UserId,
             CourseId = createEnrollmenDto.CourseId,
-            EnrolledAt = DateTime.UtcNow
+            EnrolledAt = DateTime.UtcNow,
+            
         };
         var createEnrollment=await _enrollementRepository.CreateAsync(enrollment);
         return new EnrollmentDto
@@ -58,7 +60,8 @@ public class EnrollementService
             Id = createEnrollment.Id,
             UserId = createEnrollment.UserId,
             CourseId = createEnrollment.CourseId,
-            EnrolledAt = createEnrollment.EnrolledAt
+            EnrolledAt = createEnrollment.EnrolledAt,
+           
         };
         
     }
@@ -96,6 +99,7 @@ public class EnrollementService
             UserId = e.UserId,
             CourseId = e.CourseId,
             EnrolledAt = e.EnrolledAt,
+            Status = e.Status
         }).ToList();
     }
 }
