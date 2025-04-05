@@ -69,6 +69,8 @@ namespace API_WebH3.Services
                new Claim(ClaimTypes.Email, user.Email),
                new Claim(ClaimTypes.Role, user.Role),
                new Claim(ClaimTypes.Name, user.FullName),
+               new Claim("profileImage", user.ProfileImage ?? string.Empty),
+               new Claim("birthDate", user.BirthDate?.ToString("yyyy-MM-dd") ?? string.Empty)
             }),
             Expires = DateTime.UtcNow.AddHours(2),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
