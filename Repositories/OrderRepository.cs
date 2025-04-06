@@ -48,23 +48,18 @@ public class OrderRepository : IOrderRepository
         {
             throw new KeyNotFoundException($"Order with ID {order.Id} not found.");
         }
-        existingOrder.Status = order.Status; // Ch? c?p nh?t tr?ng th�i
+        existingOrder.UserId = order.UserId;
+        existingOrder.CourseId = order.CourseId;
+        existingOrder.Status = order.Status;
+        existingOrder.Amount = order.Amount;
+        existingOrder.CreatedAt = order.CreatedAt; // Đảm bảo giữ CreatedAt
         _context.Orders.Update(existingOrder);
         await _context.SaveChangesAsync();
     }
 
-    public async Task CreateOrderAsync(CreateOrderDto order)
+    public async Task CreateOrderAsync(Order order)
     {
-        var newOrder = new Order
-        {
-            Id = order.Id, // S? d?ng Id t? CreateOrderDto
-            UserId = order.UserId,
-            CourseId = order.CourseId,
-            Amount = order.Amount,
-            Status = "Pending",
-            CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
-        };
-        _context.Orders.Add(newOrder);
+        _context.Orders.Add(order);
         await _context.SaveChangesAsync();
     }
 }
