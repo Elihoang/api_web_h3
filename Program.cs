@@ -86,9 +86,14 @@ builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<CommentService>();
 
-
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<IEnrollementRepository, EnrollementRepository>();
+builder.Services.AddScoped<OrderService>(sp =>
+    new OrderService(
+        sp.GetRequiredService<IOrderRepository>(),
+        sp.GetRequiredService<IEnrollementRepository>()
+    ));
+
 builder.Services.AddScoped<VnpayService>();
 
 builder.Services.AddScoped<EmailPaymentService>();

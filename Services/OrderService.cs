@@ -1,16 +1,19 @@
 using API_WebH3.DTOs.Order;
 using API_WebH3.Models;
 using API_WebH3.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_WebH3.Services;
 
 public class OrderService
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly IEnrollementRepository _enrollmentRepository;
 
-    public OrderService(IOrderRepository orderRepository)
+    public OrderService(IOrderRepository orderRepository, IEnrollementRepository enrollmentRepository)
     {
         _orderRepository = orderRepository;
+        _enrollmentRepository = enrollmentRepository;
     }
 
     public async Task<OrderDto> CreateOrder(CreateOrderDto order)
@@ -124,11 +127,37 @@ public class OrderService
         {
             await _orderRepository.UpdateAsync(orderEntity);
             Console.WriteLine($"Order status updated: Id={id}, Status={status}");
+
+            // Kiểm tra nếu trạng thái mới là "Paid"
+            if (status.Equals("Paid", StringComparison.OrdinalIgnoreCase))
+            {
+                // Kiểm tra xem Enrollment đã tồn tại chưa để tránh trùng lặp
+                var existingEnrollment = await _enrollmentRepository.GetByUserAndCourseAsync(order.UserId, order.CourseId);
+                if (existingEnrollment == null)
+                {
+                    // Tạo bản ghi Enrollment mới
+                    var enrollmentEntity = new Enrollment
+                    {
+                        UserId = order.UserId,
+                        CourseId = order.CourseId,
+                        Status = "Enrolled", // Dùng giá trị mặc định từ model
+                        EnrolledAt = DateTime.Now,
+                        CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
+                    };
+
+                    await _enrollmentRepository.CreateAsync(enrollmentEntity);
+                    Console.WriteLine($"Enrollment created: UserId={order.UserId}, CourseId={order.CourseId}");
+                }
+                else
+                {
+                    Console.WriteLine($"Enrollment already exists for UserId={order.UserId}, CourseId={order.CourseId}");
+                }
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating order status: {ex.Message}");
-            throw new Exception("Không thể cập nhật trạng thái đơn hàng: " + ex.Message);
+            Console.WriteLine($"Error updating order status or creating enrollment: {ex.Message}");
+            throw new Exception("Không thể cập nhật trạng thái đơn hàng hoặc tạo enrollment: " + ex.Message);
         }
 
         var updatedOrder = await _orderRepository.GetByIdAsync(id);
@@ -159,5 +188,36 @@ public class OrderService
             Status = order.Status,
             CreatedAt = order.CreatedAt
         });
+    }
+
+    public async Task<bool> DeleteOrderAsync(Guid id)
+    {
+        var order = await _orderRepository.GetByIdAsync(id);
+        if (order == null)
+        {
+            Console.WriteLine($"Order not found for deletion: Id={id}");
+            return false;
+        }
+
+        try
+        {
+            // Xóa Enrollment liên quan nếu có
+            var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(order.UserId, order.CourseId);
+            if (enrollment != null)
+            {
+                await _enrollmentRepository.DeleteAsync(enrollment.Id);
+                Console.WriteLine($"Enrollment deleted: UserId={order.UserId}, CourseId={order.CourseId}");
+            }
+
+            // Xóa Order
+            await _orderRepository.DeleteOrderAsync(id);
+            Console.WriteLine($"Order deleted successfully: Id={id}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting order: {ex.Message}");
+            throw new Exception("Không thể xóa đơn hàng: " + ex.Message);
+        }
     }
 }

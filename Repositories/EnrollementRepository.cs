@@ -59,10 +59,10 @@ public class EnrollementRepository : IEnrollementRepository
             .ToListAsync();
     }
 
-    public async Task<Enrollment?> GetByUserAndCourseAsync(Guid userId, string courseId)
+    public async Task<Enrollment?> GetByUserAndCourseAsync(Guid userId, Guid courseId)
     {
         return await _context.Enrollments
-            .Where(e => e.UserId == userId && e.CourseId == Guid.Parse(courseId))
+            .Where(e => e.UserId == userId && e.CourseId == courseId)
             .Include(u => u.User)
             .Include(c => c.Course)
             .FirstOrDefaultAsync();
