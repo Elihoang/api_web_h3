@@ -82,15 +82,7 @@ public class VnpayService
         if (vnpResponseCode == "00") // Thanh toán thành công
         {
             order.Status = "Paid";
-            await _orderRepository.UpdateAsync(new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                CourseId = order.CourseId,
-                Amount = order.Amount,
-                Status = "Paid",
-                CreatedAt = order.CreatedAt
-            });
+            await _orderRepository.UpdateAsync(order);
 
             // Kiểm tra và tạo enrollment nếu chưa tồn tại
             var existingEnrollment = await _enrollementRepository.GetByUserAndCourseAsync(order.UserId, order.CourseId.ToString());
@@ -131,29 +123,13 @@ public class VnpayService
         else if (vnpResponseCode == "24") // Người dùng hủy thanh toán
         {
             order.Status = "Cancelled";
-            await _orderRepository.UpdateAsync(new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                CourseId = order.CourseId,
-                Amount = order.Amount,
-                Status = "Cancelled",
-                CreatedAt = order.CreatedAt
-            });
+            await _orderRepository.UpdateAsync(order);
             redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
         }
         else // Thanh toán thất bại
         {
             order.Status = "Failed";
-            await _orderRepository.UpdateAsync(new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                CourseId = order.CourseId,
-                Amount = order.Amount,
-                Status = "Failed",
-                CreatedAt = order.CreatedAt
-            });
+            await _orderRepository.UpdateAsync(order);
             redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
         }
 

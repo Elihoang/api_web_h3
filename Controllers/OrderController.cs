@@ -2,6 +2,7 @@ using API_WebH3.DTOs.Order;
 using API_WebH3.Services;
 using API_WebH3.Models;
 using Microsoft.AspNetCore.Mvc;
+using API_WebH3.DTOs.Lesson;
 
 namespace API_WebH3.Controllers;
 
@@ -17,7 +18,13 @@ public class OrderController : ControllerBase
     {
         _orderService = orderService;
     }
-    
+    [HttpGet]
+    public async Task<ActionResult<List<OrderDto>>> GetAllAsync()
+    {
+        var lessons = await _orderService.GetAllAsync();
+        return Ok(lessons);
+    }
+
     [HttpPost("create")]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto request)
     {

@@ -13,43 +13,42 @@ public class OrderRepository : IOrderRepository
     {
         _context = context;
     }
-    
-    public async Task<OrderDto> GetByIdAsync(Guid id)
+
+    public async Task<Order> GetByIdAsync(Guid id)
     {
-        var order = await _context.Orders
-            .Where(o => o.Id == id)
-            .Select(o => new OrderDto
-            {
-                Id = o.Id,
-                UserId = o.UserId,
-                CourseId = o.CourseId,
-                Amount = o.Amount,
-                Status = o.Status,
-                CreatedAt = o.CreatedAt
-            })
-            .FirstOrDefaultAsync();
-        return order;
+        return await _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.Course)
+            .SingleOrDefaultAsync(o => o.Id == id);
     }
 
     public async Task<IEnumerable<Order>> GetByUserIdAsync(Guid userId)
     {
         return await _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.Course)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
     }
 
-    public async Task UpdateAsync(OrderDto order)
+    public async Task<List<Order>> GetAllAsync()
+    {
+        return await _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.Course)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task UpdateAsync(Order order)
     {
         var existingOrder = await _context.Orders.SingleOrDefaultAsync(o => o.Id == order.Id);
         if (existingOrder == null)
         {
             throw new KeyNotFoundException($"Order with ID {order.Id} not found.");
         }
-        existingOrder.UserId = order.UserId;
-        existingOrder.CourseId = order.CourseId;
-        existingOrder.Status = order.Status;
-        existingOrder.Amount = order.Amount;
+        existingOrder.Status = order.Status; // Ch? c?p nh?t tr?ng thái
         _context.Orders.Update(existingOrder);
         await _context.SaveChangesAsync();
     }
@@ -58,13 +57,14 @@ public class OrderRepository : IOrderRepository
     {
         var newOrder = new Order
         {
+            Id = order.Id, // S? d?ng Id t? CreateOrderDto
             UserId = order.UserId,
             CourseId = order.CourseId,
+            Amount = order.Amount,
             Status = "Pending",
-            Amount = order.Amount
+            CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
         };
         _context.Orders.Add(newOrder);
         await _context.SaveChangesAsync();
     }
-
 }

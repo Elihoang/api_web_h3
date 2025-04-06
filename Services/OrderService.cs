@@ -16,87 +16,100 @@ public class OrderService
 
     public async Task<OrderDto> CreateOrder(CreateOrderDto order)
     {
-        // Tạo đơn hàng
-        var orders = new CreateOrderDto
+        await _orderRepository.CreateOrderAsync(order);
+        var createdOrder = await _orderRepository.GetByIdAsync(order.Id); // Lấy đơn hàng vừa tạo
+        if (createdOrder == null)
         {
-            UserId = order.UserId,
-            CourseId = order.CourseId,
-            Amount = order.Amount,
-            Status = "Pending"
-        };
-        await _orderRepository.CreateOrderAsync(orders);
-        var orderDto = new OrderDto
+            throw new Exception("Không thể tìm thấy đơn hàng vừa tạo.");
+        }
+        return new OrderDto
         {
-            Id = orders.Id,
-            UserId = orders.UserId,
-            CourseId = orders.CourseId,
-            Amount = orders.Amount,
-            Status = orders.Status,
+            Id = createdOrder.Id,
+            UserId = createdOrder.UserId,
+            UserName = createdOrder.User?.FullName,
+            CourseId = createdOrder.CourseId,
+            CourseName = createdOrder.Course?.Title,
+            Amount = createdOrder.Amount,
+            Status = createdOrder.Status,
+            CreatedAt = createdOrder.CreatedAt
         };
-        return orderDto;
     }
 
     public async Task<OrderDto> GetOrderById(Guid id)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-        
         if (order == null)
         {
             return null;
         }
-        
         return new OrderDto
         {
             Id = order.Id,
             UserId = order.UserId,
+            UserName = order.User?.FullName,
             CourseId = order.CourseId,
+            CourseName = order.Course?.Title,
             Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt
         };
     }
-    
+
     public async Task<IEnumerable<OrderDto>> GetOrdersByUserId(Guid userId)
     {
-        // Bạn cần thêm phương thức này vào IOrderRepository và OrderRepository
         var orders = await _orderRepository.GetByUserIdAsync(userId);
-        
         if (orders == null || !orders.Any())
         {
             return Enumerable.Empty<OrderDto>();
         }
-        
         return orders.Select(order => new OrderDto
         {
             Id = order.Id,
             UserId = order.UserId,
+            UserName = order.User?.FullName,
+            CourseId = order.CourseId,
+            CourseName = order.Course?.Title,
             Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt
         });
     }
-    
+
     public async Task<OrderDto> UpdateOrderStatus(Guid id, string status)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-        
         if (order == null)
         {
             return null;
         }
-        // Cập nhật trạng thái đơn hàng
-
-
         order.Status = status;
         await _orderRepository.UpdateAsync(order);
-        
         return new OrderDto
         {
             Id = order.Id,
             UserId = order.UserId,
+            UserName = order.User?.FullName,
+            CourseId = order.CourseId,
+            CourseName = order.Course?.Title,
             Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt
         };
+    }
+
+    public async Task<IEnumerable<OrderDto>> GetAllAsync()
+    {
+        var orders = await _orderRepository.GetAllAsync();
+        return orders.Select(order => new OrderDto
+        {
+            Id = order.Id,
+            UserId = order.UserId,
+            UserName = order.User?.FullName,
+            CourseId = order.CourseId,
+            CourseName = order.Course?.Title,
+            Amount = order.Amount,
+            Status = order.Status,
+            CreatedAt = order.CreatedAt
+        });
     }
 }
