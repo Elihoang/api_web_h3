@@ -26,14 +26,7 @@ public class OrderController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var order = new Order
-        {
-            UserId = request.UserId,
-            TotalAmount = request.OrderDetails.Sum(d => d.Price),
-            Status = "Pending"
-        };
-
-        var result = await _orderService.CreateOrder(order, request.OrderDetails);
+        var result = await _orderService.CreateOrder(request);
         return CreatedAtAction(nameof(GetOrderById), new { id = result.Id }, result);
     }
 
@@ -74,18 +67,5 @@ public class OrderController : ControllerBase
         }
 
         return Ok(result);
-    }
-    
-    [HttpGet("{id}/details")]
-    public async Task<IActionResult> GetOrderDetails(Guid id)
-    {
-        var details = await _orderService.GetOrderDetailsById(id);
-    
-        if (details == null || !details.Any())
-        {
-            return NotFound($"Không tìm thấy chi tiết đơn hàng với ID: {id}");
-        }
-
-        return Ok(details);
     }
 }

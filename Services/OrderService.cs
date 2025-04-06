@@ -14,53 +14,25 @@ public class OrderService
         _orderRepository = orderRepository;
     }
 
-    public async Task<OrderDto> CreateOrder(Order order, List<OrderDetailsDto> detailsDto = null)
+    public async Task<OrderDto> CreateOrder(CreateOrderDto order)
     {
         // Tạo đơn hàng
-        var orders = new Order
+        var orders = new CreateOrderDto
         {
-            Id = Guid.NewGuid(),
             UserId = order.UserId,
-            TotalAmount = order.TotalAmount,
+            CourseId = order.CourseId,
+            Amount = order.Amount,
             Status = "Pending"
         };
         await _orderRepository.CreateOrderAsync(orders);
-    
         var orderDto = new OrderDto
         {
             Id = orders.Id,
             UserId = orders.UserId,
-            TotalAmount = orders.TotalAmount,
+            CourseId = orders.CourseId,
+            Amount = orders.Amount,
             Status = orders.Status,
-            OrderDetails = new List<OrderDetailsDto>()
         };
-    
-        // Nếu có chi tiết đơn hàng
-        if (detailsDto != null && detailsDto.Any())
-        {
-            foreach (var detail in detailsDto)
-            {
-                var orderDetails = new OrderDetail
-                {
-                    Id = Guid.NewGuid(),
-                    OrderId = orders.Id,
-                    CourseId = detail.CourseId,
-                    Price = detail.Price,
-                };
-                await _orderRepository.CreateOrderDetailsAsync(orderDetails);
-            
-                // Thêm vào DTO để trả về
-                orderDto.OrderDetails.Add(new OrderDetailsDto
-                {
-                    Id = orderDetails.Id,
-                    OrderId = orderDetails.OrderId,
-                    CourseId = orderDetails.CourseId,
-                    Price = orderDetails.Price,
-                    CreatedAt = orderDetails.CreatedAt
-                });
-            }
-        }
-
         return orderDto;
     }
 
@@ -77,7 +49,8 @@ public class OrderService
         {
             Id = order.Id,
             UserId = order.UserId,
-            TotalAmount = order.TotalAmount,
+            CourseId = order.CourseId,
+            Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt
         };
@@ -97,7 +70,7 @@ public class OrderService
         {
             Id = order.Id,
             UserId = order.UserId,
-            TotalAmount = order.TotalAmount,
+            Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt
         });
@@ -111,7 +84,9 @@ public class OrderService
         {
             return null;
         }
-        
+        // Cập nhật trạng thái đơn hàng
+
+
         order.Status = status;
         await _orderRepository.UpdateAsync(order);
         
@@ -119,22 +94,9 @@ public class OrderService
         {
             Id = order.Id,
             UserId = order.UserId,
-            TotalAmount = order.TotalAmount,
+            Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt
         };
-    }
-    public async Task<IEnumerable<OrderDetailsDto>> GetOrderDetailsById(Guid orderId)
-    {
-        var details = await _orderRepository.GetOrderDetailsByOrderIdAsync(orderId);
-    
-        return details.Select(d => new OrderDetailsDto
-        {
-            Id = d.Id,
-            OrderId = d.OrderId,
-            CourseId = d.CourseId,
-            Price = d.Price,
-            CreatedAt = d.CreatedAt
-        });
     }
 }

@@ -5,11 +5,8 @@ namespace API_WebH3.Repositories;
 
 public interface IOrderRepository
 {
-    Task<Order> GetByIdAsync(Guid id);
+    Task<OrderDto> GetByIdAsync(Guid id);
     Task<IEnumerable<Order>> GetByUserIdAsync(Guid userId);
-    Task UpdateAsync(Order order);
-    Task CreateOrderAsync(Order order);
-    
-    Task CreateOrderDetailsAsync(OrderDetail orderDetails);
-    Task<List<OrderDetailsDto>> GetOrderDetailsByOrderIdAsync(Guid orderId);
+    Task UpdateAsync(OrderDto order);
+    Task CreateOrderAsync(CreateOrderDto order);
 }

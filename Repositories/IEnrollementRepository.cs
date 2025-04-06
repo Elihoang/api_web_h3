@@ -11,4 +11,5 @@ public interface IEnrollementRepository
     Task<bool> DeleteAsync(int id);
     Task<List<Enrollment>> GetByUserIdAsync(Guid userId);
     Task<Enrollment?> GetByUserAndCourseAsync(Guid userId, string courseId);
+    Task<List<Enrollment>> GetByCourseIdAsync(Guid courseId);
 }
