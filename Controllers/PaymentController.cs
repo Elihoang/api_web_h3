@@ -38,7 +38,6 @@ public class PaymentController : ControllerBase
         {
             Console.WriteLine($"Received order data: UserId={orderDto.UserId}, CourseId={orderDto.CourseId}, Amount={orderDto.Amount}");
 
-            // Giữ CreatedAt từ frontend nếu có, nếu không thì tạo mới
             if (string.IsNullOrEmpty(orderDto.CreatedAt))
             {
                 orderDto.CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
@@ -59,6 +58,7 @@ public class PaymentController : ControllerBase
                 CourseId = orderDto.CourseId,
                 Amount = orderDto.Amount,
                 Status = orderDto.Status,
+
             });
 
             if (createdOrder == null)
