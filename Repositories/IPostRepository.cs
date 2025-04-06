@@ -9,6 +9,7 @@ namespace API_WebH3.Repositories
         Task AddPostAsync(Post post);
         Task UpdatePostAsync(Post post);
         Task DeletePostAsync(Guid id);
+        Task<IEnumerable<Post>> SearchPostsAsync(string keyword, int page, int pageSize);
 
 
     }
