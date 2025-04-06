@@ -31,11 +31,7 @@ public class ProgressService
     public async Task<ProgressDto?> GetByIdAsync(Guid id)
     {
         var progress = await _progressRepository.GetByIdAsync(id);
-        if (progress == null)
-        {
-            return null;
-        }
-
+        if (progress == null) return null;
         return new ProgressDto
         {
             Id = progress.Id,
@@ -56,7 +52,8 @@ public class ProgressService
             LessonId = createProgressDto.LessonId,
             Status = createProgressDto.Status,
             CompletionPercentage = createProgressDto.CompletionPercentage,
-            Notes = createProgressDto.Notes
+            Notes = createProgressDto.Notes,
+            LastUpdate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
         };
 
         var createdProgress = await _progressRepository.CreateAsync(progress);
@@ -75,26 +72,15 @@ public class ProgressService
     public async Task<ProgressDto?> UpdateAsync(Guid id, UpdateProgressDto updateProgressDto)
     {
         var existingProgress = await _progressRepository.GetByIdAsync(id);
-        if (existingProgress == null)
-        {
-            return null;
-        }
+        if (existingProgress == null) return null;
 
-        if (updateProgressDto.Status != null)
-            existingProgress.Status = updateProgressDto.Status;
-        if (updateProgressDto.CompletionPercentage.HasValue)
-            existingProgress.CompletionPercentage = updateProgressDto.CompletionPercentage.Value;
-        if (updateProgressDto.Notes != null)
-            existingProgress.Notes = updateProgressDto.Notes;
-
+        if (updateProgressDto.Status != null) existingProgress.Status = updateProgressDto.Status;
+        if (updateProgressDto.CompletionPercentage.HasValue) existingProgress.CompletionPercentage = updateProgressDto.CompletionPercentage.Value;
+        if (updateProgressDto.Notes != null) existingProgress.Notes = updateProgressDto.Notes;
         existingProgress.LastUpdate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 
         var updatedProgress = await _progressRepository.UpdateAsync(existingProgress);
-        if (updatedProgress == null)
-        {
-            return null;
-        }
-
+        if (updatedProgress == null) return null;
         return new ProgressDto
         {
             Id = updatedProgress.Id,
@@ -145,11 +131,7 @@ public class ProgressService
     public async Task<ProgressDto?> GetByUserAndLessonAsync(Guid userId, Guid lessonId)
     {
         var progress = await _progressRepository.GetByUserAndLessonAsync(userId, lessonId);
-        if (progress == null)
-        {
-            return null;
-        }
-
+        if (progress == null) return null;
         return new ProgressDto
         {
             Id = progress.Id,
