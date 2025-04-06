@@ -1,9 +1,8 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using API_WebH3.DTOs.Enrollment;
 using API_WebH3.DTOs.Order;
-using API_WebH3.Repositories;
-using API_WebH3.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_WebH3.Services;
@@ -11,35 +10,44 @@ namespace API_WebH3.Services;
 public class VnpayService
 {
     private readonly IConfiguration _configuration;
-    private readonly IOrderRepository _orderRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly EmailPaymentService _emailPaymentService;
-    private readonly IEnrollementRepository _enrollementRepository;
+    private readonly OrderService _orderService;
+    private readonly EnrollementService _enrollementService;
     private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
     private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
 
     public VnpayService(
         IConfiguration configuration,
-        IOrderRepository orderRepository,
-        IUserRepository userRepository,
-        EmailPaymentService emailPaymentService,
-        IEnrollementRepository enrollementRepository)
+        OrderService orderService,
+        EnrollementService enrollementService)
     {
         _configuration = configuration;
-        _orderRepository = orderRepository;
-        _userRepository = userRepository;
-        _emailPaymentService = emailPaymentService;
-        _enrollementRepository = enrollementRepository;
+        _orderService = orderService;
+        _enrollementService = enrollementService;
+        ValidateConfiguration();
+    }
+
+    private void ValidateConfiguration()
+    {
+        if (string.IsNullOrEmpty(_configuration["Vnpay:TmnCode"])) throw new ArgumentException("Vnpay:TmnCode is not configured.");
+        if (string.IsNullOrEmpty(_configuration["Vnpay:HashSecret"])) throw new ArgumentException("Vnpay:HashSecret is not configured.");
+        if (string.IsNullOrEmpty(_configuration["Vnpay:BaseUrl"])) throw new ArgumentException("Vnpay:BaseUrl is not configured.");
+        if (string.IsNullOrEmpty(_configuration["Vnpay:PaymentBackReturnUrl"])) throw new ArgumentException("Vnpay:PaymentBackReturnUrl is not configured.");
+        if (string.IsNullOrEmpty(_configuration["Frontend:BaseUrl"])) throw new ArgumentException("Frontend:BaseUrl is not configured.");
+        Console.WriteLine("VnPay and Frontend configuration validated successfully.");
     }
 
     public string CreatePaymentUrl(OrderDto orderDto, HttpContext context)
     {
-        if (orderDto.Amount <= 0 || orderDto.Id == Guid.Empty)
-            throw new ArgumentException("Invalid order data for payment.");
+        if (orderDto.Amount < 0 || orderDto.Id == Guid.Empty || orderDto.UserId == Guid.Empty || orderDto.CourseId == Guid.Empty)
+        {
+            Console.WriteLine($"Invalid order data: Amount={orderDto.Amount}, Id={orderDto.Id}, UserId={orderDto.UserId}, CourseId={orderDto.CourseId}");
+            throw new ArgumentException("Dữ liệu đơn hàng không hợp lệ: Amount, Id, UserId hoặc CourseId không đúng.");
+        }
 
         var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById(_configuration["TimeZoneId"] ?? "SE Asia Standard Time");
         var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneById);
 
+        _requestData.Clear();
         _requestData.Add("vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0");
         _requestData.Add("vnp_Command", _configuration["Vnpay:Command"] ?? "pay");
         _requestData.Add("vnp_TmnCode", _configuration["Vnpay:TmnCode"]);
@@ -53,11 +61,18 @@ public class VnpayService
         _requestData.Add("vnp_ReturnUrl", _configuration["Vnpay:PaymentBackReturnUrl"]);
         _requestData.Add("vnp_TxnRef", orderDto.Id.ToString());
 
+        Console.WriteLine("Request data for payment URL:");
+        foreach (var (key, value) in _requestData)
+        {
+            Console.WriteLine($"{key}: {value}");
+        }
+
         return CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
     }
 
     public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collections)
     {
+        _responseData.Clear();
         foreach (var (key, value) in collections)
         {
             if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
@@ -66,71 +81,79 @@ public class VnpayService
             }
         }
 
-        var orderId = Guid.Parse(GetResponseData("vnp_TxnRef"));
+        if (!_responseData.ContainsKey("vnp_TxnRef"))
+        {
+            Console.WriteLine("Missing vnp_TxnRef in response data.");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingOrderId");
+        }
+
+        Console.WriteLine($"Received vnp_TxnRef: {GetResponseData("vnp_TxnRef")}");
+        if (!Guid.TryParse(GetResponseData("vnp_TxnRef"), out var orderId))
+        {
+            Console.WriteLine($"Invalid vnp_TxnRef format: {GetResponseData("vnp_TxnRef")}");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidOrderId");
+        }
+
         var vnpResponseCode = GetResponseData("vnp_ResponseCode");
         var vnpSecureHash = collections["vnp_SecureHash"];
         var orderInfo = GetResponseData("vnp_OrderInfo");
-        var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
 
-        var order = await _orderRepository.GetByIdAsync(orderId);
-        if (order == null || !checkSignature)
+        if (string.IsNullOrEmpty(vnpSecureHash))
         {
-            return new RedirectResult("/payment-failure");
+            Console.WriteLine("Missing vnp_SecureHash in response data.");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingSignature");
+        }
+
+        var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
+        Console.WriteLine($"Signature validation: {checkSignature}");
+
+        var order = await _orderService.GetOrderById(orderId);
+        if (order == null)
+        {
+            Console.WriteLine($"Order not found: Id={orderId}");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=OrderNotFound");
+        }
+
+        if (!checkSignature)
+        {
+            Console.WriteLine($"Invalid signature for order: Id={orderId}");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidSignature");
         }
 
         string redirectUrl;
-        if (vnpResponseCode == "00") // Thanh toán thành công
+        switch (vnpResponseCode)
         {
-            order.Status = "Paid";
-            await _orderRepository.UpdateAsync(order);
+            case "00":
+                Console.WriteLine($"Payment successful for order: Id={orderId}");
+                await _orderService.UpdateOrderStatus(orderId, "Paid");
 
-            // Kiểm tra và tạo enrollment nếu chưa tồn tại
-            var existingEnrollment = await _enrollementRepository.GetByUserAndCourseAsync(order.UserId, order.CourseId.ToString());
-            if (existingEnrollment == null)
-            {
-                var enrollment = new Enrollment
+                var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(order.UserId, order.CourseId.ToString());
+                if (existingEnrollment == null)
                 {
-                    UserId = order.UserId,
-                    CourseId = order.CourseId,
-                    EnrolledAt = DateTime.UtcNow,
-                    Status = "Active"
-                };
-                await _enrollementRepository.CreateAsync(enrollment);
-            }
+                    Console.WriteLine($"Creating enrollment for UserId={order.UserId}, CourseId={order.CourseId}");
+                    await _enrollementService.CreateAsync(new CreateEnrollmentDto
+                    {
+                        UserId = order.UserId,
+                        CourseId = order.CourseId,
+                        Status = "Active"
+                    });
+                }
 
-            // Gửi email thông báo
-            var user = await _userRepository.GetByIdAsync(order.UserId);
-            if (user != null && !string.IsNullOrEmpty(user.Email))
-            {
-                var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
-                var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
-                            <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
-                            <p><strong>Thông tin đơn hàng:</strong></p>
-                            <ul>
-                                <li>Mã đơn hàng: {order.Id}</li>
-                                <li>Tổng tiền: {order.Amount:N0} VND</li>
-                                <li>Thời gian: {order.CreatedAt}</li>
-                            </ul>
-                            <p>Trân trọng,<br>H3 xin cảm ơn</p>";
-                await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
-            }
-
-            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{order.Id}" +
-                         $"?vnp_Amount={(int)(order.Amount * 100)}" +
-                         $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
-                         $"&vnp_ResponseCode={vnpResponseCode}";
-        }
-        else if (vnpResponseCode == "24") // Người dùng hủy thanh toán
-        {
-            order.Status = "Cancelled";
-            await _orderRepository.UpdateAsync(order);
-            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
-        }
-        else // Thanh toán thất bại
-        {
-            order.Status = "Failed";
-            await _orderRepository.UpdateAsync(order);
-            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
+                redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
+                             $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
+                             $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
+                             $"&vnp_ResponseCode={vnpResponseCode}";
+                break;
+            case "24":
+                Console.WriteLine($"Payment cancelled for order: Id={orderId}");
+                await _orderService.UpdateOrderStatus(orderId, "Cancelled");
+                redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=cancelled";
+                break;
+            default:
+                Console.WriteLine($"Payment failed for order: Id={orderId}, ResponseCode={vnpResponseCode}");
+                await _orderService.UpdateOrderStatus(orderId, "Failed");
+                redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=failed&vnp_ResponseCode={vnpResponseCode}";
+                break;
         }
 
         Console.WriteLine("Redirect URL: " + redirectUrl);
@@ -139,7 +162,9 @@ public class VnpayService
 
     private string GetIpAddress(HttpContext context)
     {
-        return context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        Console.WriteLine($"Client IP: {ip}");
+        return ip;
     }
 
     private string CreateRequestUrl(string baseUrl, string vnpHashSecret)
@@ -153,13 +178,16 @@ public class VnpayService
         var querystring = data.ToString().TrimEnd('&');
         var signData = querystring;
         var vnpSecureHash = HmacSha512(vnpHashSecret, signData);
+        Console.WriteLine($"Generated vnp_SecureHash: {vnpSecureHash}");
         return baseUrl + "?" + querystring + "&vnp_SecureHash=" + vnpSecureHash;
     }
 
     private bool ValidateSignature(string inputHash, string secretKey)
     {
         var rspRaw = GetResponseData();
+        Console.WriteLine($"Data for signature validation: {rspRaw}");
         var myChecksum = HmacSha512(secretKey, rspRaw);
+        Console.WriteLine($"Calculated checksum: {myChecksum}, Input hash: {inputHash}");
         return myChecksum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
     }
 
