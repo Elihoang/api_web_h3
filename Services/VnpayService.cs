@@ -127,7 +127,7 @@ public class VnpayService
                 Console.WriteLine($"Payment successful for order: Id={orderId}");
                 await _orderService.UpdateOrderStatus(orderId, "Paid");
 
-                var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(order.UserId, order.CourseId.ToString());
+                var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(order.UserId, order.CourseId);
                 if (existingEnrollment == null)
                 {
                     Console.WriteLine($"Creating enrollment for UserId={order.UserId}, CourseId={order.CourseId}");

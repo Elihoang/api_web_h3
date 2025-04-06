@@ -17,10 +17,26 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllAsync()
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllAsync([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
     {
         var orders = await _orderService.GetAllAsync();
-        return Ok(orders);
+        var totalItems = orders.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var pagedProducts = orders
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var result = new
+        {
+            Data = pagedProducts,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
     }
 
     [HttpPost("create")]
@@ -55,7 +71,7 @@ public class OrderController : ControllerBase
         return Ok(order);
     }
 
-    [HttpGet("ユーザー/{userId}")]
+    [HttpGet("{userId}")]
     public async Task<IActionResult> GetOrdersByUserId(Guid userId)
     {
         var orders = await _orderService.GetOrdersByUserId(userId);
@@ -84,5 +100,15 @@ public class OrderController : ControllerBase
         {
             return StatusCode(500, $"Lỗi khi cập nhật trạng thái đơn hàng: {ex.Message}");
         }
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteOrder(Guid id)
+    {
+        var order = await _orderService.GetOrderById(id);
+        if (order == null)
+            return NotFound(new { message = "Không tìm thấy khóa học!" });
+
+        await _orderService.DeleteOrderAsync(id);
+        return Ok(new { message = "Xóa khóa học thành công!" });
     }
 }

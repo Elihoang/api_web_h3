@@ -107,7 +107,7 @@ public class EnrollementService
         }).ToList();
     }
 
-    public async Task<EnrollmentDto> GetByUserAndCourseAsync(Guid userId, string courseId)
+    public async Task<EnrollmentDto> GetByUserAndCourseAsync(Guid userId, Guid courseId)
     {
         var enrollment = await _enrollementRepository.GetByUserAndCourseAsync(userId, courseId);
         if (enrollment == null)

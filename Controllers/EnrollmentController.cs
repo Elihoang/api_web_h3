@@ -44,7 +44,7 @@ public class EnrollmentController : ControllerBase
     public async Task<ActionResult<EnrollmentDto>> CreateAsync(CreateEnrollmentDto createEnrollmentDto)
     {
         // Kiểm tra xem người dùng đã đăng ký khóa học này chưa
-        var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(createEnrollmentDto.UserId, createEnrollmentDto.CourseId.ToString());
+        var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(createEnrollmentDto.UserId, createEnrollmentDto.CourseId);
         if (existingEnrollment != null)
         {
             return BadRequest("Bạn đã đăng ký khóa học này rồi");
