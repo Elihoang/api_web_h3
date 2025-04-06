@@ -4,9 +4,10 @@ public class OrderDto
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
-    public decimal TotalAmount { get; set; }
+    public Guid CourseId { get; set; }
+    public decimal Amount { get; set; }
     public string Status { get; set; }
     public string CreatedAt { get; set; }
     
-    public List<OrderDetailsDto>? OrderDetails { get; set; }
+  
 }

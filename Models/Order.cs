@@ -10,16 +10,19 @@ public class Order
     
     [ForeignKey("User")]
     public Guid UserId { get; set; }
-    
+
+    [ForeignKey("Course")]
+    public Guid CourseId { get; set; }
+
     [Required]
     [Column(TypeName = "decimal(10, 2)")]
-    public Decimal TotalAmount { get; set; }
-    
+    public Decimal Amount { get; set; }
     
     public string Status { get; set; } = "Pending";
-    
+   
     public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     
     public virtual User User { get; set; }
-    
+    public virtual Course Course { get; set; }
+
 }

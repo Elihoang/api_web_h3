@@ -37,7 +37,6 @@
   <ItemGroup>
     <Folder Include="Configurations\" />
     <Folder Include="Helpers\" />
-    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,3 @@
-
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -35,142 +34,132 @@ public class VnpayService
 
     public string CreatePaymentUrl(OrderDto orderDto, HttpContext context)
     {
-        var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById(_configuration["TimeZoneId"]);
+        if (orderDto.Amount <= 0 || orderDto.Id == Guid.Empty)
+            throw new ArgumentException("Invalid order data for payment.");
+
+        var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById(_configuration["TimeZoneId"] ?? "SE Asia Standard Time");
         var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneById);
 
-        _requestData.Add("vnp_Version", _configuration["Vnpay:Version"]);
-        _requestData.Add("vnp_Command", _configuration["Vnpay:Command"]);
+        _requestData.Add("vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0");
+        _requestData.Add("vnp_Command", _configuration["Vnpay:Command"] ?? "pay");
         _requestData.Add("vnp_TmnCode", _configuration["Vnpay:TmnCode"]);
-        _requestData.Add("vnp_Amount", ((int)(orderDto.TotalAmount * 100)).ToString());
+        _requestData.Add("vnp_Amount", ((int)(orderDto.Amount * 100)).ToString());
         _requestData.Add("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
-        _requestData.Add("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
+        _requestData.Add("vnp_CurrCode", _configuration["Vnpay:CurrCode"] ?? "VND");
         _requestData.Add("vnp_IpAddr", GetIpAddress(context));
-        _requestData.Add("vnp_Locale", _configuration["Vnpay:Locale"]);
+        _requestData.Add("vnp_Locale", _configuration["Vnpay:Locale"] ?? "vn");
         _requestData.Add("vnp_OrderInfo", $"Thanh toán đơn hàng #{orderDto.Id}");
         _requestData.Add("vnp_OrderType", "billpayment");
         _requestData.Add("vnp_ReturnUrl", _configuration["Vnpay:PaymentBackReturnUrl"]);
         _requestData.Add("vnp_TxnRef", orderDto.Id.ToString());
 
-        var paymentUrl = CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
-        return paymentUrl;
+        return CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
     }
 
-public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collections)
-{
-    foreach (var (key, value) in collections)
+    public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collections)
     {
-        if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+        foreach (var (key, value) in collections)
         {
-            _responseData.Add(key, value);
+            if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+            {
+                _responseData.Add(key, value);
+            }
         }
-    }
 
-    var orderId = Guid.Parse(GetResponseData("vnp_TxnRef"));
-    var vnpResponseCode = GetResponseData("vnp_ResponseCode");
-    var vnpSecureHash = collections["vnp_SecureHash"];
-    var orderInfo = GetResponseData("vnp_OrderInfo");
-    var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
+        var orderId = Guid.Parse(GetResponseData("vnp_TxnRef"));
+        var vnpResponseCode = GetResponseData("vnp_ResponseCode");
+        var vnpSecureHash = collections["vnp_SecureHash"];
+        var orderInfo = GetResponseData("vnp_OrderInfo");
+        var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
 
-    var order = await _orderRepository.GetByIdAsync(orderId);
-    if (order == null || !checkSignature)
-    {
-        return new RedirectResult("/payment-failure");
-    }
-
-    var orderDetails = await _orderRepository.GetOrderDetailsByOrderIdAsync(orderId);
-    var orderDto = new OrderDto
-    {
-        Id = order.Id,
-        UserId = order.UserId,
-        TotalAmount = order.TotalAmount,
-        Status = order.Status,
-        CreatedAt = order.CreatedAt,
-        OrderDetails = orderDetails // Gán danh sách OrderDetailsDto
-    };
-
-    string redirectUrl;
-    if (vnpResponseCode == "00")
-    {
-        order.Status = "Paid";
-        await _orderRepository.UpdateAsync(order);
-        orderDto.Status = "Paid";
-
-        // Tự động ghi danh người dùng vào khóa học
-        if (orderDto.OrderDetails != null && orderDto.OrderDetails.Any())
+        var order = await _orderRepository.GetByIdAsync(orderId);
+        if (order == null || !checkSignature)
         {
-            foreach (var detail in orderDto.OrderDetails)
+            return new RedirectResult("/payment-failure");
+        }
+
+        string redirectUrl;
+        if (vnpResponseCode == "00") // Thanh toán thành công
+        {
+            order.Status = "Paid";
+            await _orderRepository.UpdateAsync(new OrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                CourseId = order.CourseId,
+                Amount = order.Amount,
+                Status = "Paid",
+                CreatedAt = order.CreatedAt
+            });
+
+            // Kiểm tra và tạo enrollment nếu chưa tồn tại
+            var existingEnrollment = await _enrollementRepository.GetByUserAndCourseAsync(order.UserId, order.CourseId.ToString());
+            if (existingEnrollment == null)
             {
                 var enrollment = new Enrollment
                 {
                     UserId = order.UserId,
-                    CourseId = detail.CourseId,
+                    CourseId = order.CourseId,
                     EnrolledAt = DateTime.UtcNow,
                     Status = "Active"
                 };
-                try
-                {
-                    await _enrollementRepository.CreateAsync(enrollment);
-                    Console.WriteLine($"Enrollment created: UserId={order.UserId}, CourseId={detail.CourseId}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to create enrollment: {ex.Message}");
-                }
+                await _enrollementRepository.CreateAsync(enrollment);
             }
-        }
-        else
-        {
-            Console.WriteLine("OrderDetails is null or empty. No enrollments created.");
-        }
 
-        // Gửi email thông báo
-        var user = await _userRepository.GetByIdAsync(order.UserId);
-        if (user != null && !string.IsNullOrEmpty(user.Email))
-        {
-            var subject = "Thanh toán thành công - Đơn hàng #" + order.Id;
-            var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
-                        <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
-                        <p><strong>Thông tin đơn hàng:</strong></p>
-                        <ul>
-                            <li>Mã đơn hàng: {order.Id}</li>
-                            <li>Tổng tiền: {order.TotalAmount:N0} VND</li>
-                            <li>Thời gian: {order.CreatedAt}</li>
-                        </ul>
-                        <p>Trân trọng,<br>H3 xin cảm ơn</p>";
-
-            try
+            // Gửi email thông báo
+            var user = await _userRepository.GetByIdAsync(order.UserId);
+            if (user != null && !string.IsNullOrEmpty(user.Email))
             {
+                var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
+                var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
+                            <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
+                            <p><strong>Thông tin đơn hàng:</strong></p>
+                            <ul>
+                                <li>Mã đơn hàng: {order.Id}</li>
+                                <li>Tổng tiền: {order.Amount:N0} VND</li>
+                                <li>Thời gian: {order.CreatedAt}</li>
+                            </ul>
+                            <p>Trân trọng,<br>H3 xin cảm ơn</p>";
                 await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
             }
-            catch (Exception ex)
+
+            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{order.Id}" +
+                         $"?vnp_Amount={(int)(order.Amount * 100)}" +
+                         $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
+                         $"&vnp_ResponseCode={vnpResponseCode}";
+        }
+        else if (vnpResponseCode == "24") // Người dùng hủy thanh toán
+        {
+            order.Status = "Cancelled";
+            await _orderRepository.UpdateAsync(new OrderDto
             {
-                Console.WriteLine($"Failed to send email to {user.Email}: {ex.Message}");
-            }
+                Id = order.Id,
+                UserId = order.UserId,
+                CourseId = order.CourseId,
+                Amount = order.Amount,
+                Status = "Cancelled",
+                CreatedAt = order.CreatedAt
+            });
+            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
+        }
+        else // Thanh toán thất bại
+        {
+            order.Status = "Failed";
+            await _orderRepository.UpdateAsync(new OrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                CourseId = order.CourseId,
+                Amount = order.Amount,
+                Status = "Failed",
+                CreatedAt = order.CreatedAt
+            });
+            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
         }
 
-        redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{order.Id}" +
-                     $"?vnp_Amount={(int)(order.TotalAmount * 100)}" +
-                     $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
-                     $"&vnp_ResponseCode={vnpResponseCode}";
+        Console.WriteLine("Redirect URL: " + redirectUrl);
+        return new RedirectResult(redirectUrl);
     }
-    else if (vnpResponseCode == "24")
-    {
-        order.Status = "Cancelled";
-        await _orderRepository.UpdateAsync(order);
-        orderDto.Status = "Cancelled";
-        redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
-    }
-    else
-    {
-        order.Status = "Failed";
-        await _orderRepository.UpdateAsync(order);
-        orderDto.Status = "Failed";
-        redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure";
-    }
-
-    Console.WriteLine("Redirect URL: " + redirectUrl);
-    return new RedirectResult(redirectUrl);
-}
 
     private string GetIpAddress(HttpContext context)
     {

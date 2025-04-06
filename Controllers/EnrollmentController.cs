@@ -15,7 +15,12 @@ public class EnrollmentController : ControllerBase
     {
         _enrollementService = enrollementService;
     }
-
+    [HttpGet("course/{courseId}")]
+    public async Task<ActionResult<List<EnrollmentDto>>> GetByCourseIdAsync(Guid courseId)
+    {
+        var enrollments = await _enrollementService.GetByCourseIdAsync(courseId);
+        return Ok(enrollments);
+    }
     [HttpGet]
     public async Task<ActionResult<List<EnrollmentDto>>> GetAllAsync()
     {
@@ -79,4 +84,6 @@ public class EnrollmentController : ControllerBase
         var enrollments = await _enrollementService.GetByUserIdAsync(userId);
         return Ok(enrollments);
     }
+
+   
 }

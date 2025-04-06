@@ -14,9 +14,21 @@ public class OrderRepository : IOrderRepository
         _context = context;
     }
     
-    public async Task<Order> GetByIdAsync(Guid id)
+    public async Task<OrderDto> GetByIdAsync(Guid id)
     {
-        return await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
+        var order = await _context.Orders
+            .Where(o => o.Id == id)
+            .Select(o => new OrderDto
+            {
+                Id = o.Id,
+                UserId = o.UserId,
+                CourseId = o.CourseId,
+                Amount = o.Amount,
+                Status = o.Status,
+                CreatedAt = o.CreatedAt
+            })
+            .FirstOrDefaultAsync();
+        return order;
     }
 
     public async Task<IEnumerable<Order>> GetByUserIdAsync(Guid userId)
@@ -27,32 +39,32 @@ public class OrderRepository : IOrderRepository
             .ToListAsync();
     }
 
-    public async Task UpdateAsync(Order order)
+    public async Task UpdateAsync(OrderDto order)
     {
-        _context.Orders.Update(order);
+        var existingOrder = await _context.Orders.SingleOrDefaultAsync(o => o.Id == order.Id);
+        if (existingOrder == null)
+        {
+            throw new KeyNotFoundException($"Order with ID {order.Id} not found.");
+        }
+        existingOrder.UserId = order.UserId;
+        existingOrder.CourseId = order.CourseId;
+        existingOrder.Status = order.Status;
+        existingOrder.Amount = order.Amount;
+        _context.Orders.Update(existingOrder);
         await _context.SaveChangesAsync();
     }
 
-    public async Task CreateOrderAsync(Order order)
+    public async Task CreateOrderAsync(CreateOrderDto order)
     {
-        _context.Orders.Add(order);
+        var newOrder = new Order
+        {
+            UserId = order.UserId,
+            CourseId = order.CourseId,
+            Status = "Pending",
+            Amount = order.Amount
+        };
+        _context.Orders.Add(newOrder);
         await _context.SaveChangesAsync();
     }
 
-    public async Task CreateOrderDetailsAsync(OrderDetail orderDetails)
-    {
-        _context.OrderDetails.Add(orderDetails);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task<List<OrderDetailsDto>> GetOrderDetailsByOrderIdAsync(Guid orderId)
-    {
-        var details = await _context.OrderDetails
-            .Where(od => od.OrderId == orderId)
-            .Select(od=> new OrderDetailsDto
-            {
-                CourseId = od.CourseId,
-            }).ToListAsync();
-        return details;
-    }
 }

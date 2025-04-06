@@ -14,9 +14,8 @@ public class AppDbContext:DbContext
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Order>  Orders { get; set; }
-    public DbSet<OrderDetail> OrderDetails { get; set; }
     public DbSet<Post>  Posts { get; set; }
     public DbSet<Progress>  Progresses { get; set; }
     public DbSet<Review> Reviews { get; set; }
-    public DbSet<Payment> Payments { get; set; }
+
 }
