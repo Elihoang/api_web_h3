@@ -19,6 +19,8 @@ public class Enrollment
 
     public string Status { get; set; } = "Enrolled"; // Enrolled, Completed, Failed
 
+    public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
+
     public virtual User User { get; set; }
     
     public virtual Course Course { get; set; }

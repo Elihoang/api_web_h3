@@ -11,4 +11,5 @@ public class ProgressDto
     public int CompletionPercentage { get; set; }
     public string? Notes { get; set; }
     public string LastUpdate { get; set; }
+    public string CreatedAt { get; set; }
 }

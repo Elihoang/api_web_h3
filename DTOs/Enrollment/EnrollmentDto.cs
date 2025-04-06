@@ -7,4 +7,5 @@ public class EnrollmentDto
     public Guid CourseId { get; set; }
     public DateTime EnrolledAt { get; set; }
     public string Status { get; set; }
+    public string CreatedAt { get; set; }
 }

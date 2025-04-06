@@ -30,8 +30,7 @@ public class OrderController : ControllerBase
         {
             UserId = request.UserId,
             TotalAmount = request.OrderDetails.Sum(d => d.Price),
-            Status = "Pending",
-            CreatedAt = DateTime.UtcNow
+            Status = "Pending"
         };
 
         var result = await _orderService.CreateOrder(order, request.OrderDetails);
