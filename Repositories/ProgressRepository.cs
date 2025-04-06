@@ -31,6 +31,7 @@ public class ProgressRepository : IProgressRepository
 
     public async Task<Progress> CreateAsync(Progress progress)
     {
+        progress.Id = Guid.NewGuid(); // Thêm ID mới
         _context.Progresses.Add(progress);
         await _context.SaveChangesAsync();
         return progress;
@@ -39,10 +40,7 @@ public class ProgressRepository : IProgressRepository
     public async Task<Progress?> UpdateAsync(Progress progress)
     {
         var existingProgress = await _context.Progresses.FindAsync(progress.Id);
-        if (existingProgress == null)
-        {
-            return null;
-        }
+        if (existingProgress == null) return null;
 
         _context.Entry(existingProgress).CurrentValues.SetValues(progress);
         await _context.SaveChangesAsync();
@@ -52,10 +50,7 @@ public class ProgressRepository : IProgressRepository
     public async Task<bool> DeleteAsync(Guid id)
     {
         var progress = await _context.Progresses.FindAsync(id);
-        if (progress == null)
-        {
-            return false;
-        }
+        if (progress == null) return false;
 
         _context.Progresses.Remove(progress);
         await _context.SaveChangesAsync();
@@ -99,11 +94,5 @@ public class ProgressRepository : IProgressRepository
             .Include(p => p.Lesson)
             .OrderBy(p => p.Lesson.OrderNumber)
             .ToListAsync();
-    }
-
-    public async Task<bool> ExistsByUserIdAndLessonIdAsync(Guid userId, Guid lessonId)
-    {
-        return await _context.Progresses
-            .AnyAsync(p => p.UserId == userId && p.LessonId == lessonId);
     }
 }

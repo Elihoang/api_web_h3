@@ -59,7 +59,7 @@ namespace API_WebH3.Services
                 Content = postDto.Content,
                 UserId = postDto.UserId,
                 Tags = postDto.Tags,
-                UrlImage = postDto.UrlImage
+                UrlImage = postDto.UrlImage,
             };
 
             await _postRepository.AddPostAsync(post);
