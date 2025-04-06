@@ -4,6 +4,8 @@ using MailKit.Net.Smtp;
 using MimeKit;
 using Microsoft.Extensions.Configuration;
 
+namespace API_WebH3.Services;
+
 public class EmailPaymentService
 {
     private readonly IConfiguration _configuration;
@@ -19,23 +21,30 @@ public class EmailPaymentService
         {
             Console.WriteLine($"🔹 Bắt đầu gửi email đến: {toEmail}");
 
+            // Log cấu hình SMTP để kiểm tra
+            var smtpServer = _configuration["SmtpSettings:Server"];
+            var smtpPort = int.Parse(_configuration["SmtpSettings:Port"]);
+            var smtpUser = _configuration["SmtpSettings:Username"];
+            var smtpPass = _configuration["SmtpSettings:Password"];
+            var senderName = _configuration["SmtpSettings:SenderName"];
+            var senderEmail = _configuration["SmtpSettings:SenderEmail"];
+
+            Console.WriteLine($"🔹 Cấu hình SMTP: Server={smtpServer}, Port={smtpPort}, Username={smtpUser}, SenderName={senderName}, SenderEmail={senderEmail}");
+
             // Tạo MimeMessage
             var email = new MimeMessage();
-            email.From.Add(new MailboxAddress(
-                _configuration["SmtpSettings:SenderName"], 
-                _configuration["SmtpSettings:SenderEmail"]
-            ));
+            email.From.Add(new MailboxAddress(senderName, senderEmail));
             email.To.Add(MailboxAddress.Parse(toEmail));
             email.Subject = subject;
 
             var bodyBuilder = new BodyBuilder { HtmlBody = body };
             email.Body = bodyBuilder.ToMessageBody();
 
-            // Lấy thông tin SMTP từ cấu hình
-            var smtpServer = _configuration["SmtpSettings:Server"];
-            var smtpPort = int.Parse(_configuration["SmtpSettings:Port"]);
-            var smtpUser = _configuration["SmtpSettings:Username"];
-            var smtpPass = _configuration["SmtpSettings:Password"];
+            // Kiểm tra cấu hình
+            if (string.IsNullOrEmpty(smtpServer) || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+            {
+                throw new InvalidOperationException("Cấu hình SMTP không đầy đủ. Vui lòng kiểm tra SmtpSettings.");
+            }
 
             // Kết nối SMTP
             using var smtp = new SmtpClient();
@@ -51,6 +60,7 @@ public class EmailPaymentService
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Lỗi khi gửi email đến {toEmail}: {ex.Message}");
+            throw;
         }
     }
 }
