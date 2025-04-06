@@ -1,4 +1,5 @@
 using API_WebH3.Data;
+using API_WebH3.DTOs.Comment;
 using API_WebH3.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,6 @@ public class CommentRepository: ICommentRepository
             .Include(c => c.User)
             .Include(c => c.Post)
             .ToListAsync();
-
     }
 
     public async Task<Comment> GetCommentByIdAsync(int id)
@@ -38,7 +38,11 @@ public class CommentRepository: ICommentRepository
 
     public async Task<IEnumerable<Comment>> GetCommentsByPostAsync(Guid postId)
     {
-        return await _context.Comments.Where(c => c.PostId == postId).ToListAsync();
+        return await _context.Comments
+         .Where(c => c.PostId == postId)
+         .Include(c => c.User)  
+         .Include(c => c.Post)  
+         .ToListAsync();
     }
 
     public async Task<Comment> CreateCommentAsync(Comment comment)

@@ -7,7 +7,7 @@ public class OrderDto
     public string? UserName { get; set; } // Thêm
     public Guid CourseId { get; set; }
     public string? CourseName { get; set; } // Thêm
-    public decimal Amount { get; set; } // Đổi tên Amount thành TotalAmount để đồng bộ
+    public decimal Amount { get; set; } 
     public string Status { get; set; }
     public string CreatedAt { get; set; }
 }
