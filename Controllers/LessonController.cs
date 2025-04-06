@@ -41,14 +41,14 @@ public class LessonController : ControllerBase
     }
 
     /// <summary>
-    /// Tạo mới bài học (Chỉ Admin)
+    /// Tạo bài học mới (Chỉ Admin)
     /// </summary>
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<LessonDto>> CreateAsync(CreateLessonDto createLessonDto)
     {
         var lesson = await _lessonService.CreateAsync(createLessonDto);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = lesson.Id }, lesson);
+        return Ok(lesson);
     }
 
     /// <summary>

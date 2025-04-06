@@ -48,6 +48,7 @@ public class CourseService
             Description = courseDto.Description,
             Price = courseDto.Price,
             InstructorId = courseDto.InstructorId,
+            Contents = courseDto.Contents
         };
 
         await _courseRepository.AddCourseAsync(course);
@@ -89,6 +90,7 @@ public class CourseService
         existingCourse.Title = courseDto.Title;
         existingCourse.Description = courseDto.Description;
         existingCourse.Price = courseDto.Price;
+        existingCourse.Contents = courseDto.Contents;
         existingCourse.InstructorId = courseDto.InstructorId;
 
         await _courseRepository.UpdateCourseAsync(existingCourse);
