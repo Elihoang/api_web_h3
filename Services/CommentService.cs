@@ -1,4 +1,4 @@
-using API_WebH3.DTOs.Comment;
+﻿using API_WebH3.DTOs.Comment;
 using API_WebH3.Models;
 using API_WebH3.Repositories;
 
@@ -20,9 +20,12 @@ public class CommentService
         {
             Id = c.Id,
             UserId = c.UserId,
+            UserAvatar = c.User?.ProfileImage,
+            UserName = c.User?.FullName,
+            PostTitle = c.Post?.Title,
             PostId = c.PostId,
             Content = c.Content,
-            CreatedAt = c.CreatedAt,
+            CreatedAt = c.CreatedAt
         }).ToList();
     }
 
@@ -64,6 +67,9 @@ public class CommentService
         {
             Id = c.Id,
             UserId = c.UserId,
+            UserAvatar = c.User?.ProfileImage,
+            UserName = c.User?.FullName,
+            PostTitle = c.Post?.Title,  
             PostId = c.PostId,
             Content = c.Content,
             CreatedAt = c.CreatedAt
@@ -80,14 +86,23 @@ public class CommentService
             Content = createCommentDto.Content
         };
         await _commentRepository.CreateCommentAsync(comments);
-
+        var createdOrder = await _commentRepository.GetCommentByIdAsync(comments.Id);
+        if (createdOrder == null)
+        {
+            throw new Exception("Không thể tìm thấy đơn hàng vừa tạo.");
+        }
+        Console.WriteLine($"User: {createdOrder.User != null}, FullName: {createdOrder.User?.FullName}");
+        Console.WriteLine($"Post: {createdOrder.Post != null}, Title: {createdOrder.Post?.Title}");
         return new CommentDto
         {
-            Id = comments.Id,
-            UserId = comments.UserId,
-            PostId = comments.PostId,
-            Content = comments.Content,
-            CreatedAt = comments.CreatedAt
+            Id = createdOrder.Id,
+            UserId = createdOrder.UserId,
+            UserName = createdOrder.User?.FullName,
+            UserAvatar = createdOrder.User?.ProfileImage,
+            PostId = createdOrder.PostId,
+            Content = createdOrder.Content,
+            CreatedAt = createdOrder.CreatedAt,
+            PostTitle = createdOrder.Post?.Title,
         };
     }
 

@@ -1,4 +1,5 @@
 using API_WebH3.DTOs.Comment;
+using API_WebH3.Models;
 using API_WebH3.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,7 +47,7 @@ public class CommentController : ControllerBase
         return Ok(comment);
     }
 
-    [HttpGet("Post/{id}")]
+    [HttpGet("Post")]
     public async Task<ActionResult<IEnumerable<CommentDto>>> GetCommentByPostid(Guid postId)
     {
         var comment = await _commentService.GetCommentsByPostId(postId);
