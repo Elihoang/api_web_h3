@@ -77,8 +77,7 @@ public class CommentService
         {
             UserId = createCommentDto.UserId,
             PostId = createCommentDto.PostId,
-            Content = createCommentDto.Content,
-            CreatedAt = DateTime.UtcNow
+            Content = createCommentDto.Content
         };
         await _commentRepository.CreateCommentAsync(comments);
 

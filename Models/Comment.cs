@@ -18,7 +18,7 @@ public class Comment
     [Required]
     public required string Content { get; set; }
     
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     
     public virtual User User { get; set; }
     

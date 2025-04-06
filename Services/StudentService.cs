@@ -55,12 +55,14 @@ namespace API_WebH3.Services
 
       public async Task<StudentDto> CreateStudentAsync(CreateStudentDto user)
       {
-         var newStudent = new User
-         {
+            var newStudent = new User
+            {
             FullName = user.FullName,
             Email = user.Email,
             Password = user.Password,
-            Role = user.Role
+            Role = user.Role,
+            BirthDate = user.BirthDate != null ? DateTime.Parse(user.BirthDate) : null,
+            Phone = user.Phone
          };
 
          if (user.BirthDate != null && user.BirthDate != "")

@@ -49,7 +49,8 @@ namespace API_WebH3.Services
             Password = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
             BirthDate = registerDto.BirthDate ?? null,
             ProfileImage = registerDto.ProfileImage,
-            Role = registerDto.Role
+            Role = registerDto.Role,
+            Phone = registerDto.Phone
          };
 
          await _userRepository.AddUserAsync(user);

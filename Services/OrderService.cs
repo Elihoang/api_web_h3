@@ -22,8 +22,7 @@ public class OrderService
             Id = Guid.NewGuid(),
             UserId = order.UserId,
             TotalAmount = order.TotalAmount,
-            Status = "Pending",
-            CreatedAt = DateTime.UtcNow,
+            Status = "Pending"
         };
         await _orderRepository.CreateOrderAsync(orders);
     
@@ -33,7 +32,6 @@ public class OrderService
             UserId = orders.UserId,
             TotalAmount = orders.TotalAmount,
             Status = orders.Status,
-            CreatedAt = orders.CreatedAt,
             OrderDetails = new List<OrderDetailsDto>()
         };
     
@@ -48,7 +46,6 @@ public class OrderService
                     OrderId = orders.Id,
                     CourseId = detail.CourseId,
                     Price = detail.Price,
-                    CreatedAt = DateTime.UtcNow
                 };
                 await _orderRepository.CreateOrderDetailsAsync(orderDetails);
             

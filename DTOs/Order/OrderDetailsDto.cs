@@ -6,5 +6,5 @@ public class OrderDetailsDto
     public Guid OrderId { get; set; }
     public Guid CourseId { get; set; }
     public decimal Price { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public string CreatedAt { get; set; }
 }

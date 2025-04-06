@@ -85,8 +85,7 @@ public class ReviewService
             UserId = createReviewDto.UserId,
             CourseId = createReviewDto.CourseId,
             Rating = createReviewDto.Rating,
-            Comment = createReviewDto.Comment,
-            CreatedAt = DateTime.UtcNow
+            Comment = createReviewDto.Comment
         };
         await _reviewRepository.CreateReviewAsync(reviews);
 
@@ -111,7 +110,6 @@ public class ReviewService
         
         reviews.Rating = updateReviewDto.Rating;
         reviews.Comment = updateReviewDto.Comment;
-        reviews.CreatedAt = DateTime.UtcNow;
          var updateReview = await _reviewRepository.UpdateReviewAsync(reviews);
          return new ReviewDto
          {

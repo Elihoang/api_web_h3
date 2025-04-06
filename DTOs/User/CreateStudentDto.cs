@@ -7,5 +7,6 @@ namespace API_WebH3.DTOs.User
       public string Password { get; set; }
       public string? BirthDate { get; set; }
       public string Role { get; set; } = "Student";
+      public string? Phone { get; set; }
    }
 }
