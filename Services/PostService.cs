@@ -17,6 +17,39 @@ namespace API_WebH3.Services
             _postRepository = postRepository;
             _userRepository = userRepository;
         }
+        
+        public async Task<IEnumerable<PostDto>> SearchPostsAsync(
+            string keyword,
+            string author,
+            DateTime? startDate,
+            DateTime? endDate,
+            int page,
+            int pageSize)
+        {
+            // Gọi phương thức tìm kiếm từ repository
+            var posts = await _postRepository.SearchPostsAsync(keyword, page, pageSize);
+
+            // Ánh xạ sang DTO
+            return posts.Select(p => new PostDto
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Content = p.Content,
+                CreatedAt = p.CreatedAt,
+                Tags = p.Tags,
+                UrlImage = p.UrlImage,
+                User = new UserDTO
+                {
+                    Id = p.User.Id,
+                    FullName = p.User.FullName,
+                    Email = p.User.Email,
+                    ProfileImage = p.User?.ProfileImage,
+                    Role = p.User.Role,
+                    BirthDate = p.User.BirthDate,
+                    CreatedAt = p.User.CreatedAt
+                }
+            }).ToList();
+        }
 
         public async Task<IEnumerable<PostDto>> GetAllPostsAsync()
         {

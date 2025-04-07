@@ -10,5 +10,6 @@ namespace API_WebH3.Repositories
         Task UpdatePostAsync(Post post);
         Task DeletePostAsync(Guid id);
         Task<string?> UploadImageAsync(Guid Id, IFormFile file);
+        Task<IEnumerable<Post>> SearchPostsAsync(string keyword, int page, int pageSize);
     }
 }

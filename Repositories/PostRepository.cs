@@ -13,6 +13,22 @@ namespace API_WebH3.Repositories
             _context = context;
             _env = env;
         }
+        
+        public async Task<IEnumerable<Post>> SearchPostsAsync(string keyword, int page, int pageSize)
+        {
+            var query = _context.Posts.Include(p => p.User).AsQueryable();
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                keyword = keyword.ToLower();
+                query = query.Where(p => p.Title.ToLower().Contains(keyword) ||
+                                         (p.Content != null && p.Content.ToLower().Contains(keyword)));
+            }
+
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+            return await query.ToListAsync();
+        }
         public async Task<IEnumerable<Post>> GetAllPostsAsync()
         {
             return await _context.Posts

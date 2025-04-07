@@ -106,7 +106,6 @@ public class OrderService
     public async Task<OrderDto> UpdateOrderStatus(Guid id, string status)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-
         if (order == null)
         {
             Console.WriteLine($"Order not found for status update: Id={id}");
@@ -128,36 +127,43 @@ public class OrderService
             await _orderRepository.UpdateAsync(orderEntity);
             Console.WriteLine($"Order status updated: Id={id}, Status={status}");
 
-            // Kiểm tra nếu trạng thái mới là "Paid"
             if (status.Equals("Paid", StringComparison.OrdinalIgnoreCase))
             {
-                // Kiểm tra xem Enrollment đã tồn tại chưa để tránh trùng lặp
                 var existingEnrollment = await _enrollmentRepository.GetByUserAndCourseAsync(order.UserId, order.CourseId);
                 if (existingEnrollment == null)
                 {
-                    // Tạo bản ghi Enrollment mới
                     var enrollmentEntity = new Enrollment
                     {
                         UserId = order.UserId,
                         CourseId = order.CourseId,
-                        Status = "Enrolled", // Dùng giá trị mặc định từ model
-                        EnrolledAt = DateTime.Now,
-                        CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
+                        Status = "Active", 
+                        EnrolledAt = DateTime.UtcNow, // Sử dụng UTC
+                        CreatedAt = DateTime.UtcNow.ToString("dd-MM-yyyy HH:mm:ss") // Chuỗi thời gian
                     };
-
                     await _enrollmentRepository.CreateAsync(enrollmentEntity);
                     Console.WriteLine($"Enrollment created: UserId={order.UserId}, CourseId={order.CourseId}");
                 }
+                else if (existingEnrollment.Status != "Active") 
+                {
+                    existingEnrollment.Status = "Active"; 
+                    existingEnrollment.EnrolledAt = DateTime.UtcNow; // Sử dụng UTC
+                    await _enrollmentRepository.UpdateAsync(existingEnrollment);
+                    Console.WriteLine($"Enrollment updated to Atvice: UserId={order.UserId}, CourseId={order.CourseId}");
+                }
                 else
                 {
-                    Console.WriteLine($"Enrollment already exists for UserId={order.UserId}, CourseId={order.CourseId}");
+                    Console.WriteLine($"Enrollment already active: UserId={order.UserId}, CourseId={order.CourseId}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating order status or creating enrollment: {ex.Message}");
-            throw new Exception("Không thể cập nhật trạng thái đơn hàng hoặc tạo enrollment: " + ex.Message);
+            Console.WriteLine($"Error updating order status or managing enrollment: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
+            throw new Exception("Không thể cập nhật trạng thái đơn hàng hoặc quản lý enrollment: " + ex.Message, ex);
         }
 
         var updatedOrder = await _orderRepository.GetByIdAsync(id);
