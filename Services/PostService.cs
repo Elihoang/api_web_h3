@@ -59,7 +59,6 @@ namespace API_WebH3.Services
                 Content = postDto.Content,
                 UserId = postDto.UserId,
                 Tags = postDto.Tags,
-                UrlImage = postDto.UrlImage,
             };
 
             await _postRepository.AddPostAsync(post);
@@ -114,10 +113,12 @@ namespace API_WebH3.Services
             existingPost.Title = postDto.Title;
             existingPost.Content = postDto.Content;
             existingPost.Tags = postDto.Tags;
-            existingPost.UrlImage = postDto.UrlImage;
             await _postRepository.UpdatePostAsync(existingPost);
-
         }
-       
+
+        public async Task<string?> UploadImageAsync(Guid id, IFormFile file)
+        {
+            return await _postRepository.UploadImageAsync(id, file);
+        }
     }
 }

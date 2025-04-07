@@ -1,5 +1,6 @@
 ﻿using API_WebH3.DTOs.Post;
 using API_WebH3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_WebH3.Controllers
@@ -60,6 +61,7 @@ namespace API_WebH3.Controllers
             await _postService.UpdatePostAsync(id, postDto);
             return NoContent();
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePost(Guid id)
         {
@@ -68,6 +70,14 @@ namespace API_WebH3.Controllers
                 return NotFound(new { message = "Không tìm thấy bài viết" });
             await _postService.DeletePostAsync(id);
             return NoContent();
+        }
+
+        [HttpPost("upload-image/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UploadImage(string id, IFormFile file)
+        {
+            var imageUrl = await _postService.UploadImageAsync(Guid.Parse(id), file);
+            return Ok(new { message = "Upload image successfully!", imageUrl });
         }
     }
 }
