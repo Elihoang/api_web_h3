@@ -10,4 +10,6 @@ public interface ICourseRepository
     Task UpdateCourseAsync(Course course);
     Task DeleteCourseAsync(Guid id);
     Task<string?> UploadImageAsync(Guid Id, IFormFile file);
+    
+    Task<IEnumerable<Course>> SearchCoursesAsync(string keyword, int page, int pageSize);
 }

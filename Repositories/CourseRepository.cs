@@ -15,6 +15,21 @@ public class CourseRepository : ICourseRepository
         _env = env;
     }
 
+    public async Task<IEnumerable<Course>> SearchCoursesAsync(string keyword, int page, int pageSize)
+    {
+        var query = _context.Courses.AsQueryable();
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            keyword = keyword.ToLower();
+            query = query.Where(c => c.Title.ToLower().Contains(keyword) ||
+                                     (c.Description != null && c.Description.ToLower().Contains(keyword)));
+        }
+
+        query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+        return await query.ToListAsync();
+    }
     public async Task<IEnumerable<Course>> GetAllCoursesAsync()
     {
         return await _context.Courses.ToListAsync();
