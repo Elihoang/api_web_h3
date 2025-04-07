@@ -136,16 +136,16 @@ public class OrderService
                     {
                         UserId = order.UserId,
                         CourseId = order.CourseId,
-                        Status = "Atvice", // Sử dụng "Atvice" thay vì "Enrolled"
+                        Status = "Active", 
                         EnrolledAt = DateTime.UtcNow, // Sử dụng UTC
                         CreatedAt = DateTime.UtcNow.ToString("dd-MM-yyyy HH:mm:ss") // Chuỗi thời gian
                     };
                     await _enrollmentRepository.CreateAsync(enrollmentEntity);
                     Console.WriteLine($"Enrollment created: UserId={order.UserId}, CourseId={order.CourseId}");
                 }
-                else if (existingEnrollment.Status != "Atvice") // Kiểm tra với "Atvice"
+                else if (existingEnrollment.Status != "Active") 
                 {
-                    existingEnrollment.Status = "Atvice"; // Cập nhật thành "Atvice"
+                    existingEnrollment.Status = "Active"; 
                     existingEnrollment.EnrolledAt = DateTime.UtcNow; // Sử dụng UTC
                     await _enrollmentRepository.UpdateAsync(existingEnrollment);
                     Console.WriteLine($"Enrollment updated to Atvice: UserId={order.UserId}, CourseId={order.CourseId}");
