@@ -22,7 +22,7 @@ builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(builder.Configuration["Urls:Frontend"].ToString())
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
