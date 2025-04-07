@@ -10,7 +10,7 @@ namespace API_WebH3.DTOs.Post
         public required string Title { get; set; } 
         public string? Content { get; set; }
 
-        public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
+        public string CreatedAt { get; set; }
         public string? Tags { get; set; }
         public string? UrlImage { get; set; }
         public UserDTO User { get; set; } // Chứa toàn bộ thông tin User
