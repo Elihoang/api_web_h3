@@ -1,12 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace API_WebH3.Models;
 
+// Modified Lesson to include Chapter and multiple videos
 public class Lesson
 {
     [Key]
     public Guid Id { get; set; }
+    
+    [ForeignKey("Chapter")]
+    public Guid ChapterId { get; set; }
     
     [ForeignKey("Course")]
     public Guid CourseId { get; set; }
@@ -19,14 +24,45 @@ public class Lesson
     
     public string? Content { get; set; }
     
-    public string? VideoUrl { get; set; }
+    [NotMapped]
+    public List<string>? VideoUrls { get; set; }
     
-    public int Duration { get; set; } // Thời lượng bài học (phút)
+    public string? SerializedVideoUrls
+    {
+        get => VideoUrls == null ? null : JsonSerializer.Serialize(VideoUrls);
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                VideoUrls = null;
+            }
+            else
+            {
+                try
+                {
+                    VideoUrls = JsonSerializer.Deserialize<List<string>>(value);
+                }
+                catch
+                {
+                    VideoUrls = null;
+                }
+            }
+        }
+    }
+
+        public int Duration { get; set; }
     
-    public int OrderNumber { get; set; } // Số thứ tự bài học trong khóa học
+    public int OrderNumber { get; set; }
     
     [Required]
+    public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
+    
+    [ForeignKey("ApprovedByUser")]
+    public Guid? ApprovedBy { get; set; } // Admin who approved/rejected the lesson
+    
     public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     
     public virtual Course Course { get; set; }
+    public virtual Chapter Chapter { get; set; }
+    public virtual User? ApprovedByUser { get; set; }
 }
