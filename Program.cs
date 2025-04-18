@@ -1,7 +1,5 @@
 ﻿using System.Text;
 using API_WebH3.Data;
-using API_WebH3.Repositories;
-using API_WebH3.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -57,53 +55,13 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true; // Tuân thủ GDPR
 });
 
-// 🔹 Đăng ký các Repository & Service
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<AuthService>();
-
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-builder.Services.AddScoped<StudentService>();
-
-builder.Services.AddScoped<ICourseRepository, CourseRepository>();
-builder.Services.AddScoped<CourseService>();
-
-builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<PostService>();
-
-// 🔹 Cấu hình Swagger/OpenAPI
-builder.Services.AddScoped<ILessonRepository, LessonRepository>();
-builder.Services.AddScoped<LessonService>();
-
-builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
-builder.Services.AddScoped<ProgressService>();
-
-builder.Services.AddScoped<IEnrollementRepository, EnrollementRepository>();
-builder.Services.AddScoped<EnrollementService>();
-
-builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
-builder.Services.AddScoped<ReviewService>();
-
-builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-builder.Services.AddScoped<CommentService>();
-
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IEnrollementRepository, EnrollementRepository>();
-builder.Services.AddScoped<OrderService>(sp =>
-    new OrderService(
-        sp.GetRequiredService<IOrderRepository>(),
-        sp.GetRequiredService<IEnrollementRepository>()
-    ));
-
-builder.Services.AddScoped<VnpayService>();
-
-builder.Services.AddScoped<EmailPaymentService>();
 
 builder.Services.AddControllers();
 // Cấu hình Swagger/OpenAPI
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<EmailService>();
+
 var app = builder.Build();
 
 // 🔹 Middleware xử lý CORS

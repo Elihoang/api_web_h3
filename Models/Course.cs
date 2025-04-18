@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace API_WebH3.Models;
 
+// Course for online learning
 public class Course
 {
     [Key]
@@ -22,18 +23,21 @@ public class Course
     public string? UrlImage { get; set; }
 
     [Required]
-    [ForeignKey("User")] // Khớp với navigation property
-    public required Guid InstructorId { get; set; }  // Đặt tên là UserId để phản ánh rõ ràng
+    [ForeignKey("User")]
+    public required Guid InstructorId { get; set; }
+
+    [ForeignKey("Category")]
+    public Guid? CategoryId { get; set; }
 
     [Required]
     public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 
-    public virtual User User { get; set; } 
-    // Định danh mối quan hệ với User
+    public virtual required User User { get; set; }
+    public virtual Category? Category { get; set; }
+    
     [NotMapped]
     public List<string>? Contents { get; set; }
 
-    // ✅ Lưu chuỗi JSON (nullable)
     public string? SerializedContents
     {
         get => Contents == null ? null : JsonSerializer.Serialize(Contents);
@@ -51,7 +55,7 @@ public class Course
                 }
                 catch
                 {
-                    Contents = null; // fallback nếu deserialize lỗi
+                    Contents = null;
                 }
             }
         }
