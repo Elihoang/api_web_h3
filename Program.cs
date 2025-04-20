@@ -21,14 +21,19 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 builder.Services.AddScoped<ChapterService>();
-
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<CourseService>();
-
-
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+builder.Services.AddScoped<LessonService>();
+builder.Services.AddScoped<ILessonApprovalRepository, LessonApprovalRepository>();
+builder.Services.AddScoped<LessonApprovalService>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<ReviewService>();
 
+builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
+builder.Services.AddScoped<ProgressService>();
 
 // 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
 builder.Services.AddCors(options =>

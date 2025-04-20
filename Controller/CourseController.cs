@@ -63,8 +63,8 @@ public class CourseController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCourse(Guid id)
     {
-        var result = await _courseService.DeleteAsync(id);
-        if (!result)
+        var course = await _courseService.DeleteAsync(id);
+        if (!course)
         {
             return NotFound();
         }
