@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using API_WebH3.Data;
+using API_WebH3.Repository;
+using API_WebH3.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +17,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // 🔹 Thêm Controllers (Fix lỗi InvalidOperationException)
 builder.Services.AddControllers();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
+builder.Services.AddScoped<ChapterService>();
+
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<CourseService>();
+
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<UserService>();
+
 
 // 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
 builder.Services.AddCors(options =>
