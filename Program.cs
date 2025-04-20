@@ -35,6 +35,9 @@ builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
 builder.Services.AddScoped<ProgressService>();
 
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<PostService>();
+
 // 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
 builder.Services.AddCors(options =>
 {
