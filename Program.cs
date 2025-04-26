@@ -51,6 +51,34 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<CommentService>();
 
 
+builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+builder.Services.AddScoped<CouponService>();
+
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<MessageService>();
+
+builder.Services.AddScoped<IFollowerRepository, FollowerRepository>();
+builder.Services.AddScoped<FollowerService>();
+
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+builder.Services.AddScoped<EnrollmentService>();
+
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<NotificationService>();
+
+builder.Services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
+builder.Services.AddScoped<UserNotificationService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<VnpayService>(); 
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<EmailPaymentService>();
+
+// 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
+
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
