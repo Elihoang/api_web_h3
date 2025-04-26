@@ -16,8 +16,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 🔹 Thêm Controllers (Fix lỗi InvalidOperationException)
-builder.Services.AddControllers();
+// 🔹 Thêm Controllers và hỗ trợ JSON
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
+
+// 🔹 Đăng ký các dịch vụ
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
@@ -32,15 +39,17 @@ builder.Services.AddScoped<ILessonApprovalRepository, LessonApprovalRepository>(
 builder.Services.AddScoped<LessonApprovalService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<ReviewService>();
-
 builder.Services.AddScoped<IProgressRepository, ProgressRepository>();
 builder.Services.AddScoped<ProgressService>();
-
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<PostService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EmailService>();
+
 
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<CommentService>();
+
 
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<CouponService>();
@@ -67,18 +76,32 @@ builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<EmailPaymentService>();
 
 // 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
+
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+    {
+        var frontendUrl = builder.Configuration["Frontend:BaseUrl"];
+        Console.WriteLine($"CORS Frontend URL: {frontendUrl}");
+        if (!string.IsNullOrEmpty(frontendUrl))
+        {
+            policy.WithOrigins(frontendUrl)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+        else
+        {
+            Console.WriteLine("Warning: Frontend:BaseUrl is not configured!");
+        }
+    });
 });
 
-// 🔹 Cấu hình JWT Authentication
-var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]);
 
+// 🔹 Cấu hình JWT Authentication với cookie
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -89,55 +112,56 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies["auth_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
-// 🔹 Thêm Authorization (Fix lỗi thiếu Authorization)
+// 🔹 Thêm Authorization
 builder.Services.AddAuthorization();
 
-// 🔹 Thêm bộ nhớ cache phân tán trong RAM (hỗ trợ session)
+// 🔹 Thêm bộ nhớ cache phân tán và Session
 builder.Services.AddDistributedMemoryCache();
-
-// 🔹 Đăng ký Session (hỗ trợ lưu trạng thái người dùng)
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Thời gian chờ phiên
-    options.Cookie.HttpOnly = true; // Bảo mật
-    options.Cookie.IsEssential = true; // Tuân thủ GDPR
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
-
-builder.Services.AddControllers();
-// Cấu hình Swagger/OpenAPI
-
+// 🔹 Cấu hình Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🔹 Middleware xử lý CORS
-app.UseCors("AllowReactApp");
-
-// 🔹 Cấu hình Swagger khi ở môi trường Development
+// 🔹 Middleware xử lý lỗi chi tiết trong Development
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// 🔹 Các Middleware quan trọng (theo thứ tự chuẩn)
-app.UseHttpsRedirection();
-app.UseStaticFiles(); // Cho phép truy cập wwwroot/uploads
+app.UseCors("AllowReactApp");
+// 🔹 Các Middleware
+app.UseHttpsRedirection(); // Bật lại HTTPS redirection
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseSession();
 
-app.UseRouting();         // 1️⃣ Định tuyến
-app.UseAuthentication();  // 2️⃣ Xác thực (JWT)
-app.UseAuthorization();   // 3️⃣ Phân quyền
-app.UseSession();         // 4️⃣ Phiên (Session)
+app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers(); // 5️⃣ Định nghĩa API controllers
-});
-
-// 🔹 Chạy ứng dụng
 app.Run();

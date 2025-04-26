@@ -12,8 +12,8 @@ public class UserRepository : IUserRepository
     {
         _context = context;
     }
-    
-    
+
+
     public async Task<IEnumerable<User>> GetAllAsync()
     {
         return await _context.Users.ToListAsync();
@@ -38,11 +38,21 @@ public class UserRepository : IUserRepository
 
     public async Task DeleteAsync(Guid id)
     {
-       var user = await _context.Users.FindAsync(id);
-       if (user != null)
-       {
-           _context.Users.Remove(user);
-           await _context.SaveChangesAsync();
-       }
+        var user = await _context.Users.FindAsync(id);
+        if (user != null)
+        {
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
 }

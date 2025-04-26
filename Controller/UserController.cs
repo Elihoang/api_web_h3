@@ -9,7 +9,7 @@ namespace API_WebH3.Controller;
 public class UserController : ControllerBase
 {
     private readonly UserService _userService;
-    
+
     public UserController(UserService userService)
     {
         _userService = userService;
@@ -30,6 +30,7 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
+
         return Ok(user);
     }
 
@@ -58,6 +59,7 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
+
         return Ok(userDto);
     }
 
@@ -69,6 +71,7 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
+
         return NoContent();
     }
 }
