@@ -11,6 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 🔹 Lấy chuỗi kết nối từ appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is not configured in appsettings.json or environment variables.");
+}
 
 // 🔹 Đăng ký DbContext với PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -99,29 +104,41 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 // 🔹 Cấu hình JWT Authentication với cookie
-var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+
+var jwtKey = builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException(
+        "JwtSettings:Secret is not configured in appsettings.json or environment variables.");
+}
+
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
+var jwtAudience = builder.Configuration["JwtSettings:Audience"];
+if (string.IsNullOrEmpty(jwtIssuer) || string.IsNullOrEmpty(jwtAudience))
+{
+    throw new InvalidOperationException(
+        "JwtSettings:Issuer or JwtSettings:Audience is not configured in appsettings.json or environment variables.");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = false,
-            ValidateAudience = false
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                var token = context.Request.Cookies["auth_token"];
-                if (!string.IsNullOrEmpty(token))
-                {
-                    context.Token = token;
-                }
-
+                context.Token = context.Request.Cookies["auth_token"];
                 return Task.CompletedTask;
             }
         };
@@ -155,7 +172,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 // 🔹 Các Middleware
-app.UseHttpsRedirection(); // Bật lại HTTPS redirection
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
