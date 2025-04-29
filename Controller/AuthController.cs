@@ -36,8 +36,8 @@ public class AuthController : ControllerBase
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Strict,
+                Secure = _environment.IsDevelopment() ? false : true, // Sử dụng IWebHostEnvironment
+                SameSite = SameSiteMode.Lax,
                 Expires = DateTime.UtcNow.AddHours(2)
             };
             Response.Cookies.Append("auth_token", result.Token, cookieOptions);
