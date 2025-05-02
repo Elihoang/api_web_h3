@@ -17,7 +17,7 @@ public class CourseRepository : ICourseRepository
         return await _context.Courses.ToListAsync();
     }
 
-    public async Task<Course> GetByIdAsync(Guid id)
+    public async Task<Course> GetByIdAsync(string id)
     {
         return await _context.Courses.FindAsync(id);
     }
@@ -34,7 +34,7 @@ public class CourseRepository : ICourseRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(string id)
     {
         var course = await _context.Courses.FindAsync(id);
         if (course != null)

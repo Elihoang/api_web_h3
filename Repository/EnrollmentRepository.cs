@@ -23,7 +23,7 @@ public class EnrollmentRepository: IEnrollmentRepository
         return await _context.Enrollments.FindAsync(id);
     }
 
-    public async Task<Enrollment> GetByUserAndCourseAsync(Guid userId, Guid courseId)
+    public async Task<Enrollment> GetByUserAndCourseAsync(Guid userId, string courseId)
     {
         return await _context.Enrollments
             .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
@@ -36,7 +36,7 @@ public class EnrollmentRepository: IEnrollmentRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Enrollment>> GetByCourseIdAsync(Guid courseId)
+    public async Task<IEnumerable<Enrollment>> GetByCourseIdAsync(string courseId)
     {
         return await _context.Enrollments
             .Where(e => e.CourseId == courseId)

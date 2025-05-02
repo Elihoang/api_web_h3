@@ -11,7 +11,7 @@ public class Chapter
     public Guid Id { get; set; }
     
     [ForeignKey("Course")]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     
     [Required]
     public required string Title { get; set; }

@@ -1,6 +1,8 @@
 using API_WebH3.DTO.Course;
+using API_WebH3.Helpers;
 using API_WebH3.Models;
 using API_WebH3.Repository;
+using NanoidDotNet;
 
 namespace API_WebH3.Service;
 
@@ -31,7 +33,7 @@ public async Task<IEnumerable<CourseDto>> GetAllAsync()
     });
 }
 
-public async Task<CourseDto> GetByIdAsync(Guid id)
+public async Task<CourseDto> GetByIdAsync(string id)
 {
     var course = await _courseRepository.GetByIdAsync(id);
     if (course == null)
@@ -63,7 +65,7 @@ public async Task<CourseDto> CreateChapter(CreateCourseDto createCourseDto)
     
     var course = new Course 
     {
-        Id = Guid.NewGuid(),
+        Id = IdGenerator.IdCourse(),
         Title = createCourseDto.Title,
         Description = createCourseDto.Description,
         Price = createCourseDto.Price,
@@ -92,7 +94,7 @@ public async Task<CourseDto> CreateChapter(CreateCourseDto createCourseDto)
     };
 }
 
-public async Task<CourseDto> UpdateChapter(Guid id, UpdateCourseDto updateCourseDto)
+public async Task<CourseDto> UpdateChapter(string id, UpdateCourseDto updateCourseDto)
 {
     var course = await _courseRepository.GetByIdAsync(id);
     if (course == null)
@@ -124,7 +126,7 @@ public async Task<CourseDto> UpdateChapter(Guid id, UpdateCourseDto updateCourse
     };
 }
 
-public async Task<bool> DeleteAsync(Guid id)
+public async Task<bool> DeleteAsync(string id)
 {
     var course = await _courseRepository.GetByIdAsync(id);
     if (course == null)

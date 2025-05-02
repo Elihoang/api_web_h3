@@ -50,8 +50,9 @@ namespace API_WebH3.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -174,9 +175,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Course", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid");
@@ -222,8 +222,9 @@ namespace API_WebH3.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -275,9 +276,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Lesson", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("ApprovedBy")
                         .HasColumnType("uuid");
@@ -288,8 +288,9 @@ namespace API_WebH3.Migrations
                     b.Property<string>("Content")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -347,8 +348,9 @@ namespace API_WebH3.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("LessonId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("LessonId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -422,15 +424,15 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Order", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(10, 2)");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -454,15 +456,15 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.OrderDetail", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("CouponId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -471,8 +473,9 @@ namespace API_WebH3.Migrations
                     b.Property<decimal?>("DiscountAmount")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
@@ -534,8 +537,9 @@ namespace API_WebH3.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("LessonId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("LessonId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -558,9 +562,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Quiz", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<string>("CorrectAnswer")
                         .IsRequired()
@@ -573,8 +576,9 @@ namespace API_WebH3.Migrations
                     b.Property<string>("Explanation")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("LessonId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("LessonId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Question")
                         .IsRequired()
@@ -601,8 +605,9 @@ namespace API_WebH3.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()

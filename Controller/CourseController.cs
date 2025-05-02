@@ -22,7 +22,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<CourseDto>> GetCourse(Guid id)
+    public async Task<ActionResult<CourseDto>> GetCourse(string id)
     {
         var course = await _courseService.GetByIdAsync(id);
         if (course == null)
@@ -45,7 +45,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<CourseDto>> UpdateCourse(Guid id, UpdateCourseDto updateCourseDto)
+    public async Task<ActionResult<CourseDto>> UpdateCourse(string id, UpdateCourseDto updateCourseDto)
     {
         if (!ModelState.IsValid)
         {
@@ -61,7 +61,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCourse(Guid id)
+    public async Task<IActionResult> DeleteCourse(string id)
     {
         var course = await _courseService.DeleteAsync(id);
         if (!course)

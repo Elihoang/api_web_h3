@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using API_WebH3.Helpers;
 
 namespace API_WebH3.Models;
 
@@ -8,14 +9,14 @@ namespace API_WebH3.Models;
 // OrderDetail for detailed order information
 public class OrderDetail
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] 
+    public string Id { get; set; } = IdGenerator.IdOrderDetail();
     
     [ForeignKey("Order")]
-    public Guid OrderId { get; set; }
+    public string OrderId { get; set; }
     
     [ForeignKey("Course")]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     
     [Column(TypeName = "decimal(10,2)")]
     public decimal Price { get; set; }

@@ -51,7 +51,7 @@ public class VnpayService
 
     public string CreatePaymentUrl(OrderDto order, HttpContext context)
     {
-        if (order.Amount < 0 || order.Id == Guid.Empty || order.UserId == Guid.Empty)
+        if (order.Amount < 0 || order.Id == string.Empty || order.UserId == Guid.Empty)
         {
             Console.WriteLine($"Invalid order data: Amount={order.Amount}, Id={order.Id}, UserId={order.UserId}");
             throw new ArgumentException("Dữ liệu đơn hàng không hợp lệ: Amount, Id hoặc UserId không đúng.");
@@ -106,7 +106,9 @@ public class VnpayService
     }
 
     Console.WriteLine($"Received vnp_TxnRef: {GetResponseData("vnp_TxnRef")}");
-    if (!Guid.TryParse(GetResponseData("vnp_TxnRef"), out var orderId))
+    
+    var txnRefRaw = GetResponseData("vnp_TxnRef");
+    if (string.IsNullOrWhiteSpace(txnRefRaw))
     {
         Console.WriteLine($"Invalid vnp_TxnRef format: {GetResponseData("vnp_TxnRef")}");
         return new JsonResult(new
@@ -116,7 +118,8 @@ public class VnpayService
             Message = "Invalid vnp_TxnRef format"
         });
     }
-
+    var orderId = txnRefRaw;
+    
     var vnpResponseCode = GetResponseData("vnp_ResponseCode");
     var vnpSecureHash = collections["vnp_SecureHash"];
     var orderInfo = GetResponseData("vnp_OrderInfo");

@@ -7,7 +7,7 @@ public class UpdateLessonDto
     [Required]
     public Guid ChapterId { get; set; }
     [Required]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     [Required]
     public string Title { get; set; }
     [Required]

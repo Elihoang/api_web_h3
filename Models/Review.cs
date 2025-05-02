@@ -13,7 +13,7 @@ public class Review
     public Guid UserId { get; set; }
     
     [ForeignKey("Course")]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     
     [Range(1,5)]
     public int Rating { get; set; }

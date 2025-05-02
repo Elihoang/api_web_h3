@@ -1,4 +1,5 @@
 using API_WebH3.DTO.Order;
+using API_WebH3.Helpers;
 using API_WebH3.Models;
 using API_WebH3.Repository;
 
@@ -17,7 +18,7 @@ public class OrderService
     {
         var order = new Order
         {
-            Id = Guid.NewGuid(),
+            Id = IdGenerator.IdOrder(),
             UserId = orderDto.UserId,
             Amount = orderDto.Amount,
             Status = orderDto.Status,
@@ -26,7 +27,7 @@ public class OrderService
 
         var orderDetails = orderDto.OrderDetails.Select(detailDto => new OrderDetail
         {
-            Id = Guid.NewGuid(),
+            Id = IdGenerator.IdOrderDetail(),
             OrderId = order.Id,
             CourseId = detailDto.CourseId,
             Price = detailDto.Price,
@@ -34,8 +35,6 @@ public class OrderService
             DiscountAmount = detailDto.DiscountAmount,
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
         }).ToList();
-
-        order.CourseId = orderDetails.FirstOrDefault()?.CourseId ?? Guid.Empty;
 
         await _orderRepository.CreateOrderAsync(order);
 
@@ -47,7 +46,7 @@ public class OrderService
         return await GetOrderById(order.Id);
     }
 
-    public async Task<OrderDto> GetOrderById(Guid id)
+    public async Task<OrderDto> GetOrderById(string id)
     {
         var order = await _orderRepository.GetByIdAsync(id);
         if (order == null)
@@ -61,7 +60,6 @@ public class OrderService
         {
             Id = order.Id,
             UserId = order.UserId,
-            CourseId = order.CourseId,
             Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt,
@@ -71,7 +69,7 @@ public class OrderService
         };
     }
 
-    public async Task UpdateOrderStatus(Guid orderId, string status)
+    public async Task UpdateOrderStatus(string orderId, string status)
     {
         var order = await _orderRepository.GetByIdAsync(orderId);
         if (order == null)

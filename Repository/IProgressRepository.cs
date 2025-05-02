@@ -9,5 +9,5 @@ public interface IProgressRepository
     Task AddProgressAsync(Progress progress);
     Task UpdateProgressAsync(Progress progress);
     Task DeleteProgressAsync(Guid id);
-    Task<Progress> GetByUserAndLessonAsync(Guid userId, Guid lessonId);
+    Task<Progress> GetByUserAndLessonAsync(Guid userId, string lessonId);
 }

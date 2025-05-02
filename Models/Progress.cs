@@ -12,7 +12,7 @@ public class Progress
     public Guid UserId { get; set; }
     
     [ForeignKey("Lesson")] 
-    public Guid LessonId { get; set; }
+    public string LessonId { get; set; }
     
     [Required]
     public string Status { get; set; } = "not started"; // Trạng thái: not started, in progress, completed

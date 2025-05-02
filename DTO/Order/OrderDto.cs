@@ -4,7 +4,7 @@ namespace API_WebH3.DTO.Order;
 
 public class OrderDto
 {
-    public Guid Id { get; set; }
+    public string Id { get; set; }
     public Guid UserId { get; set; }
     public Guid CourseId { get; set; }
     public decimal Amount { get; set; }

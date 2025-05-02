@@ -18,7 +18,7 @@ public class LessonRepository : ILessonRepository
         return await _context.Lessons.ToListAsync();
     }
 
-    public async Task<Lesson> GetLessonById(Guid id)
+    public async Task<Lesson> GetLessonById(string id)
     {
         return await _context.Lessons.FindAsync(id);
     }
@@ -35,7 +35,7 @@ public class LessonRepository : ILessonRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteLesson(Guid id)
+    public async Task DeleteLesson(string id)
     {
         var lesson = await _context.Lessons.FindAsync(id);
         if (lesson != null)

@@ -38,7 +38,7 @@ public class EnrollmentController : ControllerBase
         return Ok(enrollments);
     }
     [HttpGet("course/{courseId}")]
-    public async Task<ActionResult<IEnumerable<EnrollmentDto>>> GetEnrollmentsByCourse(Guid courseId)
+    public async Task<ActionResult<IEnumerable<EnrollmentDto>>> GetEnrollmentsByCourse(string courseId)
     {
         var enrollments = await _enrollmentService.GetByCourseIdAsync(courseId);
         return Ok(enrollments);
