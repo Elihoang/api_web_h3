@@ -59,7 +59,7 @@ public class EnrollmentService
             CreatedAt = e.CreatedAt
         });
     }
-    public async Task<IEnumerable<EnrollmentDto>> GetByCourseIdAsync(Guid courseId)
+    public async Task<IEnumerable<EnrollmentDto>> GetByCourseIdAsync(string courseId)
     {
         var enrollments = await _enrollmentRepository.GetByCourseIdAsync(courseId);
         return enrollments.Select(e => new EnrollmentDto
@@ -140,7 +140,7 @@ public class EnrollmentService
             CreatedAt = enrollment.CreatedAt
         };
     }
-    public async Task<EnrollmentDto> GetByUserAndCourseAsync(Guid userId, Guid courseId)
+    public async Task<EnrollmentDto> GetByUserAndCourseAsync(Guid userId, string courseId)
     {
         var enrollment = await _enrollmentRepository.GetByUserAndCourseAsync(userId, courseId);
         if (enrollment == null)

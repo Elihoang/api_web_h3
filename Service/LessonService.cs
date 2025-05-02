@@ -1,4 +1,5 @@
 using API_WebH3.DTO.Lesson;
+using API_WebH3.Helpers;
 using API_WebH3.Models;
 using API_WebH3.Repository;
 
@@ -34,7 +35,7 @@ public class LessonService
         });
     }
 
-    public async Task<LessonDto> GetLessonById(Guid id)
+    public async Task<LessonDto> GetLessonById(string id)
     {
         var lesson = await _repository.GetLessonById(id);
         if (lesson == null)
@@ -63,7 +64,7 @@ public class LessonService
     {
         var lesson = new Lesson
         {
-            Id = Guid.NewGuid(),
+            Id = IdGenerator.IdLesson(),
             ChapterId = createLessonDto.ChapterId,
             CourseId = createLessonDto.CourseId,
             Title = createLessonDto.Title,
@@ -95,7 +96,7 @@ public class LessonService
         };
     }
 
-    public async Task<LessonDto> UpdateLesson(Guid id, UpdateLessonDto updateLessonDto)
+    public async Task<LessonDto> UpdateLesson(string id, UpdateLessonDto updateLessonDto)
     {
         var lesson = await _repository.GetLessonById(id);
         if (lesson == null)
@@ -132,7 +133,7 @@ public class LessonService
         };
 
     }
-    public async Task<bool> DeleteLesson(Guid id)
+    public async Task<bool> DeleteLesson(string id)
     {
         var lesson = await _repository.GetLessonById(id);
         if (lesson == null)

@@ -24,7 +24,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<LessonDto>> GetLessonById(Guid id)
+    public async Task<ActionResult<LessonDto>> GetLessonById(string id)
     {
         var lesson = await _lessonService.GetLessonById(id);
         if (lesson == null)
@@ -46,7 +46,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateLesson(Guid id, UpdateLessonDto updateLessonDto)
+    public async Task<ActionResult> UpdateLesson(string id, UpdateLessonDto updateLessonDto)
     {
 
         if (!ModelState.IsValid)
@@ -62,7 +62,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteLesson(Guid id)
+    public async Task<ActionResult> DeleteLesson(string id)
     {
         var lesson = await _lessonService.DeleteLesson(id);
         if (!lesson)

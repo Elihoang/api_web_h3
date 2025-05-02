@@ -1,15 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using API_WebH3.Helpers;
+using NanoidDotNet;
 
 namespace API_WebH3.Models;
 
 // Course for online learning
 public class Course
 {
-    [Key]
-    public Guid Id { get; set; }
-
+    [Key] 
+    public string Id { get; set; } = IdGenerator.IdCourse();
+    
     [Required]
     public required string Title { get; set; }
 

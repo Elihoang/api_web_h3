@@ -5,7 +5,7 @@ namespace API_WebH3.DTO.Order;
 public class OrderDetailDto
 {
     [Required]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
 
     [Required]
     [Range(0, double.MaxValue, ErrorMessage = "Giá phải lớn hơn hoặc bằng 0")]

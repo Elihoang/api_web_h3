@@ -1,20 +1,21 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using API_WebH3.Helpers;
 
 namespace API_WebH3.Models;
 
 // Modified Lesson to include Chapter and multiple videos
 public class Lesson
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] 
+    public string Id { get; set; } = IdGenerator.IdLesson();
     
     [ForeignKey("Chapter")]
     public Guid ChapterId { get; set; }
     
     [ForeignKey("Course")]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     
     [Required]
     public required string Title { get; set; }

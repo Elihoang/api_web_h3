@@ -5,7 +5,7 @@ namespace API_WebH3.DTO.Chapter;
 public class CreateChapterDto
 {
     [Required]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     [Required]
     public string Title { get; set; }
     public string? Description { get; set; }

@@ -7,6 +7,6 @@ public class CreateEnrollmentDto
     [Required]
     public Guid UserId { get; set; }
     [Required]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     public string Status { get; set; }
 }

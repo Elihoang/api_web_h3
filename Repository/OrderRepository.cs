@@ -12,7 +12,7 @@ public class OrderRepository: IOrderRepository
     {
         _context = context;
     }
-    public async Task<Order> GetByIdAsync(Guid id)
+    public async Task<Order> GetByIdAsync(string id)
     {
         return await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
     }
@@ -43,7 +43,7 @@ public class OrderRepository: IOrderRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(Guid orderId)
+    public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(string orderId)
     {
         return await _context.OrderDetails
             .Where(od => od.OrderId == orderId)

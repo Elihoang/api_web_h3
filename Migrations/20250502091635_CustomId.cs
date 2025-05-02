@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_WebH3.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDatabase : Migration
+    public partial class CustomId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,6 +24,25 @@ namespace API_WebH3.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Coupons",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    DiscountPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    MaxUsage = table.Column<int>(type: "integer", nullable: false),
+                    CurrentUsage = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Coupons", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -66,10 +85,36 @@ namespace API_WebH3.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Courses",
+                name: "Chats",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    User1Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    User2Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Chats", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Chats_Users_User1Id",
+                        column: x => x.User1Id,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Chats_Users_User2Id",
+                        column: x => x.User2Id,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Courses",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
                     Price = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
@@ -90,6 +135,32 @@ namespace API_WebH3.Migrations
                     table.ForeignKey(
                         name: "FK_Courses_Users_InstructorId",
                         column: x => x.InstructorId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Followers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    FollowerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FollowingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Followers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Followers_Users_FollowerId",
+                        column: x => x.FollowerId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Followers_Users_FollowingId",
+                        column: x => x.FollowingId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -146,11 +217,39 @@ namespace API_WebH3.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChatId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SenderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    SentAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Messages_Chats_ChatId",
+                        column: x => x.ChatId,
+                        principalTable: "Chats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Messages_Users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Chapters",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourseId = table.Column<string>(type: "text", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
                     OrderNumber = table.Column<int>(type: "integer", nullable: false),
@@ -174,7 +273,7 @@ namespace API_WebH3.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourseId = table.Column<string>(type: "text", nullable: false),
                     EnrolledAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<string>(type: "text", nullable: false)
@@ -200,12 +299,12 @@ namespace API_WebH3.Migrations
                 name: "Orders",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                    CreatedAt = table.Column<string>(type: "text", nullable: false),
+                    CourseId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -231,7 +330,7 @@ namespace API_WebH3.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourseId = table.Column<string>(type: "text", nullable: false),
                     Rating = table.Column<int>(type: "integer", nullable: false),
                     Comment = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<string>(type: "text", nullable: false)
@@ -291,9 +390,9 @@ namespace API_WebH3.Migrations
                 name: "Lessons",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<string>(type: "text", nullable: false),
                     ChapterId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourseId = table.Column<string>(type: "text", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: true),
@@ -327,11 +426,45 @@ namespace API_WebH3.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OrderDetails",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    OrderId = table.Column<string>(type: "text", nullable: false),
+                    CourseId = table.Column<string>(type: "text", nullable: false),
+                    Price = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
+                    CouponId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DiscountAmount = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrderDetails_Coupons_CouponId",
+                        column: x => x.CouponId,
+                        principalTable: "Coupons",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_OrderDetails_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrderDetails_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LessonApprovals",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    LessonId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LessonId = table.Column<string>(type: "text", nullable: false),
                     AdminId = table.Column<Guid>(type: "uuid", nullable: false),
                     Action = table.Column<string>(type: "text", nullable: false),
                     Comments = table.Column<string>(type: "text", nullable: true),
@@ -360,7 +493,7 @@ namespace API_WebH3.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LessonId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LessonId = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     CompletionPercentage = table.Column<int>(type: "integer", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: true),
@@ -383,10 +516,43 @@ namespace API_WebH3.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Quizzes",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    LessonId = table.Column<string>(type: "text", nullable: false),
+                    Question = table.Column<string>(type: "text", nullable: false),
+                    SerializedOptions = table.Column<string>(type: "text", nullable: true),
+                    CorrectAnswer = table.Column<string>(type: "text", nullable: false),
+                    Explanation = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Quizzes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Quizzes_Lessons_LessonId",
+                        column: x => x.LessonId,
+                        principalTable: "Lessons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Chapters_CourseId",
                 table: "Chapters",
                 column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Chats_User1Id",
+                table: "Chats",
+                column: "User1Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Chats_User2Id",
+                table: "Chats",
+                column: "User2Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_ParentCommentId",
@@ -424,6 +590,16 @@ namespace API_WebH3.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Followers_FollowerId",
+                table: "Followers",
+                column: "FollowerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Followers_FollowingId",
+                table: "Followers",
+                column: "FollowingId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LessonApprovals_AdminId",
                 table: "LessonApprovals",
                 column: "AdminId");
@@ -449,6 +625,31 @@ namespace API_WebH3.Migrations
                 column: "CourseId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_ChatId",
+                table: "Messages",
+                column: "ChatId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_SenderId",
+                table: "Messages",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_CouponId",
+                table: "OrderDetails",
+                column: "CouponId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_CourseId",
+                table: "OrderDetails",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_OrderId",
+                table: "OrderDetails",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_CourseId",
                 table: "Orders",
                 column: "CourseId");
@@ -472,6 +673,11 @@ namespace API_WebH3.Migrations
                 name: "IX_Progresses_UserId",
                 table: "Progresses",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Quizzes_LessonId",
+                table: "Quizzes",
+                column: "LessonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_CourseId",
@@ -504,13 +710,22 @@ namespace API_WebH3.Migrations
                 name: "Enrollments");
 
             migrationBuilder.DropTable(
+                name: "Followers");
+
+            migrationBuilder.DropTable(
                 name: "LessonApprovals");
 
             migrationBuilder.DropTable(
-                name: "Orders");
+                name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "OrderDetails");
 
             migrationBuilder.DropTable(
                 name: "Progresses");
+
+            migrationBuilder.DropTable(
+                name: "Quizzes");
 
             migrationBuilder.DropTable(
                 name: "Reviews");
@@ -520,6 +735,15 @@ namespace API_WebH3.Migrations
 
             migrationBuilder.DropTable(
                 name: "Posts");
+
+            migrationBuilder.DropTable(
+                name: "Chats");
+
+            migrationBuilder.DropTable(
+                name: "Coupons");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "Lessons");

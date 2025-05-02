@@ -46,7 +46,7 @@ public class ProgressRepository : IProgressRepository
         }
     }
 
-    public async  Task<Progress> GetByUserAndLessonAsync(Guid userId, Guid lessonId)
+    public async  Task<Progress> GetByUserAndLessonAsync(Guid userId, string lessonId)
     {
         return await _context.Progresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == lessonId);

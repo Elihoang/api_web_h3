@@ -1,17 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using API_WebH3.Helpers;
 
 namespace API_WebH3.Models;
 
 // Quiz for multiple-choice questions
 public class Quiz
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] 
+    public string Id { get; set; } = IdGenerator.IdQuiz();
     
     [ForeignKey("Lesson")]
-    public Guid LessonId { get; set; }
+    public string LessonId { get; set; }
     
     [Required]
     public required string Question { get; set; }

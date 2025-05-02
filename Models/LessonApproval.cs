@@ -12,7 +12,7 @@ public class LessonApproval
     
     [Required]
     [ForeignKey("Lesson")]
-    public Guid LessonId { get; set; }
+    public string LessonId { get; set; }
     
     [Required]
     [ForeignKey("Admin")]

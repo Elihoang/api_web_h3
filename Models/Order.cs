@@ -1,18 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using API_WebH3.Helpers;
 
 namespace API_WebH3.Models;
 
 public class Order
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] 
+    public string Id { get; set; } = IdGenerator.IdOrder();
     
     [ForeignKey("User")]
     public Guid UserId { get; set; }
-
-    [ForeignKey("Course")]
-    public Guid CourseId { get; set; }
 
     [Required]
     [Column(TypeName = "decimal(10, 2)")]

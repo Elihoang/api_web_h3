@@ -7,7 +7,7 @@ public class CreateReviewDto
     [Required]
     public Guid UserId { get; set; }
     [Required]
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     [Required]
     [Range(1, 5)]
     public int Rating { get; set; }

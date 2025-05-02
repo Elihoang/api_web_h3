@@ -2,7 +2,7 @@ namespace API_WebH3.DTO.Course;
 
 public class CourseDto
 {
-    public Guid Id { get; set; }
+    public String Id { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
     public decimal Price { get; set; }

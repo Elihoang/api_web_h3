@@ -5,7 +5,7 @@ namespace API_WebH3.DTO.LessonApproval;
 public class CreateLessonApprovalDto
 {
     [Required]
-    public Guid LessonId { get; set; }
+    public string LessonId { get; set; }
     [Required]
     public Guid AdminId { get; set; }
     [Required]
