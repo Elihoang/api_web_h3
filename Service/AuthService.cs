@@ -98,6 +98,7 @@ namespace API_WebH3.Services
         {
             var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]);
             var tokenHandler = new JwtSecurityTokenHandler();
+            var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
@@ -109,7 +110,9 @@ namespace API_WebH3.Services
                     new Claim("profileImage", user.ProfileImage ?? string.Empty),
                     new Claim("birthDate", user.BirthDate?.ToString("yyyy-MM-dd") ?? string.Empty)
                 }),
-                Expires = DateTime.UtcNow.AddHours(2),
+                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes), // Sử dụng cấu hình
+                Issuer = _configuration["JwtSettings:Issuer"],
+                Audience = _configuration["JwtSettings:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
             };
@@ -117,7 +120,7 @@ namespace API_WebH3.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
             Console.WriteLine($"Generated JWT for {user.Email}: {tokenString}");
-            return tokenHandler.WriteToken(token);
+            return tokenString;
         }
 
         public async Task<AccountUserDto> GetUserDetailsAsync(string email)

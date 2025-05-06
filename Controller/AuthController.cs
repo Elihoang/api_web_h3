@@ -1,7 +1,6 @@
 using API_WebH3.DTO.User;
 using API_WebH3.Services;
 using Microsoft.AspNetCore.Mvc;
-using BCrypt.Net;
 using Microsoft.Extensions.Hosting;
 
 [ApiController]
@@ -10,11 +9,13 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly IWebHostEnvironment _environment;
+    private readonly IConfiguration _configuration; // Thêm IConfiguration
 
-    public AuthController(AuthService authService, IWebHostEnvironment environment)
+    public AuthController(AuthService authService, IWebHostEnvironment environment, IConfiguration configuration)
     {
         _authService = authService;
-        _environment = environment; // Tiêm IWebHostEnvironment
+        _environment = environment;
+        _configuration = configuration; // Tiêm IConfiguration
     }
 
     [HttpPost("register")]
@@ -33,12 +34,13 @@ public class AuthController : ControllerBase
                 return StatusCode(500, new { message = "Failed to login after registration" });
 
             // Lưu token vào cookie
+            var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = _environment.IsDevelopment() ? false : true, // Sử dụng IWebHostEnvironment
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTime.UtcNow.AddHours(2)
+                Secure = _environment.IsDevelopment() ? false : true, // Tắt Secure trong dev
+                SameSite = SameSiteMode.None, // Cho phép cross-site
+                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes)
             };
             Response.Cookies.Append("auth_token", result.Token, cookieOptions);
 
@@ -60,16 +62,17 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "Invalid credentials" });
 
             // Lưu token vào cookie
+            var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = _environment.IsDevelopment() ? false : true, // Sử dụng IWebHostEnvironment
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTime.UtcNow.AddDays(7)
+                Secure = _environment.IsDevelopment() ? false : true, // Tắt Secure trong dev
+                SameSite = SameSiteMode.None, // Cho phép cross-site
+                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes)
             };
             Response.Cookies.Append("auth_token", result.Token, cookieOptions);
 
-            return Ok(new { message = "Login successful", role = result.Role });
+            return Ok(new { message = "Login successful", role = result.Role, token = result.Token });
         }
         catch (Exception ex)
         {

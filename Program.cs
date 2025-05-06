@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json;
 using API_WebH3.Data;
 using API_WebH3.Repository;
 using API_WebH3.Service;
@@ -25,9 +26,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.WriteIndented = true;
     });
+
 
 // 🔹 Đăng ký các dịch vụ
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -76,12 +78,11 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
 builder.Services.AddScoped<UserNotificationService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<VnpayService>(); 
+builder.Services.AddScoped<VnpayService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<EmailPaymentService>();
 
 // 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
-
 
 
 builder.Services.AddCors(options =>
@@ -130,15 +131,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]))
         };
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                context.Token = context.Request.Cookies["auth_token"];
+                // Ưu tiên header, nếu không có thì lấy từ cookie
+                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                context.Token = token ?? context.Request.Cookies["auth_token"];
                 return Task.CompletedTask;
             }
         };
@@ -179,6 +183,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 
-app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+app.MapControllers();
 
 app.Run();
