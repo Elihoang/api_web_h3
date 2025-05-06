@@ -1,9 +1,9 @@
 using API_WebH3.DTO.Post;
 using API_WebH3.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_WebH3.Controller;
-
 
 [ApiController]
 [Route("api/[controller]")]
@@ -15,15 +15,15 @@ public class PostController : ControllerBase
     {
         _postService = postService;
     }
-    
-    
+
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PostDto>>> GetPostsAll()
     {
         var posts = await _postService.GetAllAsync();
         return Ok(posts);
     }
-    
+
     [HttpGet("{id}")]
     public async Task<ActionResult<PostDto>> GetPost(Guid id)
     {
@@ -32,11 +32,12 @@ public class PostController : ControllerBase
         {
             return NotFound();
         }
+
         return Ok(post);
     }
-    
-    
+
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<PostDto>> CreatePost(CreatePostDto createPostDto)
     {
         if (!ModelState.IsValid)
@@ -54,8 +55,8 @@ public class PostController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    
-    
+
+
     [HttpPut("{id}")]
     public async Task<ActionResult<PostDto>> UpdatePost(Guid id, UpdatePostDto updatePostDto)
     {
@@ -69,11 +70,11 @@ public class PostController : ControllerBase
         {
             return NotFound();
         }
+
         return Ok(postDto);
     }
-    
-    
-    
+
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePost(Guid id)
     {
@@ -82,7 +83,7 @@ public class PostController : ControllerBase
         {
             return NotFound();
         }
+
         return NoContent();
     }
-    
 }
