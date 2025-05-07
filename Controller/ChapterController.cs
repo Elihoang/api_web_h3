@@ -33,6 +33,13 @@ public class ChapterController : ControllerBase
         return Ok(chapter);
     }
 
+    [HttpGet("course/{courseId}")]
+    public async Task<ActionResult<IEnumerable<ChapterDto>>> GetChaptersByCourseId(string courseId)
+    {
+        var chapters = await _chapterService.GetChaptersByCourseId(courseId);
+        return Ok(chapters);
+    }
+
     [HttpPost]
     public async Task<ActionResult<ChapterDto>> CreateChapter(CreateChapterDto createChapterDto)
     {
@@ -40,7 +47,7 @@ public class ChapterController : ControllerBase
         {
             return BadRequest(ModelState);
         }
-        var  chapter = await _chapterService.CreateChapter(createChapterDto);
+        var chapter = await _chapterService.CreateChapter(createChapterDto);
         return CreatedAtAction(nameof(GetChapterById), new { id = chapter.Id }, chapter);
     }
 
@@ -70,5 +77,4 @@ public class ChapterController : ControllerBase
         }
         return NoContent();
     }
-    
 }

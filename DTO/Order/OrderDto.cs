@@ -6,11 +6,9 @@ public class OrderDto
 {
     public string Id { get; set; }
     public Guid UserId { get; set; }
-    public Guid CourseId { get; set; }
     public decimal Amount { get; set; }
     public string Status { get; set; }
     public string CreatedAt { get; set; }
     public Models.User User { get; set; }
-    public Models.Course Course { get; set; }
     public List<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 }

@@ -15,16 +15,29 @@ public class ChapterService
 
     public async Task<IEnumerable<ChapterDto>> GetAllChapters()
     {
-        var chapter = await _chapterRepository.GetAllChaptersAsync();
-        return chapter.Select(c => new ChapterDto
+        var chapters = await _chapterRepository.GetAllChaptersAsync();
+        return chapters.Select(c => new ChapterDto
         {
             Id = c.Id,
             CourseId = c.CourseId,
             Title = c.Title,
             Description = c.Description,
             OrderNumber = c.OrderNumber,
-            CreatedAt = c.CreatedAt,
+            CreatedAt = c.CreatedAt
+        });
+    }
 
+    public async Task<IEnumerable<ChapterDto>> GetChaptersByCourseId(string courseId)
+    {
+        var chapters = await _chapterRepository.GetChaptersByCourseIdAsync(courseId);
+        return chapters.Select(c => new ChapterDto
+        {
+            Id = c.Id,
+            CourseId = c.CourseId,
+            Title = c.Title,
+            Description = c.Description,
+            OrderNumber = c.OrderNumber,
+            CreatedAt = c.CreatedAt
         });
     }
 
@@ -43,7 +56,7 @@ public class ChapterService
             Title = chapter.Title,
             Description = chapter.Description,
             OrderNumber = chapter.OrderNumber,
-            CreatedAt = chapter.CreatedAt,
+            CreatedAt = chapter.CreatedAt
         };
     }
 
@@ -69,11 +82,9 @@ public class ChapterService
             OrderNumber = chapter.OrderNumber,
             CreatedAt = chapter.CreatedAt
         };
-        
-
     }
 
-    public async Task<ChapterDto> UpdateChapter(Guid id ,UpdateChapterDto updateChapterDto)
+    public async Task<ChapterDto> UpdateChapter(Guid id, UpdateChapterDto updateChapterDto)
     {
         var chapter = await _chapterRepository.GetChapterByIdAsync(id);
         if (chapter == null)
@@ -93,7 +104,6 @@ public class ChapterService
             Description = chapter.Description,
             OrderNumber = chapter.OrderNumber,
             CreatedAt = chapter.CreatedAt
-
         };
     }
 
@@ -107,5 +117,4 @@ public class ChapterService
         await _chapterRepository.DeleteChapterAsync(id);
         return true;
     }
-        
 }

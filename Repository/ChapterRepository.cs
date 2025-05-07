@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_WebH3.Repository;
 
-public class ChapterRepository: IChapterRepository
+public class ChapterRepository : IChapterRepository
 {
     private readonly AppDbContext _context;
 
@@ -23,6 +23,13 @@ public class ChapterRepository: IChapterRepository
         return await _context.Chapters.FindAsync(id);
     }
 
+    public async Task<IEnumerable<Chapter>> GetChaptersByCourseIdAsync(string courseId)
+    {
+        return await _context.Chapters
+            .Where(c => c.CourseId == courseId)
+            .ToListAsync();
+    }
+
     public async Task AddChapterAsync(Chapter chapter)
     {
         await _context.Chapters.AddAsync(chapter);
@@ -38,11 +45,10 @@ public class ChapterRepository: IChapterRepository
     public async Task DeleteChapterAsync(Guid id)
     {
         var chapter = await _context.Chapters.FindAsync(id);
-        if (chapter!= null)
+        if (chapter != null)
         {
             _context.Chapters.Remove(chapter);
             await _context.SaveChangesAsync();
         }
-
     }
 }
