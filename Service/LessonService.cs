@@ -31,7 +31,46 @@ public class LessonService
             Status = l.Status,
             ApprovedBy = l.ApprovedBy,
             CreatedAt = l.CreatedAt
+        });
+    }
 
+    public async Task<IEnumerable<LessonDto>> GetLessonsByChapterId(Guid chapterId)
+    {
+        var lessons = await _repository.GetLessonsByChapterIdAsync(chapterId);
+        return lessons.Select(l => new LessonDto
+        {
+            Id = l.Id,
+            ChapterId = l.ChapterId,
+            CourseId = l.CourseId,
+            Title = l.Title,
+            Description = l.Description,
+            Content = l.Content,
+            VideoUrls = l.VideoUrls,
+            Duration = l.Duration,
+            OrderNumber = l.OrderNumber,
+            Status = l.Status,
+            ApprovedBy = l.ApprovedBy,
+            CreatedAt = l.CreatedAt
+        });
+    }
+
+    public async Task<IEnumerable<LessonDto>> GetLessonsByCourseId(string courseId)
+    {
+        var lessons = await _repository.GetLessonsByCourseIdAsync(courseId);
+        return lessons.Select(l => new LessonDto
+        {
+            Id = l.Id,
+            ChapterId = l.ChapterId,
+            CourseId = l.CourseId,
+            Title = l.Title,
+            Description = l.Description,
+            Content = l.Content,
+            VideoUrls = l.VideoUrls,
+            Duration = l.Duration,
+            OrderNumber = l.OrderNumber,
+            Status = l.Status,
+            ApprovedBy = l.ApprovedBy,
+            CreatedAt = l.CreatedAt
         });
     }
 
@@ -62,6 +101,10 @@ public class LessonService
 
     public async Task<LessonDto> CreateLesson(CreateLessonDto createLessonDto)
     {
+        if (createLessonDto.VideoUrls == null || createLessonDto.VideoUrls.Count != 1)
+        {
+            throw new ArgumentException("Mỗi bài học chỉ được phép có đúng 1 video.");
+        }
         var lesson = new Lesson
         {
             Id = IdGenerator.IdLesson(),
@@ -129,10 +172,9 @@ public class LessonService
             Status = lesson.Status,
             ApprovedBy = lesson.ApprovedBy,
             CreatedAt = lesson.CreatedAt
-
         };
-
     }
+
     public async Task<bool> DeleteLesson(string id)
     {
         var lesson = await _repository.GetLessonById(id);

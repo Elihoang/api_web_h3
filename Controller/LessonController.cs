@@ -15,7 +15,6 @@ public class LessonController : ControllerBase
         _lessonService = lessonService;
     }
 
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LessonDto>>> GetLessonsAll()
     {
@@ -34,6 +33,20 @@ public class LessonController : ControllerBase
         return Ok(lesson);
     }
 
+    [HttpGet("chapter/{chapterId}")]
+    public async Task<ActionResult<IEnumerable<LessonDto>>> GetLessonsByChapterId(Guid chapterId)
+    {
+        var lessons = await _lessonService.GetLessonsByChapterId(chapterId);
+        return Ok(lessons);
+    }
+
+    [HttpGet("course/{courseId}")]
+    public async Task<ActionResult<IEnumerable<LessonDto>>> GetLessonsByCourseId(string courseId)
+    {
+        var lessons = await _lessonService.GetLessonsByCourseId(courseId);
+        return Ok(lessons);
+    }
+
     [HttpPost]
     public async Task<ActionResult<LessonDto>> CreateLesson(CreateLessonDto createLessonDto)
     {
@@ -48,7 +61,6 @@ public class LessonController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateLesson(string id, UpdateLessonDto updateLessonDto)
     {
-
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);

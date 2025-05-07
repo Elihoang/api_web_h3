@@ -43,4 +43,8 @@ public class CourseRepository : ICourseRepository
             await _context.SaveChangesAsync();
         }
     }
+    public async Task<bool> ExistsAsync(string id)
+    {
+        return await _context.Courses.AnyAsync(c => c.Id == id);
+    }
 }

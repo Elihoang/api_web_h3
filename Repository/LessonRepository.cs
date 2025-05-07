@@ -23,6 +23,20 @@ public class LessonRepository : ILessonRepository
         return await _context.Lessons.FindAsync(id);
     }
 
+    public async Task<IEnumerable<Lesson>> GetLessonsByChapterIdAsync(Guid chapterId)
+    {
+        return await _context.Lessons
+            .Where(l => l.ChapterId == chapterId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Lesson>> GetLessonsByCourseIdAsync(string courseId)
+    {
+        return await _context.Lessons
+            .Where(l => l.CourseId == courseId)
+            .ToListAsync();
+    }
+
     public async Task CreateLesson(Lesson lesson)
     {
         await _context.Lessons.AddAsync(lesson);
