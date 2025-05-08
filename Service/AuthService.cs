@@ -123,31 +123,29 @@ namespace API_WebH3.Services
             return tokenString;
         }
 
-        public async Task<AccountUserDto> GetUserDetailsAsync(string email)
+        public async Task<UserDto> GetUserDetailsAsync(Guid id)
         {
-            try
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
             {
-                Console.WriteLine($"Fetching user details: {email}");
-                var user = await _userRepository.GetByEmailAsync(email);
-                if (user == null)
-                {
-                    Console.WriteLine($"User not found: {email}");
-                    throw new Exception("User not found");
-                }
+                return null;
+            }
 
-                return new AccountUserDto
-                {
-                    FullName = user.FullName,
-                    Email = user.Email,
-                    ProfileImage = user.ProfileImage,
-                    BirthDate = user.BirthDate
-                };
-            }
-            catch (Exception ex)
+            return new UserDto
             {
-                Console.WriteLine($"GetUserDetails error: {ex.Message}\n{ex.StackTrace}");
-                throw;
-            }
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                BirthDate = user.BirthDate,
+                ProfileImage = user.ProfileImage,
+                Role = user.Role,
+                CreatedAt = user.CreatedAt,
+                IpAddress = user.IpAddress,
+                DeviceName = user.DeviceName,
+                GoogleId = user.GoogleId,
+                IsGoogleAccount = user.IsGoogleAccount
+            };
         }
 
         public async Task<bool> ForgotPasswordAsync(string email)

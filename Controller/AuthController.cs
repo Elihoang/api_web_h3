@@ -1,7 +1,10 @@
 using API_WebH3.DTO.User;
 using API_WebH3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using System;
+using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -9,13 +12,13 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly IWebHostEnvironment _environment;
-    private readonly IConfiguration _configuration; // Thêm IConfiguration
+    private readonly IConfiguration _configuration;
 
     public AuthController(AuthService authService, IWebHostEnvironment environment, IConfiguration configuration)
     {
         _authService = authService;
         _environment = environment;
-        _configuration = configuration; // Tiêm IConfiguration
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -27,24 +30,20 @@ public class AuthController : ControllerBase
             if (!success)
                 return BadRequest(new { message = "Email already exists" });
 
-            // Đăng nhập tự động sau khi đăng ký
             var loginDto = new Login { Email = registerDto.Email, Password = registerDto.Password };
             var result = await _authService.LoginAsync(loginDto);
             if (result == null)
                 return StatusCode(500, new { message = "Failed to login after registration" });
 
-            // Lưu token vào cookie
             var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
-            var cookieOptions = new CookieOptions
+            return Ok(new
             {
-                HttpOnly = true,
-                Secure = _environment.IsDevelopment() ? false : true, // Tắt Secure trong dev
-                SameSite = SameSiteMode.None, // Cho phép cross-site
-                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes)
-            };
-            Response.Cookies.Append("auth_token", result.Token, cookieOptions);
-
-            return Ok(new { message = "User registered successfully", role = result.Role });
+                message = "User registered successfully",
+                role = result.Role,
+                email = registerDto.Email,
+                token = result.Token,
+                expiresInMinutes = expirationMinutes
+            });
         }
         catch (Exception ex)
         {
@@ -61,18 +60,15 @@ public class AuthController : ControllerBase
             if (result == null)
                 return Unauthorized(new { message = "Invalid credentials" });
 
-            // Lưu token vào cookie
             var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
-            var cookieOptions = new CookieOptions
+            return Ok(new
             {
-                HttpOnly = true,
-                Secure = _environment.IsDevelopment() ? false : true, // Tắt Secure trong dev
-                SameSite = SameSiteMode.None, // Cho phép cross-site
-                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes)
-            };
-            Response.Cookies.Append("auth_token", result.Token, cookieOptions);
-
-            return Ok(new { message = "Login successful", role = result.Role, token = result.Token });
+                message = "Login successful",
+                role = result.Role,
+                token = result.Token,
+                email = loginDto.Email,
+                expiresInMinutes = expirationMinutes
+            });
         }
         catch (Exception ex)
         {
@@ -88,23 +84,34 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("profile")]
-    public async Task<IActionResult> GetUserProfile([FromQuery] string email)
+    [Authorize]
+    public async Task<IActionResult> GetUserProfile()
     {
         try
         {
-            var userDetails = await _authService.GetUserDetailsAsync(email);
-            return Ok(userDetails);
+            var userIdClaim = User.FindFirst("id")?.Value;
+            var userRoleClaim = User.FindFirst("role")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized(new { message = "Token không hợp lệ." });
+
+            var userDto = await _authService.GetUserDetailsAsync(userId);
+            if (userDto == null)
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            return Ok(userDto);
         }
         catch (Exception ex)
         {
-            return NotFound(new { message = ex.Message });
+            Console.WriteLine($"Lỗi khi lấy thông tin người dùng: {ex.Message}\n{ex.StackTrace}");
+            return StatusCode(500, new { message = "Đã xảy ra lỗi server." });
         }
     }
 
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        Response.Cookies.Delete("auth_token");
+        // No server-side action needed for localStorage/sessionStorage logout
         return Ok(new { message = "Logout successful" });
     }
 

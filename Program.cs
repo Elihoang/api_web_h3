@@ -82,9 +82,6 @@ builder.Services.AddScoped<VnpayService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<EmailPaymentService>();
 
-builder.Services.AddScoped<IImageRepository, ImageRepository>();
-builder.Services.AddScoped<ImageService>();
-
 // 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
 
 
