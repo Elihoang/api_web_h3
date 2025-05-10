@@ -17,7 +17,6 @@ public class UserService
     {
         var users = await _userRepository.GetAllAsync();
 
-
         return users.Select(u => new UserDto
         {
             Id = u.Id,
@@ -108,19 +107,55 @@ public class UserService
             return null;
         }
 
-        user.FullName = updateUserDto.FullName;
-        user.Email = updateUserDto.Email;
-        user.Password = updateUserDto.Password;
-        user.Phone = updateUserDto.Phone;
-        user.BirthDate = updateUserDto.BirthDate.HasValue
-            ? DateTime.SpecifyKind(updateUserDto.BirthDate.Value, DateTimeKind.Utc)
-            : null;
-        user.ProfileImage = updateUserDto.ProfileImage;
-        user.Role = updateUserDto.Role;
-        user.IpAddress = updateUserDto.IpAddress;
-        user.DeviceName = updateUserDto.DeviceName;
-        user.GoogleId = updateUserDto.GoogleId;
-        user.IsGoogleAccount = updateUserDto.IsGoogleAccount;
+        // Only update fields that are provided in the request
+        if (updateUserDto.FullName != null)
+        {
+            user.FullName = updateUserDto.FullName;
+        }
+        if (updateUserDto.Email != null)
+        {
+            user.Email = updateUserDto.Email;
+        }
+        if (updateUserDto.Password != null)
+        {
+            user.Password = updateUserDto.Password;
+        }
+        if (updateUserDto.Phone != null)
+        {
+            user.Phone = updateUserDto.Phone;
+        }
+        if (updateUserDto.BirthDate.HasValue)
+        {
+            user.BirthDate = DateTime.SpecifyKind(updateUserDto.BirthDate.Value, DateTimeKind.Utc);
+        }
+        else if (updateUserDto.BirthDate == null)
+        {
+            user.BirthDate = null; // Explicitly allow nulling out BirthDate
+        }
+        if (updateUserDto.ProfileImage != null)
+        {
+            user.ProfileImage = updateUserDto.ProfileImage;
+        }
+        if (updateUserDto.Role != null)
+        {
+            user.Role = updateUserDto.Role;
+        }
+        if (updateUserDto.IpAddress != null)
+        {
+            user.IpAddress = updateUserDto.IpAddress;
+        }
+        if (updateUserDto.DeviceName != null)
+        {
+            user.DeviceName = updateUserDto.DeviceName;
+        }
+        if (updateUserDto.GoogleId != null)
+        {
+            user.GoogleId = updateUserDto.GoogleId;
+        }
+        if (updateUserDto.IsGoogleAccount)
+        {
+            user.IsGoogleAccount = updateUserDto.IsGoogleAccount;
+        }
 
         await _userRepository.UpdateAsync(user);
 
@@ -151,5 +186,40 @@ public class UserService
 
         await _userRepository.DeleteAsync(id);
         return true;
+    }
+
+    public async Task<bool> UpdatePasswordAsync(Guid id, UpdatePasswordDto updatePasswordDto)
+    {
+        if (updatePasswordDto == null)
+        {
+            throw new ArgumentNullException(nameof(updatePasswordDto), "Dữ liệu cập nhật không được null.");
+        }
+
+        if (updatePasswordDto.Password != updatePasswordDto.ConfirmPassword)
+        {
+            throw new ArgumentException("Mật khẩu xác nhận không khớp.");
+        }
+
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            // Băm mật khẩu mới
+            user.Password = BCrypt.Net.BCrypt.HashPassword(updatePasswordDto.Password);
+
+            Console.WriteLine($"Đã cập nhật mật khẩu cho người dùng: {user.Id}");
+
+            await _userRepository.UpdateAsync(user);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi cập nhật mật khẩu: {ex.Message}");
+            return false;
+        }
     }
 }

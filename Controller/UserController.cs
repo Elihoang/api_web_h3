@@ -74,4 +74,20 @@ public class UserController : ControllerBase
 
         return NoContent();
     }
+    [HttpPut("{id}/password")]
+    public async Task<IActionResult> UpdatePassword(Guid id, [FromBody] UpdatePasswordDto updatePasswordDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _userService.UpdatePasswordAsync(id, updatePasswordDto);
+        if (!result)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
 }

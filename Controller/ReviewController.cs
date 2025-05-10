@@ -32,6 +32,20 @@ public class ReviewController : ControllerBase
         return Ok(review);
     }
 
+    [HttpGet("course/{courseId}")]
+    public async Task<ActionResult<IEnumerable<ReviewDto>>> GetReviewsByCourseId(string courseId)
+    {
+        var reviews = await _reviewService.GetReviewsByCourseIdAsync(courseId);
+        return Ok(reviews);
+    }
+
+    [HttpGet("user/{userId}")]
+    public async Task<ActionResult<IEnumerable<ReviewDto>>> GetReviewsByUserId(Guid userId)
+    {
+        var reviews = await _reviewService.GetReviewsByUserIdAsync(userId);
+        return Ok(reviews);
+    }
+
     [HttpPost]
     public async Task<ActionResult<ReviewDto>> CreateReview(CreateReviewDto createReviewDto)
     {
@@ -77,6 +91,4 @@ public class ReviewController : ControllerBase
         }
         return NoContent();
     }
-    
-    
 }
