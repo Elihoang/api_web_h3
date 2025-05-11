@@ -1,4 +1,5 @@
 using API_WebH3.DTO.Comment;
+using API_WebH3.DTO.User;
 using API_WebH3.Models;
 using API_WebH3.Repository;
 
@@ -24,6 +25,8 @@ public class CommentService
         {
             Id = c.Id,
             UserId = c.UserId,
+            UserFullName = c.User?.FullName ?? "Unknown",
+            UserProfileImage = c.User?.ProfileImage ?? "default-avatar.png",
             PostId = c.PostId,
             Content = c.Content,
             ParentCommentId = c.ParentCommentId,
@@ -32,6 +35,8 @@ public class CommentService
             {
                 Id = r.Id,
                 UserId = r.UserId,
+                UserFullName = r.User?.FullName ?? "Unknown",
+                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
                 PostId = r.PostId,
                 Content = r.Content,
                 ParentCommentId = r.ParentCommentId,
@@ -40,16 +45,19 @@ public class CommentService
                 {
                     Id = r2.Id,
                     UserId = r2.UserId,
+                    UserFullName = r2.User?.FullName ?? "Unknown",
+                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
                     PostId = r2.PostId,
                     Content = r2.Content,
                     ParentCommentId = r2.ParentCommentId,
                     CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>() 
+                    Replies = new List<CommentDto>()
                 }).ToList() ?? new List<CommentDto>()
             }).ToList() ?? new List<CommentDto>()
         });
     }
     
+   
     public async Task<CommentDto> GetByIdAsync(int id)
     {
         var comment = await _commentRepository.GetCommentByIdAsync(id);
@@ -57,10 +65,13 @@ public class CommentService
         {
             return null;
         }
+
         return new CommentDto
         {
             Id = comment.Id,
             UserId = comment.UserId,
+            UserFullName = comment.User?.FullName ?? "Unknown",
+            UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png", // Ảnh mặc định nếu không có
             PostId = comment.PostId,
             Content = comment.Content,
             ParentCommentId = comment.ParentCommentId,
@@ -69,6 +80,8 @@ public class CommentService
             {
                 Id = r.Id,
                 UserId = r.UserId,
+                UserFullName = r.User?.FullName ?? "Unknown",
+                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
                 PostId = r.PostId,
                 Content = r.Content,
                 ParentCommentId = r.ParentCommentId,
@@ -77,46 +90,16 @@ public class CommentService
                 {
                     Id = r2.Id,
                     UserId = r2.UserId,
+                    UserFullName = r2.User?.FullName ?? "Unknown",
+                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
                     PostId = r2.PostId,
                     Content = r2.Content,
                     ParentCommentId = r2.ParentCommentId,
                     CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>() 
+                    Replies = new List<CommentDto>()
                 }).ToList() ?? new List<CommentDto>()
             }).ToList() ?? new List<CommentDto>()
         };
-    }
-    public async Task<IEnumerable<CommentDto>> GetByPostIdAsync(Guid postId)
-    {
-        var comments = await _commentRepository.GetByPostIdAsync(postId);
-        return comments.Select(c => new CommentDto
-        {
-            Id = c.Id,
-            UserId = c.UserId,
-            PostId = c.PostId,
-            Content = c.Content,
-            ParentCommentId = c.ParentCommentId,
-            CreatedAt = c.CreatedAt,
-            Replies = c.Replies?.Select(r => new CommentDto
-            {
-                Id = r.Id,
-                UserId = r.UserId,
-                PostId = r.PostId,
-                Content = r.Content,
-                ParentCommentId = r.ParentCommentId,
-                CreatedAt = r.CreatedAt,
-                Replies = r.Replies?.Select(r2 => new CommentDto
-                {
-                    Id = r2.Id,
-                    UserId = r2.UserId,
-                    PostId = r2.PostId,
-                    Content = r2.Content,
-                    ParentCommentId = r2.ParentCommentId,
-                    CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>() // Giới hạn độ sâu
-                }).ToList() ?? new List<CommentDto>()
-            }).ToList() ?? new List<CommentDto>()
-        });
     }
     
     public async Task<CommentDto> CreateAsync(CreateCommentDto createCommentDto)
@@ -127,13 +110,11 @@ public class CommentService
             throw new ArgumentException("User not found.");
         }
 
-
         var post = await _postRepository.GetPostByIdAsync(createCommentDto.PostId);
         if (post == null)
         {
             throw new ArgumentException("Post not found.");
         }
-
 
         if (createCommentDto.ParentCommentId.HasValue)
         {
@@ -163,6 +144,8 @@ public class CommentService
         {
             Id = comment.Id,
             UserId = comment.UserId,
+            UserFullName = user.FullName, // Lấy từ user đã truy vấn
+            UserProfileImage = user.ProfileImage ?? "default-avatar.png",
             PostId = comment.PostId,
             Content = comment.Content,
             ParentCommentId = comment.ParentCommentId,
@@ -179,6 +162,7 @@ public class CommentService
         }
 
         comment.Content = updateCommentDto.Content;
+        comment.CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"); // Cập nhật thời gian mới nhất
 
         await _commentRepository.UpdateCommentAsync(comment);
 
@@ -186,6 +170,8 @@ public class CommentService
         {
             Id = comment.Id,
             UserId = comment.UserId,
+            UserFullName = comment.User?.FullName ?? "Unknown",
+            UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png",
             PostId = comment.PostId,
             Content = comment.Content,
             ParentCommentId = comment.ParentCommentId,
@@ -194,6 +180,8 @@ public class CommentService
             {
                 Id = r.Id,
                 UserId = r.UserId,
+                UserFullName = r.User?.FullName ?? "Unknown",
+                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
                 PostId = r.PostId,
                 Content = r.Content,
                 ParentCommentId = r.ParentCommentId,
@@ -202,11 +190,13 @@ public class CommentService
                 {
                     Id = r2.Id,
                     UserId = r2.UserId,
+                    UserFullName = r2.User?.FullName ?? "Unknown",
+                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
                     PostId = r2.PostId,
                     Content = r2.Content,
                     ParentCommentId = r2.ParentCommentId,
                     CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>() 
+                    Replies = new List<CommentDto>()
                 }).ToList() ?? new List<CommentDto>()
             }).ToList() ?? new List<CommentDto>()
         };
@@ -223,4 +213,43 @@ public class CommentService
         await _commentRepository.DeleteCommentAsync(id);
         return true;
     }
+    public async Task<IEnumerable<CommentDto>> GetByPostIdAsync(Guid postId)
+    {
+        var comments = await _commentRepository.GetByPostIdAsync(postId);
+        return comments.Select(c => new CommentDto
+        {
+            Id = c.Id,
+            UserId = c.UserId,
+            UserFullName = c.User?.FullName ?? "Unknown",
+            UserProfileImage = c.User?.ProfileImage ?? "default-avatar.png",
+            PostId = c.PostId,
+            Content = c.Content,
+            ParentCommentId = c.ParentCommentId,
+            CreatedAt = c.CreatedAt,
+            Replies = c.Replies?.Select(r => new CommentDto
+            {
+                Id = r.Id,
+                UserId = r.UserId,
+                UserFullName = r.User?.FullName ?? "Unknown",
+                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
+                PostId = r.PostId,
+                Content = r.Content,
+                ParentCommentId = r.ParentCommentId,
+                CreatedAt = r.CreatedAt,
+                Replies = r.Replies?.Select(r2 => new CommentDto
+                {
+                    Id = r2.Id,
+                    UserId = r2.UserId,
+                    UserFullName = r2.User?.FullName ?? "Unknown",
+                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
+                    PostId = r2.PostId,
+                    Content = r2.Content,
+                    ParentCommentId = r2.ParentCommentId,
+                    CreatedAt = r2.CreatedAt,
+                    Replies = new List<CommentDto>()
+                }).ToList() ?? new List<CommentDto>()
+            }).ToList() ?? new List<CommentDto>()
+        });
+    }
+    
 }
