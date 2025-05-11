@@ -75,6 +75,9 @@ builder.Services.AddScoped<EnrollmentService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<NotificationService>();
 
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<StudentService>();
+
 builder.Services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
 builder.Services.AddScoped<UserNotificationService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();

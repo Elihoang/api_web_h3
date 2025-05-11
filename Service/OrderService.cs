@@ -85,6 +85,7 @@ public class OrderService
             Amount = order.Amount,
             Status = order.Status,
             CreatedAt = order.CreatedAt,
+            User = order.User,
             OrderDetails = orderDetails.ToList()
         };
     }
@@ -95,5 +96,62 @@ public class OrderService
         if (order == null) throw new ArgumentException("Đơn hàng không tồn tại.");
         order.Status = status;
         await _orderRepository.UpdateAsync(order);
+    }
+
+    public async Task<(List<OrderDto> Orders, int TotalItems)> GetAllOrdersAsync(int pageNumber, int pageSize)
+    {
+        var allOrders = await _orderRepository.GetAllAsync();
+        var totalItems = allOrders.Count();
+
+        var pagedOrders = allOrders
+            .OrderByDescending(o => o.CreatedAt) // nếu cần
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var orderDtos = new List<OrderDto>();
+
+        foreach (var order in pagedOrders)
+        {
+            var details = await _orderRepository.GetOrderDetailsByOrderIdAsync(order.Id);
+
+            var orderDto = new OrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                Amount = order.Amount,
+                Status = order.Status,
+                CreatedAt = order.CreatedAt,
+                User = order.User,
+                OrderDetails = details.ToList()
+            };
+
+            orderDtos.Add(orderDto);
+        }
+
+        return (orderDtos, totalItems);
+    }
+
+    public async Task<IEnumerable<OrderDto>> GetOrdersByUserIdAsync(Guid userId)
+    {
+        var orders = await _orderRepository.GetByUserIdAsync(userId);
+        var orderDtos = new List<OrderDto>();
+
+        foreach (var order in orders)
+        {
+            var orderDto = await GetOrderById(order.Id);
+            if (orderDto != null)
+            {
+                orderDtos.Add(orderDto);
+            }
+        }
+
+        return orderDtos;
+    }
+
+    public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(string orderId)
+    {
+        var orderDetails = await _orderRepository.GetOrderDetailsByOrderIdAsync(orderId);
+        return orderDetails;
     }
 }

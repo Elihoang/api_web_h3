@@ -11,4 +11,5 @@ public interface IOrderRepository
     Task CreateOrderAsync(Order order);
     Task CreateOrderDetailsAsync(OrderDetail orderDetails);
     Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(string orderId);
+    Task<IEnumerable<Order>> GetAllAsync();
 }

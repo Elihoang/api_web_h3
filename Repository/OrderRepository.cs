@@ -49,4 +49,11 @@ public class OrderRepository: IOrderRepository
             .Where(od => od.OrderId == orderId)
             .ToListAsync();
     }
+    public async Task<IEnumerable<Order>> GetAllAsync()
+    {
+        return await _context.Orders
+            .Include(o => o.User)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
 }
