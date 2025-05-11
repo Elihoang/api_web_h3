@@ -86,171 +86,129 @@ public class VnpayService
     public async Task<IActionResult> PaymentExecuteAsync(IQueryCollection collections)
     {
         _responseData.Clear();
-    foreach (var (key, value) in collections)
-    {
-        if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+        foreach (var (key, value) in collections)
         {
-            _responseData.Add(key, value);
+            if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+            {
+                _responseData.Add(key, value);
+            }
         }
-    }
 
-    if (!_responseData.ContainsKey("vnp_TxnRef"))
-    {
-        Console.WriteLine("Missing vnp_TxnRef in response data.");
-        return new JsonResult(new
+        if (!_responseData.ContainsKey("vnp_TxnRef"))
         {
-            Status = "Failed",
-            RedirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingOrderId",
-            Message = "Missing vnp_TxnRef in response data"
-        });
-    }
+            Console.WriteLine("Missing vnp_TxnRef in response data.");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingOrderId");
+        }
 
-    Console.WriteLine($"Received vnp_TxnRef: {GetResponseData("vnp_TxnRef")}");
-    
-    var txnRefRaw = GetResponseData("vnp_TxnRef");
-    if (string.IsNullOrWhiteSpace(txnRefRaw))
-    {
-        Console.WriteLine($"Invalid vnp_TxnRef format: {GetResponseData("vnp_TxnRef")}");
-        return new JsonResult(new
+        Console.WriteLine($"Received vnp_TxnRef: {GetResponseData("vnp_TxnRef")}");
+
+        var txnRefRaw = GetResponseData("vnp_TxnRef");
+        if (string.IsNullOrWhiteSpace(txnRefRaw))
         {
-            Status = "Failed",
-            RedirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidOrderId",
-            Message = "Invalid vnp_TxnRef format"
-        });
-    }
-    var orderId = txnRefRaw;
-    
-    var vnpResponseCode = GetResponseData("vnp_ResponseCode");
-    var vnpSecureHash = collections["vnp_SecureHash"];
-    var orderInfo = GetResponseData("vnp_OrderInfo");
+            Console.WriteLine($"Invalid vnp_TxnRef format: {GetResponseData("vnp_TxnRef")}");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidOrderId");
+        }
+        var orderId = txnRefRaw;
 
-    if (string.IsNullOrEmpty(vnpSecureHash))
-    {
-        Console.WriteLine("Missing vnp_SecureHash in response data.");
-        return new JsonResult(new
+        var vnpResponseCode = GetResponseData("vnp_ResponseCode");
+        var vnpSecureHash = collections["vnp_SecureHash"];
+        var orderInfo = GetResponseData("vnp_OrderInfo");
+
+        if (string.IsNullOrEmpty(vnpSecureHash))
         {
-            Status = "Failed",
-            RedirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingSignature",
-            Message = "Missing vnp_SecureHash in response data"
-        });
-    }
+            Console.WriteLine("Missing vnp_SecureHash in response data.");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingSignature");
+        }
 
-    var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
-    Console.WriteLine($"Signature validation: {checkSignature}");
+        var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
+        Console.WriteLine($"Signature validation: {checkSignature}");
 
-    var order = await _orderService.GetOrderById(orderId);
-    if (order == null)
-    {
-        Console.WriteLine($"Order not found: Id={orderId}");
-        return new JsonResult(new
+        var order = await _orderService.GetOrderById(orderId);
+        if (order == null)
         {
-            Status = "Failed",
-            RedirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=OrderNotFound",
-            Message = "Order not found"
-        });
-    }
+            Console.WriteLine($"Order not found: Id={orderId}");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=OrderNotFound");
+        }
 
-    if (!checkSignature)
-    {
-        Console.WriteLine($"Invalid signature for order: Id={orderId}");
-        return new JsonResult(new
+        if (!checkSignature)
         {
-            Status = "Failed",
-            RedirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidSignature",
-            Message = "Invalid signature"
-        });
-    }
+            Console.WriteLine($"Invalid signature for order: Id={orderId}");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidSignature");
+        }
 
-    string redirectUrl;
-    string status;
-    string message;
-    switch (vnpResponseCode)
-    {
-        case "00":
-            Console.WriteLine($"Payment successful for order: Id={orderId}");
-            await _orderService.UpdateOrderStatus(orderId, "Paid");
+        string redirectUrl;
+        switch (vnpResponseCode)
+        {
+            case "00":
+                Console.WriteLine($"Payment successful for order: Id={orderId}");
+                await _orderService.UpdateOrderStatus(orderId, "Paid");
 
-            foreach (var detail in order.OrderDetails)
-            {
-                var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(order.UserId, detail.CourseId);
-                if (existingEnrollment == null)
+                foreach (var detail in order.OrderDetails)
                 {
-                    Console.WriteLine($"Creating enrollment for UserId={order.UserId}, CourseId={detail.CourseId}");
-                    await _enrollementService.CreateAsync(new CreateEnrollmentDto
+                    var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(order.UserId, detail.CourseId);
+                    if (existingEnrollment == null)
                     {
-                        UserId = order.UserId,
-                        CourseId = detail.CourseId,
-                        Status = "Enrolled"
-                    });
+                        Console.WriteLine($"Creating enrollment for UserId={order.UserId}, CourseId={detail.CourseId}");
+                        await _enrollementService.CreateAsync(new CreateEnrollmentDto
+                        {
+                            UserId = order.UserId,
+                            CourseId = detail.CourseId,
+                            Status = "Enrolled"
+                        });
+                    }
                 }
-            }
 
-            var user = await _userRepository.GetByIdAsync(order.UserId);
-            if (user != null && !string.IsNullOrEmpty(user.Email))
-            {
-                Console.WriteLine($"🔹 Tìm thấy người dùng: Id={user.Id}, Email={user.Email}");
-                var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
-                var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
-                            <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
-                            <p><strong>Thông tin đơn hàng:</strong></p>
-                            <ul>
-                                <li>Mã đơn hàng: {order.Id}</li>
-                                <li>Tổng tiền: {order.Amount:N0} VND</li>
-                                <li>Thời gian: {order.CreatedAt}</li>
-                            </ul>
-                            <p><strong>Chi tiết đơn hàng:</strong></p>
-                            <ul>
-                                {string.Join("", order.OrderDetails.Select(d => $"<li>Khóa học ID: {d.CourseId}, Giá: {d.Price:N0} VND, Giảm giá: {(d.DiscountAmount ?? 0):N0} VND</li>"))}
-                            </ul>
-                            <p>Trân trọng,<br>H3 xin cảm ơn</p>";
-                try
+                var user = await _userRepository.GetByIdAsync(order.UserId);
+                if (user != null && !string.IsNullOrEmpty(user.Email))
                 {
-                    await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
+                    Console.WriteLine($"🔹 Tìm thấy người dùng: Id={user.Id}, Email={user.Email}");
+                    var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
+                    var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
+                                <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
+                                <p><strong>Thông tin đơn hàng:</strong></p>
+                                <ul>
+                                    <li>Mã đơn hàng: {order.Id}</li>
+                                    <li>Tổng tiền: {order.Amount:N0} VND</li>
+                                    <li>Thời gian: {order.CreatedAt}</li>
+                                </ul>
+                                <p><strong>Chi tiết đơn hàng:</strong></p>
+                                <ul>
+                                    {string.Join("", order.OrderDetails.Select(d => $"<li>Khóa học ID: {d.CourseId}, Giá: {d.Price:N0} VND, Giảm giá: {(d.DiscountAmount ?? 0):N0} VND</li>"))}
+                                </ul>
+                                <p>Trân trọng,<br>H3 xin cảm ơn</p>";
+                    try
+                    {
+                        await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Lỗi khi gửi email thông báo: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine($"❌ Lỗi khi gửi email thông báo: {ex.Message}");
+                    Console.WriteLine($"⚠️ Email của người dùng trống hoặc không tìm thấy: UserId={order.UserId}");
                 }
-            }
-            else
-            {
-                Console.WriteLine($"⚠️ Email của người dùng trống hoặc không tìm thấy: UserId={order.UserId}");
-            }
 
-            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
-                         $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
-                         $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
-                         $"&vnp_ResponseCode={vnpResponseCode}";
-            status = "Success";
-            message = "Payment successful";
-            break;
-        case "24":
-            Console.WriteLine($"Payment cancelled for order: Id={orderId}");
-            await _orderService.UpdateOrderStatus(orderId, "Cancelled");
-            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=cancelled";
-            status = "Cancelled";
-            message = "Payment cancelled";
-            break;
-        default:
-            Console.WriteLine($"Payment failed for order: Id={orderId}, ResponseCode={vnpResponseCode}");
-            await _orderService.UpdateOrderStatus(orderId, "Failed");
-            redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=failed&vnp_ResponseCode={vnpResponseCode}";
-            status = "Failed";
-            message = $"Payment failed with response code: {vnpResponseCode}";
-            break;
-    }
+                redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
+                             $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
+                             $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
+                             $"&vnp_ResponseCode={vnpResponseCode}";
+                break;
+            case "24":
+                Console.WriteLine($"Payment cancelled for order: Id={orderId}");
+                await _orderService.UpdateOrderStatus(orderId, "Cancelled");
+                redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=cancelled";
+                break;
+            default:
+                Console.WriteLine($"Payment failed for order: Id={orderId}, ResponseCode={vnpResponseCode}");
+                await _orderService.UpdateOrderStatus(orderId, "Failed");
+                redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=failed&vnp_ResponseCode={vnpResponseCode}";
+                break;
+        }
 
-    Console.WriteLine("Redirect URL: " + redirectUrl);
-
-    // Trả về JSON thay vì Redirect
-    return new JsonResult(new
-    {
-        Status = status,
-        RedirectUrl = redirectUrl,
-        OrderId = vnpResponseCode == "00" ? orderId.ToString() : null,
-        ResponseCode = vnpResponseCode,
-        Message = message
-    });
+        Console.WriteLine("Redirect URL: " + redirectUrl);
+        return new RedirectResult(redirectUrl);
     }
 
     private string GetIpAddress(HttpContext context)

@@ -1,6 +1,7 @@
 using API_WebH3.DTO.Progress;
 using API_WebH3.Models;
 using API_WebH3.Repository;
+using System.Text.Json;
 
 namespace API_WebH3.Service;
 
@@ -16,6 +17,7 @@ public class ProgressService
         _userRepository = userRepository;
         _lessonRepository = lessonRepository;
     }
+    
     public async Task<IEnumerable<ProgressDto>> GetAllAsync()
     {
         var progresses = await _progressRepository.GetAllProgressAsync();
@@ -29,6 +31,25 @@ public class ProgressService
             Notes = p.Notes,
             LastUpdate = p.LastUpdate
         });
+    }
+    
+    public async Task<ProgressDto> GetByUserAndLessonAsync(Guid userId, string lessonId)
+    {
+        var progress = await _progressRepository.GetByUserAndLessonAsync(userId, lessonId);
+        if (progress == null)
+        {
+            return null;
+        }
+        return new ProgressDto
+        {
+            Id = progress.Id,
+            UserId = progress.UserId,
+            LessonId = progress.LessonId,
+            Status = progress.Status,
+            CompletionPercentage = progress.CompletionPercentage,
+            Notes = progress.Notes,
+            LastUpdate = progress.LastUpdate
+        };
     }
 
     public async Task<ProgressDto> GetByIdAsync(Guid id)
@@ -52,18 +73,23 @@ public class ProgressService
 
     public async Task<ProgressDto> CreateAsync(CreateProgressDto createProgressDto)
     {
+        Console.WriteLine($"Kiểm tra User: userId={createProgressDto.UserId}");
         var user = await _userRepository.GetByIdAsync(createProgressDto.UserId);
         if (user == null)
         {
             throw new ArgumentException("User not found.");
         }
+        Console.WriteLine($"User tồn tại: userId={createProgressDto.UserId}");
 
+        Console.WriteLine($"Kiểm tra Lesson: lessonId={createProgressDto.LessonId}");
         var lesson = await _lessonRepository.GetLessonById(createProgressDto.LessonId);
         if (lesson == null)
         {
             throw new ArgumentException("Lesson not found.");
         }
+        Console.WriteLine($"Lesson tồn tại: lessonId={createProgressDto.LessonId}");
 
+        Console.WriteLine($"Kiểm tra tiến trình hiện có: userId={createProgressDto.UserId}, lessonId={createProgressDto.LessonId}");
         var existingProgress = await _progressRepository.GetByUserAndLessonAsync(createProgressDto.UserId, createProgressDto.LessonId);
         if (existingProgress != null)
         {
@@ -93,6 +119,7 @@ public class ProgressService
         };
 
         await _progressRepository.AddProgressAsync(progress);
+        Console.WriteLine($"Đã lưu tiến trình vào DB: {JsonSerializer.Serialize(progress)}");
 
         return new ProgressDto
         {
@@ -119,10 +146,20 @@ public class ProgressService
         {
             throw new ArgumentException("Invalid status. Must be 'not started', 'in progress', or 'completed'.");
         }
-        
+
         if (updateProgressDto.CompletionPercentage < 0 || updateProgressDto.CompletionPercentage > 100)
         {
             throw new ArgumentException("Completion percentage must be between 0 and 100.");
+        }
+
+        // Tự động đặt trạng thái dựa trên completionPercentage
+        if (updateProgressDto.CompletionPercentage == 100)
+        {
+            updateProgressDto.Status = "completed";
+        }
+        else if (updateProgressDto.CompletionPercentage > 0)
+        {
+            updateProgressDto.Status = "in progress";
         }
 
         progress.Status = updateProgressDto.Status.ToLower();
