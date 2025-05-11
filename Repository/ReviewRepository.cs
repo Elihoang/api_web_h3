@@ -2,6 +2,8 @@ using API_WebH3.Data;
 using API_WebH3.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace API_WebH3.Repository;
 
@@ -16,12 +18,16 @@ public class ReviewRepository : IReviewRepository
 
     public async Task<IEnumerable<Review>> GetAllReviewAsync()
     {
-        return await _context.Reviews.ToListAsync();
+        return await _context.Reviews
+            .Include(r => r.User)
+            .ToListAsync();
     }
 
     public async Task<Review> GetReviewByIdAsync(int id)
     {
-        return await _context.Reviews.FindAsync(id);
+        return await _context.Reviews
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.Id == id);
     }
 
     public async Task<IEnumerable<Review>> GetReviewsByCourseIdAsync(string courseId)
@@ -30,7 +36,10 @@ public class ReviewRepository : IReviewRepository
         {
             throw new ArgumentException("CourseId cannot be null or empty.", nameof(courseId));
         }
-        return await _context.Reviews.Where(r => r.CourseId == courseId).ToListAsync();
+        return await _context.Reviews
+            .Include(r => r.User) // Tải thông tin người dùng
+            .Where(r => r.CourseId == courseId)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Review>> GetReviewsByUserIdAsync(Guid userId)
@@ -39,7 +48,10 @@ public class ReviewRepository : IReviewRepository
         {
             throw new ArgumentException("UserId cannot be empty.", nameof(userId));
         }
-        return await _context.Reviews.Where(r => r.UserId == userId).ToListAsync();
+        return await _context.Reviews
+            .Include(r => r.User) // Tải thông tin người dùng
+            .Where(r => r.UserId == userId)
+            .ToListAsync();
     }
 
     public async Task AddReviewAsync(Review review)

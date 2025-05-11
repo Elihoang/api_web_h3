@@ -18,18 +18,29 @@ public class ReviewService
         _courseRepository = courseRepository;
     }
 
+    
     public async Task<IEnumerable<ReviewDto>> GetAllAsync()
     {
         var reviews = await _reviewRepository.GetAllReviewAsync();
-        return reviews.Select(r => new ReviewDto
+        var reviewDtos = new List<ReviewDto>();
+
+        foreach (var r in reviews)
         {
-            Id = r.Id,
-            UserId = r.UserId,
-            CourseId = r.CourseId,
-            Rating = r.Rating,
-            Comment = r.Comment,
-            CreatedAt = r.CreatedAt
-        });
+            var user = await _userRepository.GetByIdAsync(r.UserId); // Lấy thông tin User
+            reviewDtos.Add(new ReviewDto
+            {
+                Id = r.Id,
+                UserId = r.UserId,
+                CourseId = r.CourseId,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedAt = r.CreatedAt,
+                UserFullName = user?.FullName ?? string.Empty, // Gán FullName, xử lý null
+                UserProfileImage = user?.ProfileImage ?? string.Empty // Gán ProfileImage, xử lý null
+            });
+        }
+
+        return reviewDtos;
     }
 
     public async Task<ReviewDto> GetByIdAsync(int id)
@@ -39,6 +50,8 @@ public class ReviewService
         {
             return null;
         }
+
+        var user = await _userRepository.GetByIdAsync(review.UserId); // Lấy thông tin User
         return new ReviewDto
         {
             Id = review.Id,
@@ -46,7 +59,9 @@ public class ReviewService
             CourseId = review.CourseId,
             Rating = review.Rating,
             Comment = review.Comment,
-            CreatedAt = review.CreatedAt
+            CreatedAt = review.CreatedAt,
+            UserFullName = user?.FullName ?? string.Empty, // Gán FullName, xử lý null
+            UserProfileImage = user?.ProfileImage ?? string.Empty // Gán ProfileImage, xử lý null
         };
     }
 
@@ -62,6 +77,8 @@ public class ReviewService
             Id = r.Id,
             UserId = r.UserId,
             CourseId = r.CourseId,
+            UserFullName = r.User?.FullName ?? "Unknown",
+            UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
             Rating = r.Rating,
             Comment = r.Comment,
             CreatedAt = r.CreatedAt
@@ -79,6 +96,8 @@ public class ReviewService
         {
             Id = r.Id,
             UserId = r.UserId,
+            UserFullName = r.User?.FullName ?? "Unknown",
+            UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
             CourseId = r.CourseId,
             Rating = r.Rating,
             Comment = r.Comment,
@@ -88,29 +107,16 @@ public class ReviewService
 
     public async Task<ReviewDto> CreateAsync(CreateReviewDto createReviewDto)
     {
-        if (createReviewDto == null)
-        {
-            throw new ArgumentNullException(nameof(createReviewDto));
-        }
-
-       
-        // Check if user has already reviewed this course
-        var existingReviews = await _reviewRepository.GetReviewsByUserIdAsync(createReviewDto.UserId);
-        if (existingReviews.Any(r => r.CourseId == createReviewDto.CourseId))
-        {
-            throw new InvalidOperationException("User has already submitted a review for this course.");
-        }
-
         var user = await _userRepository.GetByIdAsync(createReviewDto.UserId);
         if (user == null)
         {
-            throw new ArgumentException("User not found.", nameof(createReviewDto.UserId));
+            throw new ArgumentException("User not found.");
         }
 
         var course = await _courseRepository.GetByIdAsync(createReviewDto.CourseId);
         if (course == null)
         {
-            throw new ArgumentException("Course not found.", nameof(createReviewDto.CourseId));
+            throw new ArgumentException("Course not found.");
         }
 
         var review = new Review
@@ -118,7 +124,7 @@ public class ReviewService
             UserId = createReviewDto.UserId,
             CourseId = createReviewDto.CourseId,
             Rating = createReviewDto.Rating,
-            Comment = createReviewDto.Comment ?? string.Empty,
+            Comment = createReviewDto.Comment,
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
         };
 
@@ -131,28 +137,28 @@ public class ReviewService
             CourseId = review.CourseId,
             Rating = review.Rating,
             Comment = review.Comment,
-            CreatedAt = review.CreatedAt
+            CreatedAt = review.CreatedAt,
+            UserFullName = user.FullName, // Gán FullName từ User
+            UserProfileImage = user.ProfileImage ?? string.Empty // Gán ProfileImage, xử lý null
         };
     }
 
     public async Task<ReviewDto> UpdateAsync(int id, UpdateReviewDto updateReviewDto)
     {
-        if (updateReviewDto == null)
-        {
-            throw new ArgumentNullException(nameof(updateReviewDto));
-        }
-
         var review = await _reviewRepository.GetReviewByIdAsync(id);
         if (review == null)
         {
             return null;
         }
 
+        // Cập nhật các trường từ DTO
         review.Rating = updateReviewDto.Rating;
-        review.Comment = updateReviewDto.Comment ?? string.Empty;
+        review.Comment = updateReviewDto.Comment;
 
         await _reviewRepository.UpdateReviewAsync(review);
 
+        var user = await _userRepository.GetByIdAsync(review.UserId); // Lấy thông tin User
+        Console.WriteLine(review.User.FullName);
         return new ReviewDto
         {
             Id = review.Id,
@@ -160,7 +166,9 @@ public class ReviewService
             CourseId = review.CourseId,
             Rating = review.Rating,
             Comment = review.Comment,
-            CreatedAt = review.CreatedAt
+            CreatedAt = review.CreatedAt,
+            UserFullName = review.User.FullName ?? string.Empty, // Gán FullName, xử lý null
+            UserProfileImage = user?.ProfileImage ?? string.Empty // Gán ProfileImage, xử lý null
         };
     }
 
