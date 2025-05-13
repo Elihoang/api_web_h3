@@ -1,4 +1,5 @@
 using API_WebH3.DTO.Post;
+using API_WebH3.DTO.User;
 using API_WebH3.Models;
 using API_WebH3.Repository;
 
@@ -116,5 +117,36 @@ public class PostService
 
         await _postRepository.DeletePostAsync(id);
         return true;
+    }
+    public async Task<IEnumerable<PostDto>> SearchPostsAsync(
+        string keyword,
+        string author,
+        DateTime? startDate,
+        DateTime? endDate,
+        int page,
+        int pageSize)
+    {
+
+        var posts = await _postRepository.SearchPostsAsync(keyword, page, pageSize);
+        
+        return posts.Select(p => new PostDto
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Content = p.Content,
+            CreatedAt = p.CreatedAt,
+            Tags = p.Tags,
+            UrlImage = p.UrlImage,
+            User= new UserDto
+            {
+                Id = p.User.Id,
+                FullName = p.User.FullName,
+                Email = p.User.Email,
+                ProfileImage = p.User?.ProfileImage,
+                Role = p.User.Role,
+                BirthDate = p.User.BirthDate,
+                CreatedAt = p.User.CreatedAt
+            }
+        }).ToList();
     }
 }

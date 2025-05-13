@@ -61,4 +61,19 @@ public class CourseRepository : ICourseRepository
             .Where(c => c.InstructorId == Guid.Parse(categoryId))
             .ToListAsync();
     }
+    public async Task<IEnumerable<Course>> SearchCoursesAsync(string keyword, int page, int pageSize)
+    {
+        var query = _context.Courses.AsQueryable();
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            keyword = keyword.ToLower();
+            query = query.Where(c => c.Title.ToLower().Contains(keyword) ||
+                                     (c.Description != null && c.Description.ToLower().Contains(keyword)));
+        }
+
+        query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+        return await query.ToListAsync();
+    }
 }

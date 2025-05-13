@@ -173,4 +173,28 @@ public async Task<CourseDto> GetByIdAsync(string id)
             Contents = c.Contents
         });
     }
+    public async Task<IEnumerable<CourseDto>> SearchCoursesAsync(
+        string keyword,
+        string category,
+        decimal? minPrice,
+        decimal? maxPrice,
+        int page,
+        int pageSize)
+    {
+        // Gọi phương thức tìm kiếm từ repository
+        var courses = await _courseRepository.SearchCoursesAsync(keyword, page, pageSize);
+
+        // Ánh xạ sang DTO
+        return courses.Select(c => new CourseDto
+        {
+            Id = c.Id,
+            Title = c.Title,
+            Description = c.Description,
+            Price = c.Price,
+            InstructorId = c.InstructorId,
+            UrlImage = c.UrlImage,
+            CreatedAt = c.CreatedAt,
+            Contents = c.Contents
+        }).ToList();
+    }
 }

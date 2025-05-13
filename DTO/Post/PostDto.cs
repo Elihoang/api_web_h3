@@ -1,3 +1,5 @@
+using API_WebH3.DTO.User;
+
 namespace API_WebH3.DTO.Post;
 
 public class PostDto
@@ -9,4 +11,5 @@ public class PostDto
     public string? Tags { get; set; }
     public string? UrlImage { get; set; }
     public string CreatedAt { get; set; }
+    public UserDto User { get; set; } 
 }

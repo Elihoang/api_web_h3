@@ -12,4 +12,5 @@ public interface ICourseRepository
     Task<bool> ExistsAsync(string id);
     Task<IEnumerable<Course>> GetCoursesByUserIdAsync(string userId);
     Task<IEnumerable<Course>> GetCoursesByCategoryIdAsync(string categoryId);
+    Task<IEnumerable<Course>> SearchCoursesAsync(string keyword, int page, int pageSize);
 }
