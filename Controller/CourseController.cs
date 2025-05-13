@@ -14,6 +14,30 @@ public class CourseController : ControllerBase
         _courseService = courseService;
     }
 
+    [HttpGet("paginated")]
+    public async Task<ActionResult<IEnumerable<CourseDto>>> GetPaginatedCourses([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var courses = await _courseService.GetAllAsync();
+        var totalItems = courses.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        
+        var pagedCourseList = courses
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new
+        {
+            Data = pagedCourseList,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+        
+        return Ok(result);
+    }
+    
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses()
     {
@@ -69,5 +93,20 @@ public class CourseController : ControllerBase
             return NotFound();
         }
         return NoContent();
+    }
+
+    [HttpGet("category/{categoryId}")]
+    public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesByCategoryId(string categoryId)
+    {
+        var courses = await _courseService.GetByCategoryIdAsync(categoryId);
+        return Ok(courses);
+    }
+    
+    [HttpGet("instructor/{instructorId}")]
+    public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesByInstructorId(string instructorId)
+    {
+        var courses = await _courseService.GetByInstructorIdAsync(instructorId);
+        
+        return Ok(courses);
     }
 }
