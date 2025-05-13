@@ -47,4 +47,18 @@ public class CourseRepository : ICourseRepository
     {
         return await _context.Courses.AnyAsync(c => c.Id == id);
     }
+
+    public async Task<IEnumerable<Course>> GetCoursesByUserIdAsync(string userId)
+    {
+        return await _context.Courses
+            .Where(c => c.InstructorId == Guid.Parse(userId))
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Course>> GetCoursesByCategoryIdAsync(string categoryId)
+    {
+        return await _context.Courses
+            .Where(c => c.InstructorId == Guid.Parse(categoryId))
+            .ToListAsync();
+    }
 }
