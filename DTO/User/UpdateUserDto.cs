@@ -14,7 +14,7 @@ public class UpdateUserDto
     public DateTime? BirthDate { get; set; }
     public string? ProfileImage { get; set; }
     [Required]
-    public string Role { get; set; }
+    public string? Role { get; set; }
     public string? IpAddress { get; set; }
     public string? DeviceName { get; set; }
     public string? GoogleId { get; set; }
