@@ -10,13 +10,13 @@ public class CommentService
     private readonly ICommentRepository _commentRepository; 
     private readonly IUserRepository _userRepository; 
     private readonly IPostRepository _postRepository;
+
     public CommentService(ICommentRepository commentRepository, IUserRepository userRepository, IPostRepository postRepository)
     {
         _commentRepository = commentRepository;
         _userRepository = userRepository;
         _postRepository = postRepository;
     }
-    
     
     public async Task<IEnumerable<CommentDto>> GetAllAsync()
     {
@@ -57,7 +57,6 @@ public class CommentService
         });
     }
     
-   
     public async Task<CommentDto> GetByIdAsync(int id)
     {
         var comment = await _commentRepository.GetCommentByIdAsync(id);
@@ -71,7 +70,7 @@ public class CommentService
             Id = comment.Id,
             UserId = comment.UserId,
             UserFullName = comment.User?.FullName ?? "Unknown",
-            UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png", // Ảnh mặc định nếu không có
+            UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png",
             PostId = comment.PostId,
             Content = comment.Content,
             ParentCommentId = comment.ParentCommentId,
@@ -144,7 +143,7 @@ public class CommentService
         {
             Id = comment.Id,
             UserId = comment.UserId,
-            UserFullName = user.FullName, // Lấy từ user đã truy vấn
+            UserFullName = user.FullName,
             UserProfileImage = user.ProfileImage ?? "default-avatar.png",
             PostId = comment.PostId,
             Content = comment.Content,
@@ -153,6 +152,7 @@ public class CommentService
             Replies = new List<CommentDto>()
         };
     }
+    
     public async Task<CommentDto> UpdateAsync(int id, UpdateCommentDto updateCommentDto)
     {
         var comment = await _commentRepository.GetCommentByIdAsync(id);
@@ -162,7 +162,7 @@ public class CommentService
         }
 
         comment.Content = updateCommentDto.Content;
-        comment.CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"); // Cập nhật thời gian mới nhất
+        comment.CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 
         await _commentRepository.UpdateCommentAsync(comment);
 
@@ -202,6 +202,26 @@ public class CommentService
         };
     }
 
+    // Hàm lấy tất cả ID của phản hồi lồng nhau
+    private async Task<List<int>> GetAllReplyIdsAsync(int commentId)
+    {
+        var replyIds = new List<int>();
+        var comment = await _commentRepository.GetCommentByIdAsync(commentId);
+        
+        if (comment == null || comment.Replies == null)
+        {
+            return replyIds;
+        }
+
+        foreach (var reply in comment.Replies)
+        {
+            replyIds.Add(reply.Id);
+            replyIds.AddRange(await GetAllReplyIdsAsync(reply.Id));
+        }
+
+        return replyIds;
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         var comment = await _commentRepository.GetCommentByIdAsync(id);
@@ -210,9 +230,21 @@ public class CommentService
             return false;
         }
 
+        // Lấy danh sách tất cả ID của phản hồi lồng nhau
+        var replyIds = await GetAllReplyIdsAsync(id);
+
+        // Xóa tất cả phản hồi
+        foreach (var replyId in replyIds)
+        {
+            await _commentRepository.DeleteCommentAsync(replyId);
+        }
+
+        // Xóa bình luận mẹ
         await _commentRepository.DeleteCommentAsync(id);
+
         return true;
     }
+    
     public async Task<IEnumerable<CommentDto>> GetByPostIdAsync(Guid postId)
     {
         var comments = await _commentRepository.GetByPostIdAsync(postId);
@@ -251,5 +283,4 @@ public class CommentService
             }).ToList() ?? new List<CommentDto>()
         });
     }
-    
 }
