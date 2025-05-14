@@ -48,4 +48,16 @@ public class NotificationRepository : INotificationRepository
             _context.UserNotifications.RemoveRange(notification.UserNotifications);
         }
     }
+    public async Task UpdateUserNotificationAsync(UserNotification userNotification)
+    {
+        _context.UserNotifications.Update(userNotification);
+        await _context.SaveChangesAsync();
+    }
+    public async Task<IEnumerable<Notification>> GetByUserIdAsync(Guid userId)
+    {
+        return await _context.Notifications
+            .Include(n => n.UserNotifications)
+            .Where(n => n.UserNotifications.Any(un => un.UserId == userId))
+            .ToListAsync();
+    }
 }

@@ -9,11 +9,16 @@ public class OrderService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly ICourseRepository _courseRepository;
+    private readonly ICouponRepository _couponRepository;
 
-    public OrderService(IOrderRepository orderRepository, ICourseRepository courseRepository)
+    public OrderService(
+        IOrderRepository orderRepository, 
+        ICourseRepository courseRepository, 
+        ICouponRepository couponRepository)
     {
         _orderRepository = orderRepository;
         _courseRepository = courseRepository;
+        _couponRepository = couponRepository;
     }
 
     public async Task<OrderDto> CreateOrderWithDetailsAsync(CreateOrderDto orderDto)
@@ -27,7 +32,31 @@ public class OrderService
         {
             if (!await _courseRepository.ExistsAsync(detailDto.CourseId))
                 throw new ArgumentException($"CourseId {detailDto.CourseId} không tồn tại.");
+
+            // Kiểm tra và áp dụng coupon nếu có
+            if (detailDto.CouponId.HasValue)
+            {
+                var coupon = await _couponRepository.GetByIdAsync(detailDto.CouponId.Value);
+                if (coupon == null)
+                    throw new ArgumentException($"CouponId {detailDto.CouponId} không tồn tại.");
+
+                if (!coupon.IsActive || DateTime.UtcNow < coupon.StartDate || DateTime.UtcNow > coupon.EndDate)
+                    throw new ArgumentException("Mã coupon không hợp lệ hoặc đã hết hạn.");
+
+                if (coupon.CurrentUsage >= coupon.MaxUsage)
+                    throw new ArgumentException("Mã coupon đã được sử dụng hết lượt.");
+
+                // Kiểm tra số tiền giảm giá
+                var expectedDiscount = detailDto.Price * coupon.DiscountPercentage / 100;
+                if (detailDto.DiscountAmount != expectedDiscount)
+                    throw new ArgumentException("Số tiền giảm giá không khớp với phần trăm giảm của coupon.");
+            }
         }
+
+        // Tính tổng số tiền đơn hàng
+        decimal totalAmount = orderDto.OrderDetails.Sum(d => d.Price - (d.DiscountAmount ?? 0));
+        if (orderDto.Amount != totalAmount)
+            throw new ArgumentException("Tổng số tiền đơn hàng không khớp với chi tiết đơn hàng.");
 
         var order = new Order
         {
@@ -53,6 +82,14 @@ public class OrderService
                 CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
             };
             await _orderRepository.CreateOrderDetailsAsync(orderDetail);
+
+            // Cập nhật CurrentUsage của coupon
+            if (detailDto.CouponId.HasValue)
+            {
+                var coupon = await _couponRepository.GetByIdAsync(detailDto.CouponId.Value);
+                coupon.CurrentUsage += 1;
+                await _couponRepository.UpdateAsync(coupon);
+            }
         }
 
         return new OrderDto
