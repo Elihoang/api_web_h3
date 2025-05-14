@@ -28,4 +28,5 @@ public class AppDbContext:DbContext
     public DbSet<Follower> Followers { get; set; }
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<UserQuizAnswer> UserQuizAnswers { get; set; }
 }

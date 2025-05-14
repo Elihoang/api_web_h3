@@ -18,8 +18,14 @@ public class CommentRepository : ICommentRepository
     public async Task<Comment> GetCommentByIdAsync(int id)
     {
         return await _context.Comments
-            .Include(c => c.User) // Tải thông tin người dùng
-            .Include(c => c.Replies) // Tải các bình luận trả lời
+            .Include(c => c.User)
+            .Include(c => c.ParentComment)
+            .ThenInclude(pc => pc.User)
+            .Include(c => c.Replies)
+            .ThenInclude(r => r.User)
+            .Include(c => c.Replies)
+            .ThenInclude(r => r.Replies)
+            .ThenInclude(r2 => r2.User)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -34,9 +40,15 @@ public class CommentRepository : ICommentRepository
     public async Task<IEnumerable<Comment>> GetByPostIdAsync(Guid postId)
     {
         return await _context.Comments
+            .Include(c => c.User) // Lấy thông tin người dùng
+            .Include(c => c.ParentComment) // Lấy bình luận cha
+            .ThenInclude(pc => pc.User) // Lấy thông tin người dùng của bình luận cha
+            .Include(c => c.Replies) // Lấy các bình luận trả lời
+            .ThenInclude(r => r.User) // Lấy thông tin người dùng của trả lời
+            .Include(c => c.Replies) // Lấy trả lời cấp 1
+            .ThenInclude(r => r.Replies) // Lấy trả lời cấp 2
+            .ThenInclude(r2 => r2.User) // Lấy thông tin người dùng của trả lời cấp 2
             .Where(c => c.PostId == postId)
-            .Include(c => c.User)
-            .Include(c => c.Replies)
             .ToListAsync();
     }
 

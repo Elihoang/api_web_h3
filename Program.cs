@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using API_WebH3.Data;
+using API_WebH3.Repositories;
 using API_WebH3.Repository;
 using API_WebH3.Service;
 using API_WebH3.Services;
@@ -22,6 +23,12 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// 🔹 Cấu hình logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
 // 🔹 Thêm Controllers và hỗ trợ JSON
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -29,7 +36,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.WriteIndented = true;
     });
-
 
 // 🔹 Đăng ký các dịch vụ
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -52,32 +58,22 @@ builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
-
-
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<CommentService>();
-
-
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<CouponService>();
-
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<MessageService>();
-
 builder.Services.AddScoped<IFollowerRepository, FollowerRepository>();
 builder.Services.AddScoped<FollowerService>();
-
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<EnrollmentService>();
-
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<NotificationService>();
-
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<StudentService>();
-
 builder.Services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
 builder.Services.AddScoped<UserNotificationService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -86,10 +82,12 @@ builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<EmailPaymentService>();
 builder.Services.AddScoped<UserService>();
 
+builder.Services.AddScoped<IUserQuizAnswerRepository,UserQuizAnswerRepository>();
 
-// 🔹 Cấu hình CORS cho React (hoặc các frontend khác)
+builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+builder.Services.AddScoped<QuizService>();
 
-
+// 🔹 Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -110,8 +108,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 🔹 Cấu hình JWT Authentication với cookie
-
+// 🔹 Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["JwtSettings:Secret"];
 if (string.IsNullOrEmpty(jwtKey))
 {
@@ -145,7 +142,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnMessageReceived = context =>
             {
-                // Ưu tiên header, nếu không có thì lấy từ cookie
                 var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 context.Token = token ?? context.Request.Cookies["auth_token"];
                 return Task.CompletedTask;
@@ -156,7 +152,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // 🔹 Thêm Authorization
 builder.Services.AddAuthorization();
 
-// 🔹 Thêm bộ nhớ cache phân tán và Session
+// 🔹 Thêm bộ nhớ cache và Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -171,7 +167,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🔹 Middleware xử lý lỗi chi tiết trong Development
+// 🔹 Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -180,7 +176,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowReactApp");
-// 🔹 Các Middleware
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
