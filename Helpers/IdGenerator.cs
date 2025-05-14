@@ -10,6 +10,7 @@ public static class IdGenerator
     private static int SIZE_ORDER = 12;
     private static int SIZE_ORDER_DETAIL = 12;
     private static int SIZE_QUIZ = 12;
+    private static int SIZE_QUIZ_DETAIL = 12;
     
     /// <summary>
     /// Sinh ID mặc định 12 ký tự
@@ -65,5 +66,9 @@ public static class IdGenerator
     public static string IdQuiz()
     {
         return Nanoid.Generate(size: SIZE_QUIZ);
+    }
+    public static string IdUserQuizAnswer()
+    {
+        return Nanoid.Generate(size: SIZE_QUIZ_DETAIL);
     }
 }

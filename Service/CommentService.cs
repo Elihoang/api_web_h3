@@ -19,9 +19,13 @@ public class CommentService
     }
     
     public async Task<IEnumerable<CommentDto>> GetAllAsync()
+{
+    var comments = await _commentRepository.GetCommentAllAsync();
+    return comments.Select(c =>
     {
-        var comments = await _commentRepository.GetCommentAllAsync();
-        return comments.Select(c => new CommentDto
+        var parentComment = c.ParentComment;
+
+        return new CommentDto
         {
             Id = c.Id,
             UserId = c.UserId,
@@ -30,76 +34,105 @@ public class CommentService
             PostId = c.PostId,
             Content = c.Content,
             ParentCommentId = c.ParentCommentId,
+            ParentUserFullName = parentComment?.User?.FullName ?? null,
             CreatedAt = c.CreatedAt,
-            Replies = c.Replies?.Select(r => new CommentDto
+            Replies = c.Replies?.Select(r =>
             {
-                Id = r.Id,
-                UserId = r.UserId,
-                UserFullName = r.User?.FullName ?? "Unknown",
-                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
-                PostId = r.PostId,
-                Content = r.Content,
-                ParentCommentId = r.ParentCommentId,
-                CreatedAt = r.CreatedAt,
-                Replies = r.Replies?.Select(r2 => new CommentDto
-                {
-                    Id = r2.Id,
-                    UserId = r2.UserId,
-                    UserFullName = r2.User?.FullName ?? "Unknown",
-                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
-                    PostId = r2.PostId,
-                    Content = r2.Content,
-                    ParentCommentId = r2.ParentCommentId,
-                    CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>()
-                }).ToList() ?? new List<CommentDto>()
-            }).ToList() ?? new List<CommentDto>()
-        });
-    }
-    
-    public async Task<CommentDto> GetByIdAsync(int id)
-    {
-        var comment = await _commentRepository.GetCommentByIdAsync(id);
-        if (comment == null)
-        {
-            return null;
-        }
+                var replyParentComment = r.ParentComment;
 
-        return new CommentDto
-        {
-            Id = comment.Id,
-            UserId = comment.UserId,
-            UserFullName = comment.User?.FullName ?? "Unknown",
-            UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png",
-            PostId = comment.PostId,
-            Content = comment.Content,
-            ParentCommentId = comment.ParentCommentId,
-            CreatedAt = comment.CreatedAt,
-            Replies = comment.Replies?.Select(r => new CommentDto
-            {
-                Id = r.Id,
-                UserId = r.UserId,
-                UserFullName = r.User?.FullName ?? "Unknown",
-                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
-                PostId = r.PostId,
-                Content = r.Content,
-                ParentCommentId = r.ParentCommentId,
-                CreatedAt = r.CreatedAt,
-                Replies = r.Replies?.Select(r2 => new CommentDto
+                return new CommentDto
                 {
-                    Id = r2.Id,
-                    UserId = r2.UserId,
-                    UserFullName = r2.User?.FullName ?? "Unknown",
-                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
-                    PostId = r2.PostId,
-                    Content = r2.Content,
-                    ParentCommentId = r2.ParentCommentId,
-                    CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>()
-                }).ToList() ?? new List<CommentDto>()
+                    Id = r.Id,
+                    UserId = r.UserId,
+                    UserFullName = r.User?.FullName ?? "Unknown",
+                    UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
+                    PostId = r.PostId,
+                    Content = r.Content,
+                    ParentCommentId = r.ParentCommentId,
+                    ParentUserFullName = replyParentComment?.User?.FullName ?? null,
+                    CreatedAt = r.CreatedAt,
+                    Replies = r.Replies?.Select(r2 =>
+                    {
+                        var replyParentComment2 = r2.ParentComment;
+
+                        return new CommentDto
+                        {
+                            Id = r2.Id,
+                            UserId = r2.UserId,
+                            UserFullName = r2.User?.FullName ?? "Unknown",
+                            UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
+                            PostId = r2.PostId,
+                            Content = r2.Content,
+                            ParentCommentId = r2.ParentCommentId,
+                            ParentUserFullName = replyParentComment2?.User?.FullName ?? null,
+                            CreatedAt = r2.CreatedAt,
+                            Replies = new List<CommentDto>()
+                        };
+                    }).ToList() ?? new List<CommentDto>()
+                };
             }).ToList() ?? new List<CommentDto>()
         };
+    }).ToList();
+}
+    
+    public async Task<CommentDto> GetByIdAsync(int id)
+{
+    var comment = await _commentRepository.GetCommentByIdAsync(id);
+    if (comment == null)
+    {
+        return null;
     }
+
+    var parentComment = comment.ParentComment;
+
+    return new CommentDto
+    {
+        Id = comment.Id,
+        UserId = comment.UserId,
+        UserFullName = comment.User?.FullName ?? "Unknown",
+        UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png",
+        PostId = comment.PostId,
+        Content = comment.Content,
+        ParentCommentId = comment.ParentCommentId,
+        ParentUserFullName = parentComment?.User?.FullName ?? null,
+        CreatedAt = comment.CreatedAt,
+        Replies = comment.Replies?.Select(r =>
+        {
+            var replyParentComment = r.ParentComment;
+
+            return new CommentDto
+            {
+                Id = r.Id,
+                UserId = r.UserId,
+                UserFullName = r.User?.FullName ?? "Unknown",
+                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
+                PostId = r.PostId,
+                Content = r.Content,
+                ParentCommentId = r.ParentCommentId,
+                ParentUserFullName = replyParentComment?.User?.FullName ?? null,
+                CreatedAt = r.CreatedAt,
+                Replies = r.Replies?.Select(r2 =>
+                {
+                    var replyParentComment2 = r2.ParentComment;
+
+                    return new CommentDto
+                    {
+                        Id = r2.Id,
+                        UserId = r2.UserId,
+                        UserFullName = r2.User?.FullName ?? "Unknown",
+                        UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
+                        PostId = r2.PostId,
+                        Content = r2.Content,
+                        ParentCommentId = r2.ParentCommentId,
+                        ParentUserFullName = replyParentComment2?.User?.FullName ?? null,
+                        CreatedAt = r2.CreatedAt,
+                        Replies = new List<CommentDto>()
+                    };
+                }).ToList() ?? new List<CommentDto>()
+            };
+        }).ToList() ?? new List<CommentDto>()
+    };
+}
     
     public async Task<CommentDto> CreateAsync(CreateCommentDto createCommentDto)
     {
@@ -115,9 +148,11 @@ public class CommentService
             throw new ArgumentException("Post not found.");
         }
 
+        // Lấy và kiểm tra bình luận cha trước khi tạo
+        Comment? parentComment = null;
         if (createCommentDto.ParentCommentId.HasValue)
         {
-            var parentComment = await _commentRepository.GetCommentByIdAsync(createCommentDto.ParentCommentId.Value);
+            parentComment = await _commentRepository.GetCommentByIdAsync(createCommentDto.ParentCommentId.Value);
             if (parentComment == null)
             {
                 throw new ArgumentException("Parent comment not found.");
@@ -128,6 +163,7 @@ public class CommentService
             }
         }
 
+        // Tạo bình luận mới
         var comment = new Comment
         {
             UserId = createCommentDto.UserId,
@@ -139,6 +175,7 @@ public class CommentService
 
         await _commentRepository.AddCommentAsync(comment);
 
+        // Trả về CommentDto với parentUserFullName từ parentComment đã tải trước
         return new CommentDto
         {
             Id = comment.Id,
@@ -148,35 +185,43 @@ public class CommentService
             PostId = comment.PostId,
             Content = comment.Content,
             ParentCommentId = comment.ParentCommentId,
+            ParentUserFullName = parentComment?.User?.FullName ?? null, 
             CreatedAt = comment.CreatedAt,
             Replies = new List<CommentDto>()
         };
     }
     
     public async Task<CommentDto> UpdateAsync(int id, UpdateCommentDto updateCommentDto)
+{
+    var comment = await _commentRepository.GetCommentByIdAsync(id);
+    if (comment == null)
     {
-        var comment = await _commentRepository.GetCommentByIdAsync(id);
-        if (comment == null)
+        return null;
+    }
+
+    comment.Content = updateCommentDto.Content;
+    comment.CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
+
+    await _commentRepository.UpdateCommentAsync(comment);
+
+    var parentComment = comment.ParentComment;
+
+    return new CommentDto
+    {
+        Id = comment.Id,
+        UserId = comment.UserId,
+        UserFullName = comment.User?.FullName ?? "Unknown",
+        UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png",
+        PostId = comment.PostId,
+        Content = comment.Content,
+        ParentCommentId = comment.ParentCommentId,
+        ParentUserFullName = parentComment?.User?.FullName ?? null,
+        CreatedAt = comment.CreatedAt,
+        Replies = comment.Replies?.Select(r =>
         {
-            return null;
-        }
+            var replyParentComment = r.ParentComment;
 
-        comment.Content = updateCommentDto.Content;
-        comment.CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
-
-        await _commentRepository.UpdateCommentAsync(comment);
-
-        return new CommentDto
-        {
-            Id = comment.Id,
-            UserId = comment.UserId,
-            UserFullName = comment.User?.FullName ?? "Unknown",
-            UserProfileImage = comment.User?.ProfileImage ?? "default-avatar.png",
-            PostId = comment.PostId,
-            Content = comment.Content,
-            ParentCommentId = comment.ParentCommentId,
-            CreatedAt = comment.CreatedAt,
-            Replies = comment.Replies?.Select(r => new CommentDto
+            return new CommentDto
             {
                 Id = r.Id,
                 UserId = r.UserId,
@@ -185,22 +230,30 @@ public class CommentService
                 PostId = r.PostId,
                 Content = r.Content,
                 ParentCommentId = r.ParentCommentId,
+                ParentUserFullName = replyParentComment?.User?.FullName ?? null,
                 CreatedAt = r.CreatedAt,
-                Replies = r.Replies?.Select(r2 => new CommentDto
+                Replies = r.Replies?.Select(r2 =>
                 {
-                    Id = r2.Id,
-                    UserId = r2.UserId,
-                    UserFullName = r2.User?.FullName ?? "Unknown",
-                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
-                    PostId = r2.PostId,
-                    Content = r2.Content,
-                    ParentCommentId = r2.ParentCommentId,
-                    CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>()
+                    var replyParentComment2 = r2.ParentComment;
+
+                    return new CommentDto
+                    {
+                        Id = r2.Id,
+                        UserId = r2.UserId,
+                        UserFullName = r2.User?.FullName ?? "Unknown",
+                        UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
+                        PostId = r2.PostId,
+                        Content = r2.Content,
+                        ParentCommentId = r2.ParentCommentId,
+                        ParentUserFullName = replyParentComment2?.User?.FullName ?? null,
+                        CreatedAt = r2.CreatedAt,
+                        Replies = new List<CommentDto>()
+                    };
                 }).ToList() ?? new List<CommentDto>()
-            }).ToList() ?? new List<CommentDto>()
-        };
-    }
+            };
+        }).ToList() ?? new List<CommentDto>()
+    };
+}
 
     // Hàm lấy tất cả ID của phản hồi lồng nhau
     private async Task<List<int>> GetAllReplyIdsAsync(int commentId)
@@ -246,9 +299,22 @@ public class CommentService
     }
     
     public async Task<IEnumerable<CommentDto>> GetByPostIdAsync(Guid postId)
+{
+    var comments = await _commentRepository.GetByPostIdAsync(postId);
+
+    return comments.Select(c =>
     {
-        var comments = await _commentRepository.GetByPostIdAsync(postId);
-        return comments.Select(c => new CommentDto
+        // Sử dụng c.ParentComment đã được tải từ repository
+        var parentComment = c.ParentComment;
+        if (c.ParentComment == null && c.ParentCommentId.HasValue)
+        {
+            Console.WriteLine($"ParentComment not loaded for comment {c.Id}, ParentCommentId: {c.ParentCommentId}");
+        }
+        if (c.ParentComment?.User == null)
+        {
+            Console.WriteLine($"User not loaded for ParentComment of comment {c.Id}");
+        }
+        return new CommentDto
         {
             Id = c.Id,
             UserId = c.UserId,
@@ -257,30 +323,44 @@ public class CommentService
             PostId = c.PostId,
             Content = c.Content,
             ParentCommentId = c.ParentCommentId,
+            ParentUserFullName = parentComment?.User?.FullName ?? null, // Lấy FullName từ ParentComment.User
             CreatedAt = c.CreatedAt,
-            Replies = c.Replies?.Select(r => new CommentDto
+            Replies = c.Replies?.Select(r =>
             {
-                Id = r.Id,
-                UserId = r.UserId,
-                UserFullName = r.User?.FullName ?? "Unknown",
-                UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
-                PostId = r.PostId,
-                Content = r.Content,
-                ParentCommentId = r.ParentCommentId,
-                CreatedAt = r.CreatedAt,
-                Replies = r.Replies?.Select(r2 => new CommentDto
+                var replyParentComment = r.ParentComment;
+
+                return new CommentDto
                 {
-                    Id = r2.Id,
-                    UserId = r2.UserId,
-                    UserFullName = r2.User?.FullName ?? "Unknown",
-                    UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
-                    PostId = r2.PostId,
-                    Content = r2.Content,
-                    ParentCommentId = r2.ParentCommentId,
-                    CreatedAt = r2.CreatedAt,
-                    Replies = new List<CommentDto>()
-                }).ToList() ?? new List<CommentDto>()
+                    Id = r.Id,
+                    UserId = r.UserId,
+                    UserFullName = r.User?.FullName ?? "Unknown",
+                    UserProfileImage = r.User?.ProfileImage ?? "default-avatar.png",
+                    PostId = r.PostId,
+                    Content = r.Content,
+                    ParentCommentId = r.ParentCommentId,
+                    ParentUserFullName = replyParentComment?.User?.FullName ?? null,
+                    CreatedAt = r.CreatedAt,
+                    Replies = r.Replies?.Select(r2 =>
+                    {
+                        var replyParentComment2 = r2.ParentComment;
+
+                        return new CommentDto
+                        {
+                            Id = r2.Id,
+                            UserId = r2.UserId,
+                            UserFullName = r2.User?.FullName ?? "Unknown",
+                            UserProfileImage = r2.User?.ProfileImage ?? "default-avatar.png",
+                            PostId = r2.PostId,
+                            Content = r2.Content,
+                            ParentCommentId = r2.ParentCommentId,
+                            ParentUserFullName = replyParentComment2?.User?.FullName ?? null,
+                            CreatedAt = r2.CreatedAt,
+                            Replies = new List<CommentDto>()
+                        };
+                    }).ToList() ?? new List<CommentDto>()
+                };
             }).ToList() ?? new List<CommentDto>()
-        });
-    }
+        };
+    }).ToList();
+}
 }
