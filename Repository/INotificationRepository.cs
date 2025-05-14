@@ -8,4 +8,6 @@ public interface INotificationRepository
     Task<Notification> GetByIdAsync(Guid id);
     Task AddAsync(Notification notification);
     Task DeleteAsync(Guid id);
+    Task UpdateUserNotificationAsync(UserNotification userNotification);
+    Task<IEnumerable<Notification>> GetByUserIdAsync(Guid userId);
 }

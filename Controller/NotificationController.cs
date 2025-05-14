@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using API_WebH3.DTO.Notification;
 using API_WebH3.DTO.UserNotification;
 using API_WebH3.Service;
 using Microsoft.AspNetCore.Mvc;
+using CreateNotificationDto = API_WebH3.DTO.Notification.CreateNotificationDto;
 
 namespace API_WebH3.Controller;
 
@@ -18,6 +20,12 @@ public class NotificationController : ControllerBase
     public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotifications()
     {
         var notifications = await _notificationService.GetAllAsync();
+        return Ok(notifications);
+    }
+    [HttpGet("by-user/{userId}")]
+    public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotificationsByUser(Guid userId)
+    {
+        var notifications = await _notificationService.GetByUserIdAsync(userId);
         return Ok(notifications);
     }
     [HttpGet("{id}")]
@@ -40,6 +48,30 @@ public class NotificationController : ControllerBase
         var notificationDto = await _notificationService.CreateAsync(createNotificationDto);
         return CreatedAtAction(nameof(GetNotification), new { id = notificationDto.Id }, notificationDto);
     }
+    
+    [HttpPut("{notificationId}/mark-as-read")]
+    public async Task<IActionResult> MarkAsRead(Guid notificationId, [FromBody] Guid userId)
+    {
+        try
+        {
+            if (userId == Guid.Empty)
+            {
+                return BadRequest(new { message = "UserId không hợp lệ" });
+            }
+            await _notificationService.MarkAsReadAsync(notificationId, userId);
+            return Ok(new { message = "Đánh dấu thông báo là đã đọc thành công" });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi khi đánh dấu thông báo", error = ex.Message });
+        }
+    }
+
+    
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteNotification(Guid id)
     {

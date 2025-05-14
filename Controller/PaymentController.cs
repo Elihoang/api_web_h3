@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using API_WebH3.DTO.Enrollment;
 using API_WebH3.DTO.Order;
@@ -28,58 +29,60 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("create-payment-url")]
-    public async Task<ActionResult<object>> CreatePayment([FromBody] CreateOrderDto orderDto)
+public async Task<ActionResult<object>> CreatePayment([FromBody] CreateOrderDto orderDto)
+{
+    Console.WriteLine($"Nhận yêu cầu: {JsonSerializer.Serialize(orderDto)}");
+    try
     {
-        if (orderDto == null || orderDto.UserId == Guid.Empty || orderDto.Amount < 0 || !orderDto.OrderDetails.Any())
+        if (orderDto == null || orderDto.UserId == Guid.Empty || !orderDto.OrderDetails.Any())
         {
-            Console.WriteLine("Invalid order data: " + (orderDto == null ? "orderDto is null" : $"UserId={orderDto.UserId}, Amount={orderDto.Amount}, DetailsCount={orderDto.OrderDetails.Count}"));
-            return BadRequest("Dữ liệu đơn hàng không hợp lệ. Vui lòng kiểm tra UserId, Amount và OrderDetails.");
+            Console.WriteLine("Dữ liệu đơn hàng không hợp lệ.");
+            return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
         }
 
-        try
+        Console.WriteLine("Đặt trạng thái đơn hàng...");
+        orderDto.Status = orderDto.Amount == 0 ? "Paid" : "Pending";
+
+        Console.WriteLine("Tạo đơn hàng...");
+        var createdOrder = await _orderService.CreateOrderWithDetailsAsync(orderDto);
+        if (createdOrder == null)
         {
-            Console.WriteLine($"Received order data: UserId={orderDto.UserId}, Amount={orderDto.Amount}, DetailsCount={orderDto.OrderDetails.Count}");
+            Console.WriteLine("Không thể tạo đơn hàng.");
+            return StatusCode(500, "Không thể tạo đơn hàng.");
+        }
 
-            orderDto.Status = orderDto.Amount == 0 ? "Paid" : "Pending";
-
-            var createdOrder = await _orderService.CreateOrderWithDetailsAsync(orderDto);
-            if (createdOrder == null)
+        if (orderDto.Amount == 0)
+        {
+            Console.WriteLine("Xử lý khóa học miễn phí...");
+            foreach (var detail in orderDto.OrderDetails)
             {
-                Console.WriteLine("Failed to create order.");
-                return StatusCode(500, "Không thể tạo đơn hàng. Vui lòng thử lại.");
-            }
-
-            if (orderDto.Amount == 0)
-            {
-                Console.WriteLine($"Processing free course for UserId={orderDto.UserId}");
-                foreach (var detail in orderDto.OrderDetails)
+                await _enrollementService.CreateAsync(new CreateEnrollmentDto
                 {
-                    await _enrollementService.CreateAsync(new CreateEnrollmentDto
-                    {
-                        UserId = orderDto.UserId,
-                        CourseId = detail.CourseId,
-                        Status = "Active"
-                    });
-                }
-                return Ok(new { orderId = createdOrder.Id, isFree = true, message = "Đăng ký khóa học miễn phí thành công" });
+                    UserId = orderDto.UserId,
+                    CourseId = detail.CourseId,
+                    Status = "Enrolled"
+                });
             }
-
-            var paymentUrl = _vnpayService.CreatePaymentUrl(createdOrder, HttpContext);
-            if (string.IsNullOrEmpty(paymentUrl))
-            {
-                Console.WriteLine("Failed to generate payment URL.");
-                return StatusCode(500, "Không thể tạo URL thanh toán. Vui lòng thử lại.");
-            }
-
-            Console.WriteLine("Generated Payment URL: " + paymentUrl);
-            return Ok(new { paymentUrl, orderId = createdOrder.Id, isFree = false });
+            return Ok(new { orderId = createdOrder.Id, isFree = true, message = "Đăng ký thành công" });
         }
-        catch (Exception ex)
+
+        Console.WriteLine("Tạo URL thanh toán...");
+        var paymentUrl = _vnpayService.CreatePaymentUrl(createdOrder, HttpContext);
+        if (string.IsNullOrEmpty(paymentUrl))
         {
-            Console.WriteLine($"Error creating payment URL: {ex.Message}\nStackTrace: {ex.StackTrace}");
-            return StatusCode(500, $"Lỗi khi tạo URL thanh toán: {ex.Message}");
+            Console.WriteLine("Không thể tạo URL thanh toán.");
+            return StatusCode(500, "Không thể tạo URL thanh toán.");
         }
+
+        Console.WriteLine($"URL thanh toán: {paymentUrl}");
+        return Ok(new { paymentUrl, orderId = createdOrder.Id, isFree = false });
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Lỗi trong CreatePayment: {ex.Message}\nStackTrace: {ex.StackTrace}");
+        return StatusCode(500, $"Lỗi server: {ex.Message}");
+    }
+}
 
     [HttpGet("payment-callback")]
     public async Task<IActionResult> PaymentCallback()
