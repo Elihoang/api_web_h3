@@ -18,7 +18,7 @@ public class ChapterRepository : IChapterRepository
         return await _context.Chapters.ToListAsync();
     }
 
-    public async Task<Chapter> GetChapterByIdAsync(Guid id)
+    public async Task<Chapter> GetChapterByIdAsync(string id)
     {
         return await _context.Chapters.FindAsync(id);
     }
@@ -42,7 +42,7 @@ public class ChapterRepository : IChapterRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteChapterAsync(Guid id)
+    public async Task DeleteChapterAsync(string id)
     {
         var chapter = await _context.Chapters.FindAsync(id);
         if (chapter != null)

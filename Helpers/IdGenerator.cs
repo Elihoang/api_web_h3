@@ -10,7 +10,9 @@ public static class IdGenerator
     private static int SIZE_ORDER = 12;
     private static int SIZE_ORDER_DETAIL = 12;
     private static int SIZE_QUIZ = 12;
-    private static int SIZE_QUIZ_DETAIL = 12;
+    private static int SIZE_USER_QUIZ_ANSWER = 12;
+    private static int SIZE_CATEGORY = 6;
+    private static int SIZE_CHAPTER = 10;
     
     /// <summary>
     /// Sinh ID mặc định 12 ký tự
@@ -67,8 +69,28 @@ public static class IdGenerator
     {
         return Nanoid.Generate(size: SIZE_QUIZ);
     }
+    
+    /// <summary>
+    /// Sinh ID User Quiz Answer
+    /// </summary>
     public static string IdUserQuizAnswer()
     {
-        return Nanoid.Generate(size: SIZE_QUIZ_DETAIL);
+        return Nanoid.Generate(size: SIZE_USER_QUIZ_ANSWER);
+    }
+
+    /// <summary>
+    /// Sinh ID Category
+    /// </summary>
+    public static string IdCategory()
+    {
+        return Nanoid.Generate(size: SIZE_CATEGORY);
+    }
+    
+    /// <summary>
+    /// Sinh ID Chapter
+    /// </summary>
+    public static string IdChapter()
+    {
+        return Nanoid.Generate(size: SIZE_CHAPTER);
     }
 }

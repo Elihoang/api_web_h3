@@ -1,14 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using API_WebH3.Helpers;
 
 namespace API_WebH3.Models;
 
 // Chapter for organizing course content
 public class Chapter
 {
-    [Key]
-    public Guid Id { get; set; }
+    [Key] 
+    public string Id { get; set; } = IdGenerator.IdChapter();
     
     [ForeignKey("Course")]
     public string CourseId { get; set; }

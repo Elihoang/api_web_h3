@@ -25,7 +25,7 @@ public class LessonService
             Title = l.Title,
             Description = l.Description,
             Content = l.Content,
-            VideoUrls = l.VideoUrls,
+            VideoName = l.VideoName,
             Duration = l.Duration,
             OrderNumber = l.OrderNumber,
             Status = l.Status,
@@ -34,7 +34,7 @@ public class LessonService
         });
     }
 
-    public async Task<IEnumerable<LessonDto>> GetLessonsByChapterId(Guid chapterId)
+    public async Task<IEnumerable<LessonDto>> GetLessonsByChapterId(string chapterId)
     {
         var lessons = await _repository.GetLessonsByChapterIdAsync(chapterId);
         return lessons.Select(l => new LessonDto
@@ -45,7 +45,7 @@ public class LessonService
             Title = l.Title,
             Description = l.Description,
             Content = l.Content,
-            VideoUrls = l.VideoUrls,
+            VideoName = l.VideoName,
             Duration = l.Duration,
             OrderNumber = l.OrderNumber,
             Status = l.Status,
@@ -65,7 +65,7 @@ public class LessonService
             Title = l.Title,
             Description = l.Description,
             Content = l.Content,
-            VideoUrls = l.VideoUrls,
+            VideoName = l.VideoName,
             Duration = l.Duration,
             OrderNumber = l.OrderNumber,
             Status = l.Status,
@@ -90,7 +90,7 @@ public class LessonService
             Title = lesson.Title,
             Description = lesson.Description,
             Content = lesson.Content,
-            VideoUrls = lesson.VideoUrls,
+            VideoName = lesson.VideoName,
             Duration = lesson.Duration,
             OrderNumber = lesson.OrderNumber,
             Status = lesson.Status,
@@ -101,10 +101,6 @@ public class LessonService
 
     public async Task<LessonDto> CreateLesson(CreateLessonDto createLessonDto)
     {
-        if (createLessonDto.VideoUrls == null || createLessonDto.VideoUrls.Count != 1)
-        {
-            throw new ArgumentException("Mỗi bài học chỉ được phép có đúng 1 video.");
-        }
         var lesson = new Lesson
         {
             Id = IdGenerator.IdLesson(),
@@ -113,7 +109,7 @@ public class LessonService
             Title = createLessonDto.Title,
             Description = createLessonDto.Description,
             Content = createLessonDto.Content,
-            VideoUrls = createLessonDto.VideoUrls,
+            VideoName = createLessonDto.VideoName,
             Duration = createLessonDto.Duration,
             OrderNumber = createLessonDto.OrderNumber,
             Status = "Pending",
@@ -130,7 +126,7 @@ public class LessonService
             Title = lesson.Title,
             Description = lesson.Description,
             Content = lesson.Content,
-            VideoUrls = lesson.VideoUrls,
+            VideoName = lesson.VideoName,
             Duration = lesson.Duration,
             OrderNumber = lesson.OrderNumber,
             Status = lesson.Status,
@@ -152,7 +148,7 @@ public class LessonService
         lesson.Title = updateLessonDto.Title;
         lesson.Description = updateLessonDto.Description;
         lesson.Content = updateLessonDto.Content;
-        lesson.VideoUrls = updateLessonDto.VideoUrls;
+        lesson.VideoName = updateLessonDto.VideoName;
         lesson.Duration = updateLessonDto.Duration;
         lesson.OrderNumber = updateLessonDto.OrderNumber;
         
@@ -166,7 +162,7 @@ public class LessonService
             Title = lesson.Title,
             Description = lesson.Description,
             Content = lesson.Content,
-            VideoUrls = lesson.VideoUrls,
+            VideoName = lesson.VideoName,
             Duration = lesson.Duration,
             OrderNumber = lesson.OrderNumber,
             Status = lesson.Status,
@@ -185,4 +181,6 @@ public class LessonService
         await _repository.DeleteLesson(id);
         return true;
     }
+    
+    
 }

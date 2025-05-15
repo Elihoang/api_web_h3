@@ -1,4 +1,5 @@
 using API_WebH3.DTO.Chapter;
+using API_WebH3.Helpers;
 using API_WebH3.Models;
 using API_WebH3.Repository;
 
@@ -41,7 +42,7 @@ public class ChapterService
         });
     }
 
-    public async Task<ChapterDto> GetChapterById(Guid id)
+    public async Task<ChapterDto> GetChapterById(string id)
     {
         var chapter = await _chapterRepository.GetChapterByIdAsync(id);
         if (chapter == null)
@@ -64,7 +65,7 @@ public class ChapterService
     {
         var chapter = new Chapter
         {
-            Id = Guid.NewGuid(),
+            Id = IdGenerator.IdChapter(),
             CourseId = createChapterDto.CourseId,
             Title = createChapterDto.Title,
             Description = createChapterDto.Description,
@@ -84,7 +85,7 @@ public class ChapterService
         };
     }
 
-    public async Task<ChapterDto> UpdateChapter(Guid id, UpdateChapterDto updateChapterDto)
+    public async Task<ChapterDto> UpdateChapter(string id, UpdateChapterDto updateChapterDto)
     {
         var chapter = await _chapterRepository.GetChapterByIdAsync(id);
         if (chapter == null)
@@ -107,7 +108,7 @@ public class ChapterService
         };
     }
 
-    public async Task<bool> DeleteChapter(Guid id)
+    public async Task<bool> DeleteChapter(string id)
     {
         var chapter = await _chapterRepository.GetChapterByIdAsync(id);
         if (chapter == null)

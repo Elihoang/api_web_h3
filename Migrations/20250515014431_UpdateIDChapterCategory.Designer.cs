@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_WebH3.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250506063520_UpdateOrder")]
-    partial class UpdateOrder
+    [Migration("20250515014431_UpdateIDChapterCategory")]
+    partial class UpdateIDChapterCategory
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,9 +27,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Category", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -49,9 +48,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Chapter", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<string>("CourseId")
                         .IsRequired()
@@ -181,8 +179,8 @@ namespace API_WebH3.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -285,8 +283,9 @@ namespace API_WebH3.Migrations
                     b.Property<Guid?>("ApprovedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ChapterId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ChapterId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Content")
                         .HasColumnType("text");
@@ -309,14 +308,15 @@ namespace API_WebH3.Migrations
                     b.Property<int>("OrderNumber")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SerializedVideoUrls")
-                        .HasColumnType("text");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VideoName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -704,6 +704,43 @@ namespace API_WebH3.Migrations
                     b.ToTable("UserNotifications");
                 });
 
+            modelBuilder.Entity("API_WebH3.Models.UserQuizAnswer", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AnsweredAt")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Feedback")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("QuizId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserAnswer")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserQuizAnswers");
+                });
+
             modelBuilder.Entity("API_WebH3.Models.Chapter", b =>
                 {
                     b.HasOne("API_WebH3.Models.Course", "Course")
@@ -988,6 +1025,25 @@ namespace API_WebH3.Migrations
                         .IsRequired();
 
                     b.Navigation("Notification");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("API_WebH3.Models.UserQuizAnswer", b =>
+                {
+                    b.HasOne("API_WebH3.Models.Quiz", "Quiz")
+                        .WithMany()
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API_WebH3.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
 
                     b.Navigation("User");
                 });

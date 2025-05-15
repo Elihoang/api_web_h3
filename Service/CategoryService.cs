@@ -1,4 +1,5 @@
 using API_WebH3.DTO.Category;
+using API_WebH3.Helpers;
 using API_WebH3.Models;
 using API_WebH3.Repository;
 
@@ -25,7 +26,7 @@ public class CategoryService
         });
     }
 
-    public async Task<CategoryDto> GetCategoryById(Guid id)
+    public async Task<CategoryDto> GetCategoryById(string id)
     {
         var category = await _categoryRepository.GetByIdAsync(id);
         if (category == null)
@@ -47,7 +48,7 @@ public class CategoryService
     {
         var category = new Category
         {
-            Id = Guid.NewGuid(),
+            Id = IdGenerator.IdCategory(),
             Name = createCategoryDto.Name,
             Description = createCategoryDto.Description,
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
@@ -64,7 +65,7 @@ public class CategoryService
         };
     }
 
-    public async Task<CategoryDto> UpdateCategory(Guid id, UpdateCategoryDto updateCategoryDto)
+    public async Task<CategoryDto> UpdateCategory(string id, UpdateCategoryDto updateCategoryDto)
     {
         var category = await _categoryRepository.GetByIdAsync(id);
         if (category == null )
@@ -83,7 +84,7 @@ public class CategoryService
         };
     }
 
-    public async Task<bool> DeleteCategory(Guid id)
+    public async Task<bool> DeleteCategory(string id)
     {
         var category =  await _categoryRepository.GetByIdAsync(id);
         if (category == null)

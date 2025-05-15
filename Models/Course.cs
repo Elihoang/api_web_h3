@@ -29,7 +29,7 @@ public class Course
     public required Guid InstructorId { get; set; }
 
     [ForeignKey("Category")]
-    public Guid? CategoryId { get; set; }
+    public string? CategoryId { get; set; }
 
     [Required]
     public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
