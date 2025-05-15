@@ -24,9 +24,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Category", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -46,9 +45,8 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Chapter", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<string>("CourseId")
                         .IsRequired()
@@ -178,8 +176,8 @@ namespace API_WebH3.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
@@ -282,8 +280,9 @@ namespace API_WebH3.Migrations
                     b.Property<Guid?>("ApprovedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ChapterId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ChapterId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Content")
                         .HasColumnType("text");
@@ -306,14 +305,15 @@ namespace API_WebH3.Migrations
                     b.Property<int>("OrderNumber")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SerializedVideoUrls")
-                        .HasColumnType("text");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VideoName")
                         .IsRequired()
                         .HasColumnType("text");
 

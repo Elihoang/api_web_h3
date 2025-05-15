@@ -23,7 +23,7 @@ public class ChapterController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ChapterDto>> GetChapterById(Guid id)
+    public async Task<ActionResult<ChapterDto>> GetChapterById(string id)
     {
         var chapter = await _chapterService.GetChapterById(id);
         if (chapter == null)
@@ -52,7 +52,7 @@ public class ChapterController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ChapterDto>> UpdateChapter(Guid id, UpdateChapterDto updateChapterDto)
+    public async Task<ActionResult<ChapterDto>> UpdateChapter(string id, UpdateChapterDto updateChapterDto)
     {
         if (!ModelState.IsValid)
         {
@@ -68,7 +68,7 @@ public class ChapterController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteChapter(Guid id)
+    public async Task<IActionResult> DeleteChapter(string id)
     {
         var chapter = await _chapterService.DeleteChapter(id);
         if (!chapter)

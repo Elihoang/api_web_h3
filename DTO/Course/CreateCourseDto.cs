@@ -13,6 +13,6 @@ public class CreateCourseDto
     public string? UrlImage { get; set; }
     [Required]
     public Guid InstructorId { get; set; }
-    public Guid? CategoryId { get; set; }
+    public string? CategoryId { get; set; }
     public List<string>? Contents { get; set; }
 }

@@ -34,7 +34,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpGet("chapter/{chapterId}")]
-    public async Task<ActionResult<IEnumerable<LessonDto>>> GetLessonsByChapterId(Guid chapterId)
+    public async Task<ActionResult<IEnumerable<LessonDto>>> GetLessonsByChapterId(string chapterId)
     {
         var lessons = await _lessonService.GetLessonsByChapterId(chapterId);
         return Ok(lessons);
@@ -83,4 +83,22 @@ public class LessonController : ControllerBase
         }
         return NoContent();
     }
+    
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadVideo(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("File không hợp lệ");
+
+        var path = Path.Combine("wwwroot/videos", file.FileName);
+
+        using (var stream = new FileStream(path, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        var url = $"{Request.Scheme}://{Request.Host}/videos/{file.FileName}";
+        return Ok(new { url });
+    }
+
 }

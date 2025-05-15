@@ -5,7 +5,7 @@ namespace API_WebH3.DTO.Lesson;
 public class CreateLessonDto
 {
     [Required]
-    public Guid ChapterId { get; set; }
+    public string ChapterId { get; set; }
     [Required]
     public string CourseId { get; set; }
     [Required]
@@ -13,7 +13,7 @@ public class CreateLessonDto
     [Required]
     public string Description { get; set; }
     public string? Content { get; set; }
-    public List<string>? VideoUrls { get; set; }
+    public string VideoName { get; set; }
     public int Duration { get; set; }
     public int OrderNumber { get; set; }
 }

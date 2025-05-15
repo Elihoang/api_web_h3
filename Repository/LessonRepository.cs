@@ -23,7 +23,7 @@ public class LessonRepository : ILessonRepository
         return await _context.Lessons.FindAsync(id);
     }
 
-    public async Task<IEnumerable<Lesson>> GetLessonsByChapterIdAsync(Guid chapterId)
+    public async Task<IEnumerable<Lesson>> GetLessonsByChapterIdAsync(string chapterId)
     {
         return await _context.Lessons
             .Where(l => l.ChapterId == chapterId)
@@ -57,5 +57,11 @@ public class LessonRepository : ILessonRepository
             _context.Lessons.Remove(lesson);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task UpdateVideo(string id, string videoName)
+    {
+        var lesson = _context.Lessons.SingleAsync(l => l.Id == id);
+        await _context.SaveChangesAsync();
     }
 }

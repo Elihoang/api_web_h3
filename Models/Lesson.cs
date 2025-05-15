@@ -12,7 +12,7 @@ public class Lesson
     public string Id { get; set; } = IdGenerator.IdLesson();
     
     [ForeignKey("Chapter")]
-    public Guid ChapterId { get; set; }
+    public string ChapterId { get; set; }
     
     [ForeignKey("Course")]
     public string CourseId { get; set; }
@@ -25,33 +25,9 @@ public class Lesson
     
     public string? Content { get; set; }
     
-    [NotMapped]
-    public List<string>? VideoUrls { get; set; }
-    
-    public string? SerializedVideoUrls
-    {
-        get => VideoUrls == null ? null : JsonSerializer.Serialize(VideoUrls);
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                VideoUrls = null;
-            }
-            else
-            {
-                try
-                {
-                    VideoUrls = JsonSerializer.Deserialize<List<string>>(value);
-                }
-                catch
-                {
-                    VideoUrls = null;
-                }
-            }
-        }
-    }
+    public string VideoName { get; set; }
 
-        public int Duration { get; set; }
+    public int Duration { get; set; }
     
     public int OrderNumber { get; set; }
     

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using API_WebH3.Helpers;
 
 namespace API_WebH3.Models;
 
@@ -8,7 +9,7 @@ namespace API_WebH3.Models;
 public class Category
 {
     [Key]
-    public Guid Id { get; set; }
+    public string Id { get; set; } = IdGenerator.IdCategory();
     
     [Required]
     public required string Name { get; set; }
