@@ -107,7 +107,6 @@ public class UserService
             return null;
         }
 
-        // Only update fields that are provided in the request
         if (updateUserDto.FullName != null)
         {
             user.FullName = updateUserDto.FullName;
@@ -124,13 +123,9 @@ public class UserService
         {
             user.Phone = updateUserDto.Phone;
         }
-        if (updateUserDto.BirthDate.HasValue)
+        if (updateUserDto.BirthDate.HasValue) // Chỉ cập nhật nếu BirthDate được gửi
         {
             user.BirthDate = DateTime.SpecifyKind(updateUserDto.BirthDate.Value, DateTimeKind.Utc);
-        }
-        else if (updateUserDto.BirthDate == null)
-        {
-            user.BirthDate = null; // Explicitly allow nulling out BirthDate
         }
         if (updateUserDto.ProfileImage != null)
         {
@@ -156,7 +151,7 @@ public class UserService
         {
             user.IsGoogleAccount = updateUserDto.IsGoogleAccount;
         }
-
+        
         await _userRepository.UpdateAsync(user);
 
         return new UserDto
@@ -221,5 +216,32 @@ public class UserService
             Console.WriteLine($"Lỗi khi cập nhật mật khẩu: {ex.Message}");
             return false;
         }
+    }
+    public async Task<UserDto> UpdateProfileImageAsync(Guid id, string profileImage)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            return null;
+        }
+
+        user.ProfileImage = profileImage;
+        await _userRepository.UpdateAsync(user);
+
+        return new UserDto
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Phone = user.Phone,
+            BirthDate = user.BirthDate,
+            ProfileImage = user.ProfileImage,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt,
+            IpAddress = user.IpAddress,
+            DeviceName = user.DeviceName,
+            GoogleId = user.GoogleId,
+            IsGoogleAccount = user.IsGoogleAccount
+        };
     }
 }

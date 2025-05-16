@@ -31,9 +31,9 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Email already exists" });
 
             var loginDto = new Login { Email = registerDto.Email, Password = registerDto.Password };
-            var result = await _authService.LoginAsync(loginDto);
+            var (result, errorMessage) = await _authService.LoginAsync(loginDto);
             if (result == null)
-                return StatusCode(500, new { message = "Failed to login after registration" });
+                return StatusCode(500, new { message = errorMessage ?? "Failed to login after registration" });
 
             var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
             return Ok(new
@@ -56,9 +56,9 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var result = await _authService.LoginAsync(loginDto);
+            var (result, errorMessage) = await _authService.LoginAsync(loginDto);
             if (result == null)
-                return Unauthorized(new { message = "Invalid credentials" });
+                return BadRequest(new { message = errorMessage ?? "Thông tin đăng nhập không hợp lệ" });
 
             var expirationMinutes = int.Parse(_configuration["JwtSettings:AccessTokenExpiration"]);
             return Ok(new
@@ -111,7 +111,6 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        // No server-side action needed for localStorage/sessionStorage logout
         return Ok(new { message = "Logout successful" });
     }
 

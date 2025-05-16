@@ -29,7 +29,7 @@ namespace API_WebH3.Services
             Console.WriteLine("AuthService initialized");
         }
 
-        public async Task<AuthResponseDto?> LoginAsync(Login loginDto)
+        public async Task<(AuthResponseDto? Result, string? ErrorMessage)> LoginAsync(Login loginDto)
         {
             try
             {
@@ -38,19 +38,19 @@ namespace API_WebH3.Services
                 if (user == null)
                 {
                     Console.WriteLine($"User not found: {loginDto.Email}");
-                    return null;
+                    return (null, "Email không tồn tại");
                 }
 
                 Console.WriteLine($"Verifying password for: {loginDto.Email}");
                 if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
                 {
                     Console.WriteLine($"Invalid password for: {loginDto.Email}");
-                    return null;
+                    return (null, "Mật khẩu không đúng");
                 }
 
                 Console.WriteLine($"Generating JWT for: {loginDto.Email}");
                 string token = GenerateJwtToken(user);
-                return new AuthResponseDto { Token = token, Role = user.Role };
+                return (new AuthResponseDto { Token = token, Role = user.Role }, null);
             }
             catch (Exception ex)
             {
@@ -110,7 +110,7 @@ namespace API_WebH3.Services
                     new Claim("profileImage", user.ProfileImage ?? string.Empty),
                     new Claim("birthDate", user.BirthDate?.ToString("yyyy-MM-dd") ?? string.Empty)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes), // Sử dụng cấu hình
+                Expires = DateTime.UtcNow.AddMinutes(expirationMinutes),
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
