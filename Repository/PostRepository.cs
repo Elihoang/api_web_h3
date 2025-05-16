@@ -16,12 +16,14 @@ public class PostRepository : IPostRepository
     
     public async Task<IEnumerable<Post>> GetPostAllAsync()
     {
-        return await _context.Posts.ToListAsync();
+        return await _context.Posts.Include(p =>p.User).ToListAsync();
     }
 
     public async Task<Post> GetPostByIdAsync(Guid id)
     {
-        return await _context.Posts.FindAsync(id);
+        return await _context.Posts
+            .Include(p => p.User) 
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task AddPostAsync(Post post)

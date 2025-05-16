@@ -27,8 +27,16 @@ public class PostService
             Content = p.Content,
             Tags = p.Tags,
             UrlImage = p.UrlImage,
-            CreatedAt = p.CreatedAt
-        });
+            CreatedAt = p.CreatedAt,
+            User = new UserDto
+            {
+                Id = p.User.Id,
+                FullName = p.User.FullName ?? "Không có tên",
+                Email = p.User.Email ?? "Chưa có email",
+                ProfileImage = p.User.ProfileImage,
+                Role = p.User.Role
+            }
+        }).ToList();
     }
     public async Task<PostDto> GetByIdAsync(Guid id)
     {
@@ -45,7 +53,15 @@ public class PostService
             Content = post.Content,
             Tags = post.Tags,
             UrlImage = post.UrlImage,
-            CreatedAt = post.CreatedAt
+            CreatedAt = post.CreatedAt,
+            User = new UserDto
+            {
+                Id = post.User.Id,
+                FullName = post.User.FullName ?? null,
+                Email = post.User.Email ?? null,
+                ProfileImage = post.User.ProfileImage,
+                Role = post.User.Role
+            }
         };
     }
     public async Task<PostDto> CreateAsync(CreatePostDto createPostDto)
@@ -77,7 +93,7 @@ public class PostService
             Content = post.Content,
             Tags = post.Tags,
             UrlImage = post.UrlImage,
-            CreatedAt = post.CreatedAt
+            CreatedAt = post.CreatedAt,
         };
     }
     public async Task<PostDto> UpdateAsync(Guid id, UpdatePostDto updatePostDto)
@@ -103,7 +119,15 @@ public class PostService
             Content = post.Content,
             Tags = post.Tags,
             UrlImage = post.UrlImage,
-            CreatedAt = post.CreatedAt
+            CreatedAt = post.CreatedAt,
+            User = new UserDto
+            {
+                Id = post.User.Id,
+                FullName = post.User.FullName ?? null,
+                Email = post.User.Email ?? null,
+                ProfileImage = post.User.ProfileImage,
+                Role = post.User.Role
+            }
         };
     }
 

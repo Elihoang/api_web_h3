@@ -96,11 +96,6 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UploadProfileImage(Guid id, IFormFile file)
     {
-        // Kiểm tra quyền
-        var userIdClaim = User.FindFirst("id")?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid currentUserId) || currentUserId != id)
-            return Unauthorized(new { message = "Bạn không có quyền cập nhật ảnh này." });
-
         if (file == null || file.Length == 0)
             return BadRequest(new { message = "Không có file được tải lên." });
 
@@ -119,8 +114,7 @@ public class UserController : ControllerBase
             }
 
             var relativePath = $"/uploads/{fileName}";
-            var updateUserDto = new UpdateUserDto { ProfileImage = relativePath };
-            var updatedUser = await _userService.UpdateAsync(id, updateUserDto);
+            var updatedUser = await _userService.UpdateProfileImageAsync(id, relativePath);
 
             if (updatedUser == null)
                 return NotFound(new { message = "Không tìm thấy người dùng." });
