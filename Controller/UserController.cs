@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using API_WebH3.DTO.User;
 using API_WebH3.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -10,10 +11,12 @@ namespace API_WebH3.Controller;
 public class UserController : ControllerBase
 {
     private readonly UserService _userService;
+    private readonly PhotoService _photoService;
 
-    public UserController(UserService userService)
+    public UserController(UserService userService, PhotoService photoService)
     {
         _userService = userService;
+        _photoService = photoService;
     }
 
     [HttpGet]
@@ -75,6 +78,7 @@ public class UserController : ControllerBase
 
         return NoContent();
     }
+
     [HttpPut("{id}/password")]
     public async Task<IActionResult> UpdatePassword(Guid id, [FromBody] UpdatePasswordDto updatePasswordDto)
     {
@@ -91,39 +95,24 @@ public class UserController : ControllerBase
 
         return NoContent();
     }
-    
+
     [HttpPost("{id}/upload-profile-image")]
     [Authorize]
     public async Task<IActionResult> UploadProfileImage(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new { message = "Không có file được tải lên." });
+            return BadRequest("Không có tệp nào được tải lên.");
 
-        try
-        {
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
+        // Tải ảnh lên Cloudinary
+        var imageUrl = await _photoService.UploadImageAsync(file);
+        if (imageUrl == null)
+            return BadRequest("Tải ảnh không thành công.");
 
-            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
-            var filePath = Path.Combine(uploadsFolder, fileName);
+        // Cập nhật ảnh hồ sơ
+        var userDto = await _userService.UpdateProfileImageAsync(id, imageUrl);
+        if (userDto == null)
+            return NotFound("Không tìm thấy người dùng.");
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            var relativePath = $"/uploads/{fileName}";
-            var updatedUser = await _userService.UpdateProfileImageAsync(id, relativePath);
-
-            if (updatedUser == null)
-                return NotFound(new { message = "Không tìm thấy người dùng." });
-
-            return Ok(new { profileImage = relativePath });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = ex.Message });
-        }
+        return Ok(new { ImageUrl = userDto.ProfileImage });
     }
 }
