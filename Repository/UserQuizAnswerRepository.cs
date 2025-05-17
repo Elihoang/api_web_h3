@@ -39,4 +39,25 @@ public class UserQuizAnswerRepository : IUserQuizAnswerRepository
             .Where(uqa => uqa.QuizId == quizId)
             .ToListAsync();
     }
+    public async Task<IEnumerable<UserQuizAnswer>> GetByLessonIdAsync(string lessonId, Guid userId)
+    {
+        return await _context.UserQuizAnswers
+            .Where(a => a.Quiz.LessonId == lessonId && a.UserId == userId)
+            .ToListAsync();
+    }
+    public async Task<UserQuizAnswer> UpdateAsync(UserQuizAnswer userAnswer)
+    {
+        _context.UserQuizAnswers.Update(userAnswer);
+        await _context.SaveChangesAsync();
+        return userAnswer;
+    }
+    public async Task<bool> DeleteAsync(string id)
+    {
+        var answer = await _context.UserQuizAnswers.FindAsync(id);
+        if (answer == null) return false;
+
+        _context.UserQuizAnswers.Remove(answer);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
