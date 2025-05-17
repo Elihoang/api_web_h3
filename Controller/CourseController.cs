@@ -9,9 +9,11 @@ namespace API_WebH3.Controller;
 public class CourseController : ControllerBase
 {
     private readonly CourseService _courseService;
-    public CourseController(CourseService courseService)
+    private readonly PhotoService _photoService;
+    public CourseController(CourseService courseService, PhotoService photoService)
     {
         _courseService = courseService;
+        _photoService = photoService;
     }
 
     [HttpGet("paginated")]
@@ -20,7 +22,7 @@ public class CourseController : ControllerBase
         var courses = await _courseService.GetAllAsync();
         var totalItems = courses.Count();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        
+
         var pagedCourseList = courses
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -34,10 +36,10 @@ public class CourseController : ControllerBase
             CurrentPage = pageNumber,
             PageSize = pageSize
         };
-        
+
         return Ok(result);
     }
-    
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses()
     {
@@ -64,7 +66,7 @@ public class CourseController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var courseDto = await _courseService.CreateChapter(createCourseDto);
+        var courseDto = await _courseService.CreateCourseAsync(createCourseDto);
         return CreatedAtAction(nameof(GetCourse), new { id = courseDto.Id }, courseDto);
     }
 
@@ -76,7 +78,7 @@ public class CourseController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var courseDto = await _courseService.UpdateChapter(id, updateCourseDto);
+        var courseDto = await _courseService.UpdateCourseAsync(id, updateCourseDto);
         if (courseDto == null)
         {
             return NotFound();
@@ -101,12 +103,40 @@ public class CourseController : ControllerBase
         var courses = await _courseService.GetByCategoryIdAsync(categoryId);
         return Ok(courses);
     }
-    
+
     [HttpGet("instructor/{instructorId}")]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesByInstructorId(string instructorId)
     {
         var courses = await _courseService.GetByInstructorIdAsync(instructorId);
-        
+
         return Ok(courses);
     }
+
+    [HttpPost("{courseId}/upload-image")]
+    public async Task<IActionResult> UploadCourseImage(string courseId, IFormFile file)
+    {
+        var imageUrl = await _photoService.UploadImageAsync(file);
+        if (imageUrl == null)
+            return BadRequest("Upload failed.");
+
+        var course = await _courseService.GetByIdAsync(courseId);
+        if (course == null)
+            return BadRequest("Không tìm thấy khóa học này!");
+
+        UpdateCourseDto update = new UpdateCourseDto()
+        {
+            Title = course.Title,
+            Description = course.Description,
+            Price = course.Price,
+            UrlImage = imageUrl,
+            InstructorId = course.InstructorId,
+            CategoryId = course.CategoryId,
+            Contents = course.Contents
+        };
+        await _courseService.UpdateCourseAsync(courseId, update);
+
+
+        return Ok(new { course.Id, course.Title, course.UrlImage });
+    }
+    
 }

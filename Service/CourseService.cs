@@ -55,7 +55,7 @@ public async Task<CourseDto> GetByIdAsync(string id)
     };
 }
 
-    public async Task<CourseDto> CreateChapter(CreateCourseDto createCourseDto)
+    public async Task<CourseDto> CreateCourseAsync(CreateCourseDto createCourseDto)
     {
         var instructor = await _userRepository.GetByIdAsync(createCourseDto.InstructorId);
         if (instructor == null)
@@ -94,7 +94,7 @@ public async Task<CourseDto> GetByIdAsync(string id)
         };
     }
 
-    public async Task<CourseDto> UpdateChapter(string id, UpdateCourseDto updateCourseDto)
+    public async Task<CourseDto> UpdateCourseAsync(string id, UpdateCourseDto updateCourseDto)
     {
         var course = await _courseRepository.GetByIdAsync(id);
         if (course == null)
