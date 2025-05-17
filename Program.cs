@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using API_WebH3.Configurations;
 using API_WebH3.Data;
 using API_WebH3.Repositories;
 using API_WebH3.Repository;
@@ -22,6 +23,11 @@ if (string.IsNullOrEmpty(connectionString))
 // 🔹 Đăng ký DbContext với PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// 🔹 Cấu hình Cloudinary
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("CloudinarySettings"));
+
 
 // 🔹 Cấu hình logging
 builder.Logging.ClearProviders();
@@ -86,6 +92,7 @@ builder.Services.AddScoped<IUserQuizAnswerRepository,UserQuizAnswerRepository>()
 
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<QuizService>();
+builder.Services.AddScoped<PhotoService>();
 
 // 🔹 Cấu hình CORS
 builder.Services.AddCors(options =>
