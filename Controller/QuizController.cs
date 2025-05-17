@@ -38,6 +38,26 @@ public class QuizController : ControllerBase
         }
     }
 
+    [HttpGet("user-answers/lesson/{lessonId}")]
+    public async Task<ActionResult<IEnumerable<UserQuizAnswerDto>>> GetUserAnswersByLessonId(string lessonId)
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")?.Value ?? throw new UnauthorizedAccessException("Người dùng chưa xác thực."));
+            var userAnswers = await _quizService.GetUserAnswersByLessonIdAsync(lessonId, userId);
+            return Ok(userAnswers ?? new List<UserQuizAnswerDto>());
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in GetUserAnswersByLessonId: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            return StatusCode(500, $"Lỗi server: {ex.Message}");
+        }
+    }
+
     [HttpGet("lesson/{lessonId}")]
     public async Task<ActionResult<IEnumerable<QuizDTO>>> GetByLessonId(string lessonId)
     {
@@ -110,14 +130,11 @@ public class QuizController : ControllerBase
     {
         try
         {
-            var userId = Guid.Parse(User.FindFirst("id")?.Value ??
-                                    throw new UnauthorizedAccessException("Người dùng chưa xác thực."));
-            Console.WriteLine(
-                $"Received Submit Answer Request - QuizId: {answerDto.QuizId}, UserAnswer: {answerDto.UserAnswer}");
+            var userId = Guid.Parse(User.FindFirst("id")?.Value ?? throw new UnauthorizedAccessException("Người dùng chưa xác thực."));
+            Console.WriteLine($"Received Submit Answer Request - QuizId: {answerDto.QuizId}, UserAnswer: {answerDto.UserAnswer}");
 
             var userAnswer = await _quizService.SaveUserAnswerAsync(answerDto.QuizId, userId, answerDto.UserAnswer);
-            Console.WriteLine(
-                $"UserAnswer Result - IsCorrect: {userAnswer.IsCorrect}, Feedback: {userAnswer.Feedback}");
+            Console.WriteLine($"UserAnswer Result - IsCorrect: {userAnswer.IsCorrect}, Feedback: {userAnswer.Feedback}");
 
             return Ok(new UserQuizAnswerDto
             {
@@ -140,6 +157,26 @@ public class QuizController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"Error in SubmitAnswer: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            return StatusCode(500, $"Lỗi server: {ex.Message}");
+        }
+    }
+
+    [HttpDelete("user-answers/lesson/{lessonId}")]
+    public async Task<ActionResult> DeleteUserAnswersByLessonId(string lessonId)
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")?.Value ?? throw new UnauthorizedAccessException("Người dùng chưa xác thực."));
+            await _quizService.DeleteUserAnswersByLessonIdAsync(lessonId, userId);
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in DeleteUserAnswersByLessonId: {ex.Message}\nStackTrace: {ex.StackTrace}");
             return StatusCode(500, $"Lỗi server: {ex.Message}");
         }
     }
