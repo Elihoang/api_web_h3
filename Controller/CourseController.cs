@@ -1,5 +1,7 @@
 using API_WebH3.DTO.Course;
 using API_WebH3.Service;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_WebH3.Controller;
@@ -112,31 +114,18 @@ public class CourseController : ControllerBase
         return Ok(courses);
     }
 
-    [HttpPost("{courseId}/upload-image")]
-    public async Task<IActionResult> UploadCourseImage(string courseId, IFormFile file)
+    [HttpPost("upload-image")]
+    // [Authorize(Roles = "Instructor")]
+    public async Task<IActionResult> UploadImage(IFormFile file)
     {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
         var imageUrl = await _photoService.UploadImageAsync(file);
         if (imageUrl == null)
             return BadRequest("Upload failed.");
 
-        var course = await _courseService.GetByIdAsync(courseId);
-        if (course == null)
-            return BadRequest("Không tìm thấy khóa học này!");
-
-        UpdateCourseDto update = new UpdateCourseDto()
-        {
-            Title = course.Title,
-            Description = course.Description,
-            Price = course.Price,
-            UrlImage = imageUrl,
-            InstructorId = course.InstructorId,
-            CategoryId = course.CategoryId,
-            Contents = course.Contents
-        };
-        await _courseService.UpdateCourseAsync(courseId, update);
-
-
-        return Ok(new { course.Id, course.Title, course.UrlImage });
+        return Ok(new { url = imageUrl });
     }
-    
+
 }
