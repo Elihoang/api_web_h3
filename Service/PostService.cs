@@ -173,4 +173,45 @@ public class PostService
             }
         }).ToList();
     }
+    public async Task<PostDto> UpdatePostImageAsync(Guid id, string urlImage)
+    {
+        if (string.IsNullOrWhiteSpace(urlImage))
+        {
+            throw new ArgumentException("URL ảnh không được để trống.");
+        }
+        
+        var post = await _postRepository.GetPostByIdAsync(id);
+        if (post == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            post.UrlImage = urlImage;
+            await _postRepository.UpdatePostAsync(post);
+            return new PostDto
+            {
+                Id = post.Id,
+                UserId = post.UserId,
+                Title = post.Title,
+                Content = post.Content,
+                Tags = post.Tags,
+                UrlImage = post.UrlImage,
+                CreatedAt = post.CreatedAt,
+                User = new UserDto
+                {
+                    Id = post.User.Id,
+                    FullName = post.User.FullName ?? null,
+                    Email = post.User.Email ?? null,
+                    ProfileImage = post.User.ProfileImage,
+                    Role = post.User.Role
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Không thể cập nhật ảnh bài đăng.", ex);
+        }
+    }
 }

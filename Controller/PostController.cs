@@ -10,11 +10,14 @@ namespace API_WebH3.Controller;
 public class PostController : ControllerBase
 {
     private readonly PostService _postService;
+    private readonly PhotoService _photoService;
 
-    public PostController(PostService postService)
+    public PostController(PostService postService, PhotoService photoService)
     {
+        _photoService = photoService;
         _postService = postService;
     }
+    
 
 
     [HttpGet]
@@ -85,5 +88,23 @@ public class PostController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpPost("{postId}/upload-image")]
+    [Authorize]
+    public async Task<IActionResult> UploadPostImage(Guid postId, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Không có tệp nào được tải lên.");
+
+        var imageUrl = await _photoService.UploadImageAsync(file);
+        if (imageUrl == null)
+            return BadRequest("Tải ảnh không thành công.");
+
+        var postDto = await _postService.UpdatePostImageAsync(postId, imageUrl);
+        if (postDto == null)
+            return NotFound("Không tìm thấy người dùng.");
+
+        return Ok(new { ImageUrl = postDto.UrlImage });
     }
 }
