@@ -93,6 +93,7 @@ builder.Services.AddScoped<IUserQuizAnswerRepository,UserQuizAnswerRepository>()
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<QuizService>();
 builder.Services.AddScoped<PhotoService>();
+builder.Services.AddSingleton<S3Service>();
 
 // 🔹 Cấu hình CORS
 builder.Services.AddCors(options =>
