@@ -291,3 +291,8 @@ __pycache__/
 # Video 
 .mp4
 *.mp4
+
+# App Settings
+appsettings.json
+appsettings.Development.json
+
