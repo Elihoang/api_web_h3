@@ -13,11 +13,10 @@ public class CourseController : ControllerBase
     private readonly CourseService _courseService;
     private readonly PhotoService _photoService;
     private readonly S3Service _s3Service;
-    public CourseController(CourseService courseService, PhotoService photoService, S3Service s3Service)
+    public CourseController(CourseService courseService, PhotoService photoService)
     {
         _courseService = courseService;
         _photoService = photoService;
-        _s3Service = s3Service;
     }
 
     [HttpGet("paginated")]
@@ -130,31 +129,4 @@ public class CourseController : ControllerBase
         return Ok(new { url = imageUrl });
     }
     
-    [HttpPost("upload-video")]
-    public async Task<IActionResult> UploadVideo(IFormFile file)
-    {
-        if (file == null || file.Length == 0)
-            return BadRequest("File is empty.");
-
-        var url = await _s3Service.UploadVideoAsync(file);
-        return Ok(new { videoUrl = url });
-    }
-    
-    [HttpGet("stream/{fileName}")]
-    public async Task<IActionResult> StreamVideo(string fileName)
-    {
-        if (string.IsNullOrEmpty(fileName))
-            return BadRequest("File name is required.");
-
-        var stream = await _s3Service.GetVideoStreamAsync(fileName);
-        if (stream == null)
-            return NotFound();
-
-        // Định dạng MIME – có thể mở rộng nếu cần
-        var contentType = "video/mp4";
-
-        // Trả về stream – không cache để giảm độ trễ
-        return File(stream, contentType, enableRangeProcessing: true);
-    }
-
 }

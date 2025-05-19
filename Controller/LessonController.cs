@@ -9,10 +9,12 @@ namespace API_WebH3.Controller;
 public class LessonController : ControllerBase
 {
     private readonly LessonService _lessonService;
+    private readonly S3Service _s3Service;
 
-    public LessonController(LessonService lessonService)
+    public LessonController(LessonService lessonService, S3Service s3Service)
     {
         _lessonService = lessonService;
+        _s3Service = s3Service;
     }
 
     [HttpGet]
@@ -84,21 +86,30 @@ public class LessonController : ControllerBase
         return NoContent();
     }
     
-    [HttpPost("upload")]
+    [HttpPost("upload-video")]
     public async Task<IActionResult> UploadVideo(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("File không hợp lệ");
+            return BadRequest("File is empty.");
 
-        var path = Path.Combine("wwwroot/videos", file.FileName);
-
-        using (var stream = new FileStream(path, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        var url = $"{Request.Scheme}://{Request.Host}/videos/{file.FileName}";
-        return Ok(new { url });
+        var url = await _s3Service.UploadVideoAsync(file);
+        return Ok(new { videoUrl = url });
     }
+    
+    [HttpGet("stream/{fileName}")]
+    public async Task<IActionResult> StreamVideo(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+            return BadRequest("File name is required.");
 
+        var stream = await _s3Service.GetVideoStreamAsync(fileName);
+        if (stream == null)
+            return NotFound();
+
+        // Định dạng MIME – có thể mở rộng nếu cần
+        var contentType = "video/mp4";
+
+        // Trả về stream – không cache để giảm độ trễ
+        return File(stream, contentType, enableRangeProcessing: true);
+    }
 }
