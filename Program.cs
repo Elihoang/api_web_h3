@@ -87,13 +87,13 @@ builder.Services.AddScoped<VnpayService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<EmailPaymentService>();
 builder.Services.AddScoped<UserService>();
-
 builder.Services.AddScoped<IUserQuizAnswerRepository,UserQuizAnswerRepository>();
-
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<QuizService>();
 builder.Services.AddScoped<PhotoService>();
 builder.Services.AddSingleton<S3Service>();
+builder.Services.AddScoped<IFilterRepository, FilterRepository>();
+builder.Services.AddScoped<FilterService>();
 
 // 🔹 Cấu hình CORS
 builder.Services.AddCors(options =>
