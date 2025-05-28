@@ -18,6 +18,28 @@ public class PostController : ControllerBase
         _postService = postService;
     }
     
+    [HttpGet("paginated")]
+    public async Task<ActionResult<IEnumerable<PostDto>>> GetPaginatedCourses([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var post = await _postService.GetAllAsync();
+        var totalItems = post.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var pagedPostList = post.Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new
+        {
+            Data = pagedPostList,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
 
 
     [HttpGet]

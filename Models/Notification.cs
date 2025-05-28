@@ -12,14 +12,14 @@ public class Notification
     public Guid Id { get; set; }
 
     [Required]
-    public required string Type { get; set; } // e.g., LessonApproval, NewMessage, CourseEnrollment
+    public required string Type { get; set; } 
 
     [Required]
-    public required string Content { get; set; } // Notification message (e.g., "Your lesson was approved")
+    public required string Content { get; set; } 
 
-    public Guid? RelatedEntityId { get; set; } // Optional ID of related entity (e.g., LessonId, MessageId)
+    public string? RelatedEntityId { get; set; }
 
-    public string? RelatedEntityType { get; set; } // Type of related entity (e.g., Lesson, Message, Course)
+    public string? RelatedEntityType { get; set; } 
 
     public string CreatedAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 

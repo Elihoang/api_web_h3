@@ -102,15 +102,7 @@ public class NotificationService
     }
 
     // Parse RelatedEntityId từ string sang Guid
-    Guid? relatedEntityId = null;
-    if (createNotificationDto.RelatedEntityId != null)
-    {
-        if (!Guid.TryParse(createNotificationDto.RelatedEntityId, out var parsedGuid))
-        {
-            throw new ArgumentException("RelatedEntityId phải là định dạng Guid hợp lệ (ví dụ: 123e4567-e89b-12d3-a456-426614174000).");
-        }
-        relatedEntityId = parsedGuid;
-    }
+   
 
     // Nếu là thông báo toàn hệ thống, lấy tất cả người dùng
     if (createNotificationDto.IsSystemWide)
@@ -138,7 +130,7 @@ public class NotificationService
         Id = Guid.NewGuid(),
         Type = createNotificationDto.Type,
         Content = createNotificationDto.Content,
-        RelatedEntityId = relatedEntityId, // Gán Guid? đã parse
+        RelatedEntityId = createNotificationDto.RelatedEntityId, // Gán Guid? đã parse
         RelatedEntityType = createNotificationDto.RelatedEntityType,
         CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"),
         UserNotifications = createNotificationDto.UserIds.Select(userId => new UserNotification
