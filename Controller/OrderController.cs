@@ -77,7 +77,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateOrder(string id, [FromBody] UpdatOrderDto updateOrderDto)
+    public async Task<IActionResult> UpdateOrder(string id, [FromBody] UpdateOrderDto updateOrderDto)
     {
         if (!ModelState.IsValid)
         {

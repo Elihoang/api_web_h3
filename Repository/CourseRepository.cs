@@ -76,4 +76,10 @@ public class CourseRepository : ICourseRepository
 
         return await query.ToListAsync();
     }
+    public async Task<IEnumerable<Course>> GetAllActiveCoursesAsync()
+    {
+        return await _context.Courses
+            .Where(c => c.Activate == "Active")
+            .ToListAsync();
+    }
 }
