@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_WebH3.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateIDChapterCategory : Migration
+    public partial class newdb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -52,7 +52,7 @@ namespace API_WebH3.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
-                    RelatedEntityId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RelatedEntityId = table.Column<string>(type: "text", nullable: true),
                     RelatedEntityType = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<string>(type: "text", nullable: false)
                 },
@@ -122,7 +122,8 @@ namespace API_WebH3.Migrations
                     InstructorId = table.Column<Guid>(type: "uuid", nullable: false),
                     CategoryId = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<string>(type: "text", nullable: false),
-                    SerializedContents = table.Column<string>(type: "text", nullable: true)
+                    SerializedContents = table.Column<string>(type: "text", nullable: true),
+                    Activate = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -389,7 +390,8 @@ namespace API_WebH3.Migrations
                     PostId = table.Column<Guid>(type: "uuid", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
                     ParentCommentId = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<string>(type: "text", nullable: false)
+                    CreatedAt = table.Column<string>(type: "text", nullable: false),
+                    ReactionIcon = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

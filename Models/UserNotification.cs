@@ -19,7 +19,7 @@ public class UserNotification
     [ForeignKey("User")]
     public Guid UserId { get; set; }
 
-    public bool IsRead { get; set; } = false; // Track if the user has read the notification
+    public bool IsRead { get; set; } = false; 
 
     public string SentAt { get; set; } = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 

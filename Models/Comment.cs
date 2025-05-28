@@ -31,4 +31,5 @@ public class Comment
     public virtual Comment? ParentComment { get; set; }
     
     public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>();
+    public string? ReactionIcon { get; set; } 
 }

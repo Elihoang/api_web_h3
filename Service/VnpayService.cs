@@ -199,12 +199,12 @@ public class VnpayService
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"❌ Lỗi khi gửi email thông báo: {ex.Message}");
+                            Console.WriteLine($"Lỗi khi gửi email thông báo: {ex.Message}");
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"⚠️ Email của người dùng trống hoặc không tìm thấy: UserId={order.UserId}");
+                        Console.WriteLine($" Email của người dùng trống hoặc không tìm thấy: UserId={order.UserId}");
                     }
 
                     redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +

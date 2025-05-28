@@ -120,6 +120,9 @@ namespace API_WebH3.Migrations
                     b.Property<Guid>("PostId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ReactionIcon")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -174,6 +177,9 @@ namespace API_WebH3.Migrations
             modelBuilder.Entity("API_WebH3.Models.Course", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Activate")
                         .HasColumnType("text");
 
                     b.Property<string>("CategoryId")
@@ -407,8 +413,8 @@ namespace API_WebH3.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("RelatedEntityId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RelatedEntityId")
+                        .HasColumnType("text");
 
                     b.Property<string>("RelatedEntityType")
                         .HasColumnType("text");

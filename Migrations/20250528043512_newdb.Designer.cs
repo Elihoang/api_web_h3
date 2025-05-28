@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_WebH3.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250515014431_UpdateIDChapterCategory")]
-    partial class UpdateIDChapterCategory
+    [Migration("20250528043512_newdb")]
+    partial class newdb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -123,6 +123,9 @@ namespace API_WebH3.Migrations
                     b.Property<Guid>("PostId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ReactionIcon")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -177,6 +180,9 @@ namespace API_WebH3.Migrations
             modelBuilder.Entity("API_WebH3.Models.Course", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Activate")
                         .HasColumnType("text");
 
                     b.Property<string>("CategoryId")
@@ -410,8 +416,8 @@ namespace API_WebH3.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("RelatedEntityId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RelatedEntityId")
+                        .HasColumnType("text");
 
                     b.Property<string>("RelatedEntityType")
                         .HasColumnType("text");
