@@ -92,8 +92,8 @@ public class LessonController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest("File is empty.");
 
-        var url = await _s3Service.UploadVideoAsync(file);
-        return Ok(new { videoUrl = url });
+        var videoName = await _s3Service.UploadVideoAsync(file);
+        return Ok(new { videoName = videoName });
     }
     
     [HttpGet("stream/{fileName}")]
