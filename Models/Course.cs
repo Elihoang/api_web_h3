@@ -62,5 +62,5 @@ public class Course
             }
         }
     }
-    public string? Activate { get; set; } = "Pending"; // "Pending", "Active", "Inactive"
+    public string? Activate { get; set; } = "Inactive"; //  "Active", "Inactive"
 }

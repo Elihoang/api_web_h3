@@ -11,4 +11,6 @@ public class CourseDto
     public string? CategoryId { get; set; }
     public string CreatedAt { get; set; }
     public List<string>? Contents { get; set; }
+    
+    public string Activate { get; set; } = "Active";
 }

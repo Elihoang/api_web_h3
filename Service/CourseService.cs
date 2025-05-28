@@ -29,7 +29,8 @@ public async Task<IEnumerable<CourseDto>> GetAllAsync()
         InstructorId = c.InstructorId,
         CategoryId = c.CategoryId,
         CreatedAt = c.CreatedAt,
-        Contents = c.Contents
+        Contents = c.Contents,
+        Activate = c.Activate
     });
 }
 
@@ -51,7 +52,8 @@ public async Task<CourseDto> GetByIdAsync(string id)
         InstructorId = course.InstructorId,
         CategoryId = course.CategoryId,
         CreatedAt = course.CreatedAt,
-        Contents = course.Contents
+        Contents = course.Contents,
+        Activate = course.Activate
     };
 }
 
@@ -74,6 +76,7 @@ public async Task<CourseDto> GetByIdAsync(string id)
             CategoryId = createCourseDto.CategoryId,
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"),
             Contents = createCourseDto.Contents,
+            Activate = "Inactive", 
             User = instructor
         };
 
@@ -90,7 +93,8 @@ public async Task<CourseDto> GetByIdAsync(string id)
             InstructorId = course.InstructorId,
             CategoryId = course.CategoryId,
             CreatedAt = course.CreatedAt,
-            Contents = course.Contents
+            Contents = course.Contents,
+            Activate = course.Activate
         };
     }
 
@@ -122,7 +126,8 @@ public async Task<CourseDto> GetByIdAsync(string id)
             InstructorId = course.InstructorId,
             CategoryId = course.CategoryId,
             CreatedAt = course.CreatedAt,
-            Contents = course.Contents
+            Contents = course.Contents,
+            Activate = course.Activate
         };
     }
 
@@ -152,7 +157,8 @@ public async Task<CourseDto> GetByIdAsync(string id)
             InstructorId = c.InstructorId,
             CategoryId = c.CategoryId,
             CreatedAt = c.CreatedAt,
-            Contents = c.Contents
+            Contents = c.Contents,
+            Activate = c.Activate
         });
     }
     
@@ -170,16 +176,11 @@ public async Task<CourseDto> GetByIdAsync(string id)
             InstructorId = c.InstructorId,
             CategoryId = c.CategoryId,
             CreatedAt = c.CreatedAt,
-            Contents = c.Contents
+            Contents = c.Contents,
+            Activate = c.Activate
         });
     }
-    public async Task<IEnumerable<CourseDto>> SearchCoursesAsync(
-        string keyword,
-        string category,
-        decimal? minPrice,
-        decimal? maxPrice,
-        int page,
-        int pageSize)
+    public async Task<IEnumerable<CourseDto>> SearchCoursesAsync(string keyword, string category, decimal? minPrice, decimal? maxPrice, int page, int pageSize)
     {
         // Gọi phương thức tìm kiếm từ repository
         var courses = await _courseRepository.SearchCoursesAsync(keyword, page, pageSize);
@@ -194,7 +195,33 @@ public async Task<CourseDto> GetByIdAsync(string id)
             InstructorId = c.InstructorId,
             UrlImage = c.UrlImage,
             CreatedAt = c.CreatedAt,
-            Contents = c.Contents
+            Contents = c.Contents,
+            Activate = c.Activate
         }).ToList();
+    }
+    
+    public async Task UpdateCourseActivate(string id, string activate)
+    {
+        var course = await _courseRepository.GetByIdAsync(id);
+        if (course == null) throw new ArgumentException("Khoa hoc ko tồn tại.");
+        course.Activate = activate;
+        await _courseRepository.UpdateAsync(course);
+    }
+    public async Task<IEnumerable<CourseDto>> GetAllActiveCoursesAsync()
+    {
+        var courses = await _courseRepository.GetAllActiveCoursesAsync();
+        return courses.Select(c => new CourseDto
+        {
+            Id = c.Id,
+            Title = c.Title,
+            Description = c.Description,
+            Price = c.Price,
+            UrlImage = c.UrlImage,
+            InstructorId = c.InstructorId,
+            CategoryId = c.CategoryId,
+            CreatedAt = c.CreatedAt,
+            Contents = c.Contents,
+            Activate = c.Activate
+        });
     }
 }

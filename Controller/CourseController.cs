@@ -44,12 +44,20 @@ public class CourseController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize( Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses()
     {
         var courses = await _courseService.GetAllAsync();
         return Ok(courses);
     }
-
+    
+    [HttpGet("active")]
+    public async Task<ActionResult<IEnumerable<CourseDto>>> GetActiveCourses()
+    {
+        var courses = await _courseService.GetAllActiveCoursesAsync();
+        return Ok(courses);
+    }
+    
     [HttpGet("{id}")]
     public async Task<ActionResult<CourseDto>> GetCourse(string id)
     {
@@ -127,6 +135,26 @@ public class CourseController : ControllerBase
             return BadRequest("Upload failed.");
 
         return Ok(new { url = imageUrl });
+    }
+   
+    [HttpPut("{id}/approve")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ApproveCourse(string id, [FromBody] UpdateCourseActivate activateDto)
+    {
+        if (activateDto == null || string.IsNullOrEmpty(activateDto.Activate))
+        {
+            return BadRequest("Trạng thái không hợp lệ.");
+        }
+
+        try
+        {
+            await _courseService.UpdateCourseActivate(id, activateDto.Activate);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
     
 }
