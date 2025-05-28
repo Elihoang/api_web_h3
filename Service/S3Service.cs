@@ -23,14 +23,16 @@ public class S3Service
     public async Task<string> UploadVideoAsync(IFormFile file)
     {
         var fileTransferUtility = new TransferUtility(_s3Client);
-        var key = $"videos/{Guid.NewGuid()}_{file.FileName}";
+        
+        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+        var key = $"videos/{fileName}";
 
         using (var stream = file.OpenReadStream())
         {
             await fileTransferUtility.UploadAsync(stream, _bucketName, key);
         }
 
-        return $"https://{_bucketName}.s3.amazonaws.com/{key}";
+        return fileName;
     }
     
     public async Task<Stream> GetVideoStreamAsync(string fileName)
