@@ -152,19 +152,15 @@ namespace API_WebH3.Services
         {
             try
             {
-                Console.WriteLine($"Forgot password for: {email}");
                 var user = await _userRepository.GetByEmailAsync(email);
                 if (user == null)
                 {
-                    Console.WriteLine($"User not found: {email}");
                     return false;
                 }
 
                 var resetCode = new Random().Next(100000, 999999).ToString();
                 _resetCodes[email] = (resetCode, DateTime.UtcNow.AddMinutes(10));
-
-                Console.WriteLine($"OTP: {_resetCodes[email].ResetCode} for email: {email}");
-
+                
                 var filePath = Path.Combine(_env.WebRootPath, "templates", "OtpTemplate.html");
                 if (!File.Exists(filePath))
                 {
@@ -177,7 +173,6 @@ namespace API_WebH3.Services
                 emailBody = emailBody.Replace("{{OTP}}", resetCode);
 
                 await _emailService.SendPasswordResetEmailAsync(email, subject, emailBody);
-                Console.WriteLine($"OTP email sent to: {email}");
                 return true;
             }
             catch (Exception ex)

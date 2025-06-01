@@ -1,16 +1,17 @@
 using API_WebH3.DTO.Contact;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using API_WebH3.Services;
 
 [Route("api/contact")]
 [ApiController]
 public class ContactController : ControllerBase
 {
-    private readonly EmailService _emailService;
+    private readonly ContactEmailService _contactEmailService;
 
-    public ContactController(EmailService emailService)
+    public ContactController(ContactEmailService contactEmailService)
     {
-        _emailService = emailService;
+        _contactEmailService = contactEmailService;
     }
 
     [HttpPost("send-email")]
@@ -20,17 +21,17 @@ public class ContactController : ControllerBase
             string.IsNullOrWhiteSpace(request.Subject) ||
             string.IsNullOrWhiteSpace(request.Message))
         {
-            return BadRequest("⚠️ Thiếu thông tin!");
+            return BadRequest("Thiếu thông tin!");
         }
 
         try
         {
-            await _emailService.SendEmailAsync(request.SenderEmail, request.Subject, request.Message);
-            return Ok(new { message = "✅ Gửi thành công!" });
+            await _contactEmailService.SendEmailAsync(request.SenderEmail, request.Subject, request.Message);
+            return Ok(new { message = "Gửi thành công!" });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"❌ Lỗi: {ex.Message}" });
+            return StatusCode(500, new { message = $"Lỗi: {ex.Message}" });
         }
     }
 }

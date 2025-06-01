@@ -28,8 +28,7 @@ public class EmailPaymentService
             var smtpPass = _configuration["SmtpSettings:Password"];
             var senderName = _configuration["SmtpSettings:SenderName"];
             var senderEmail = _configuration["SmtpSettings:SenderEmail"];
-
-            Console.WriteLine($"🔹 Cấu hình SMTP: Server={smtpServer}, Port={smtpPort}, Username={smtpUser}, SenderName={senderName}, SenderEmail={senderEmail}");
+            
 
             // Tạo MimeMessage
             var email = new MimeMessage();
@@ -55,11 +54,11 @@ public class EmailPaymentService
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
 
-            Console.WriteLine($"✅ Email đã gửi thành công đến {toEmail}");
+            Console.WriteLine($" Email đã gửi thành công đến {toEmail}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Lỗi khi gửi email đến {toEmail}: {ex.Message}");
+            Console.WriteLine($" Lỗi khi gửi email đến {toEmail}: {ex.Message}");
             throw;
         }
     }
