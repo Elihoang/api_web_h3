@@ -30,7 +30,7 @@ public class QuizService
                 Id = quiz.Id,
                 LessonId = quiz.LessonId,
                 Question = quiz.Question,
-                Options = quiz.Options,
+                Options = System.Text.Json.JsonSerializer.Deserialize<List<string>>(quiz.SerializedOptions),
                 CorrectAnswer = quiz.CorrectAnswer,
                 Explanation = quiz.Explanation,
                 CreatedAt = quiz.CreatedAt
@@ -49,7 +49,7 @@ public class QuizService
             Id = quiz.Id,
             LessonId = quiz.LessonId,
             Question = quiz.Question,
-            Options = quiz.Options,
+            Options = System.Text.Json.JsonSerializer.Deserialize<List<string>>(quiz.SerializedOptions),
             CorrectAnswer = quiz.CorrectAnswer,
             Explanation = quiz.Explanation,
             CreatedAt = quiz.CreatedAt
@@ -70,7 +70,7 @@ public class QuizService
                 Id = quiz.Id,
                 LessonId = quiz.LessonId,
                 Question = quiz.Question,
-                Options = quiz.Options,
+                Options = System.Text.Json.JsonSerializer.Deserialize<List<string>>(quiz.SerializedOptions),
                 CorrectAnswer = quiz.CorrectAnswer,
                 Explanation = quiz.Explanation,
                 CreatedAt = quiz.CreatedAt
@@ -80,56 +80,56 @@ public class QuizService
     }
 
     public async Task<QuizDTO> CreateAsync(CreateQuizDto createQuizDto)
+{
+    try
     {
-        try
+        if (string.IsNullOrWhiteSpace(createQuizDto.Question))
+            throw new ArgumentException("Câu hỏi không được để trống.");
+
+        if (createQuizDto.Options == null || createQuizDto.Options.Count < 2)
+            throw new ArgumentException("Quiz phải có ít nhất 2 lựa chọn.");
+
+        if (string.IsNullOrWhiteSpace(createQuizDto.CorrectAnswer))
+            throw new ArgumentException("Đáp án đúng không được để trống.");
+
+        if (!createQuizDto.Options.Contains(createQuizDto.CorrectAnswer))
+            throw new ArgumentException("Đáp án đúng phải nằm trong danh sách lựa chọn.");
+
+        Console.WriteLine($"Checking LessonId: {createQuizDto.LessonId}");
+        var lesson = await _lessonRepository.GetLessonById(createQuizDto.LessonId);
+        if (lesson == null) throw new KeyNotFoundException("Bài học không tìm thấy.");
+
+        var quiz = new Quiz
         {
-            if (string.IsNullOrWhiteSpace(createQuizDto.Question))
-                throw new ArgumentException("Câu hỏi không được để trống.");
+            Id = Helpers.IdGenerator.IdQuiz(),
+            LessonId = createQuizDto.LessonId,
+            Question = createQuizDto.Question,
+            Options = createQuizDto.Options,
+            CorrectAnswer = createQuizDto.CorrectAnswer,
+            Explanation = createQuizDto.Explanation,
+            CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") // Server tự tạo
+        };
 
-            if (createQuizDto.Options == null || createQuizDto.Options.Count < 2)
-                throw new ArgumentException("Quiz phải có ít nhất 2 lựa chọn.");
+        Console.WriteLine($"Saving Quiz with Id: {quiz.Id}");
+        var createdQuiz = await _quizRepository.AddAsync(quiz);
 
-            if (string.IsNullOrWhiteSpace(createQuizDto.CorrectAnswer))
-                throw new ArgumentException("Đáp án đúng không được để trống.");
-
-            if (!createQuizDto.Options.Contains(createQuizDto.CorrectAnswer))
-                throw new ArgumentException("Đáp án đúng phải nằm trong danh sách lựa chọn.");
-
-            Console.WriteLine($"Checking LessonId: {createQuizDto.LessonId}");
-            var lesson = await _lessonRepository.GetLessonById(createQuizDto.LessonId);
-            if (lesson == null) throw new KeyNotFoundException("Bài học không tìm thấy.");
-
-            var quiz = new Quiz
-            {
-                Id = Helpers.IdGenerator.IdQuiz(),
-                LessonId = createQuizDto.LessonId,
-                Question = createQuizDto.Question,
-                Options = createQuizDto.Options,
-                CorrectAnswer = createQuizDto.CorrectAnswer,
-                Explanation = createQuizDto.Explanation,
-                CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
-            };
-
-            Console.WriteLine($"Saving Quiz with Id: {quiz.Id}");
-            var createdQuiz = await _quizRepository.AddAsync(quiz);
-
-            return new QuizDTO
-            {
-                Id = createdQuiz.Id,
-                LessonId = createdQuiz.LessonId,
-                Question = createdQuiz.Question,
-                Options = createdQuiz.Options,
-                CorrectAnswer = createdQuiz.CorrectAnswer,
-                Explanation = createdQuiz.Explanation,
-                CreatedAt = createdQuiz.CreatedAt
-            };
-        }
-        catch (Exception ex)
+        return new QuizDTO
         {
-            Console.WriteLine($"Error in CreateAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
-            throw;
-        }
+            Id = createdQuiz.Id,
+            LessonId = createdQuiz.LessonId,
+            Question = createdQuiz.Question,
+            Options = createdQuiz.Options,
+            CorrectAnswer = createdQuiz.CorrectAnswer,
+            Explanation = createdQuiz.Explanation,
+            CreatedAt = createdQuiz.CreatedAt
+        };
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error in CreateAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+        throw;
+    }
+}
 
     public async Task<QuizDTO> UpdateAsync(string id, QuizDTO quizDto)
     {

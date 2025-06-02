@@ -29,4 +29,10 @@ public class AppDbContext:DbContext
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
     public DbSet<UserQuizAnswer> UserQuizAnswers { get; set; }
+    
+    public DbSet<Assignment> Assignments { get; set; }
+    
+    public DbSet<Email> Emails { get; set; }
+    
+    public DbSet<AssignmentStudent> AssignmentStudents { get; set; }
 }

@@ -3,6 +3,7 @@ using System;
 using API_WebH3.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_WebH3.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250601140357_UpdateAssignmentAndAddAssignmentStudent2")]
+    partial class UpdateAssignmentAndAddAssignmentStudent2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,6 +28,10 @@ namespace API_WebH3.Migrations
             modelBuilder.Entity("API_WebH3.Models.Assignment", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CourseId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
@@ -46,10 +53,6 @@ namespace API_WebH3.Migrations
                     b.Property<Guid>("InstructorId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("LessonId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -63,9 +66,9 @@ namespace API_WebH3.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InstructorId");
+                    b.HasIndex("CourseId");
 
-                    b.HasIndex("LessonId");
+                    b.HasIndex("InstructorId");
 
                     b.HasIndex("StudentId");
 
@@ -870,15 +873,15 @@ namespace API_WebH3.Migrations
 
             modelBuilder.Entity("API_WebH3.Models.Assignment", b =>
                 {
-                    b.HasOne("API_WebH3.Models.User", "Instructor")
+                    b.HasOne("API_WebH3.Models.Course", "Course")
                         .WithMany()
-                        .HasForeignKey("InstructorId")
+                        .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("API_WebH3.Models.Lesson", "Lesson")
+                    b.HasOne("API_WebH3.Models.User", "Instructor")
                         .WithMany()
-                        .HasForeignKey("LessonId")
+                        .HasForeignKey("InstructorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -886,9 +889,9 @@ namespace API_WebH3.Migrations
                         .WithMany()
                         .HasForeignKey("StudentId");
 
-                    b.Navigation("Instructor");
+                    b.Navigation("Course");
 
-                    b.Navigation("Lesson");
+                    b.Navigation("Instructor");
 
                     b.Navigation("Student");
                 });

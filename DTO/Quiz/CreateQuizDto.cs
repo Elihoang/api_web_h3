@@ -7,5 +7,5 @@ public class CreateQuizDto
     public List<string> Options { get; set; }
     public string CorrectAnswer { get; set; }
     public string? Explanation { get; set; }
-    public string CreatedAt { get; set; }
+    
 }

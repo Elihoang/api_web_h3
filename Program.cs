@@ -95,6 +95,7 @@ builder.Services.AddSingleton<S3Service>();
 builder.Services.AddScoped<IFilterRepository, FilterRepository>();
 builder.Services.AddScoped<FilterService>();
 builder.Services.AddScoped<ContactEmailService>();
+builder.Services.AddScoped<IEmailRepository, EmailRepository>();
 
 // 🔹 Cấu hình CORS
 builder.Services.AddCors(options =>

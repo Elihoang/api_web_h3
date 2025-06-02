@@ -1,14 +1,19 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using API_WebH3.Models;
+using System.Threading.Tasks;
+using API_WebH3.Repository;
 
 public class EmailService
 {
     private readonly IConfiguration _config;
+    private readonly IEmailRepository _emailRepository; // Thêm dòng này
 
-    public EmailService(IConfiguration config)
+    public EmailService(IConfiguration config, IEmailRepository emailRepository)
     {
         _config = config;
+        _emailRepository = emailRepository; // Khởi tạo
     }
     
     public async Task SendPasswordResetEmailAsync(string receiverEmail, string subject, string message)
@@ -18,14 +23,15 @@ public class EmailService
         string portString = smtpSettings["Port"];
         string username = smtpSettings["Username"];
         string password = smtpSettings["Password"];
+
         if (string.IsNullOrEmpty(portString))
         {
-            throw new ArgumentException(" SMTP Port is missing in appsettings.json.");
+            throw new ArgumentException("Cổng SMTP không có trong appsettings.json.");
         }
         
         if (!int.TryParse(portString, out int smtpPort))
         {
-            throw new ArgumentException($" Invalid SMTP Port: '{portString}'. Please check appsettings.json.");
+            throw new ArgumentException($"Cổng SMTP không hợp lệ: '{portString}'. Vui lòng kiểm tra appsettings.json.");
         }
 
         var smtpClient = new SmtpClient(smtpServer)
@@ -45,6 +51,40 @@ public class EmailService
 
         mailMessage.To.Add(receiverEmail);
 
-        await smtpClient.SendMailAsync(mailMessage);
+        try
+        {
+            await smtpClient.SendMailAsync(mailMessage);
+            Console.WriteLine($"Email đặt lại mật khẩu đã gửi đến {receiverEmail}");
+
+            // Ghi email vào cơ sở dữ liệu
+            var emailRecord = new Email
+            {
+                SenderEmail = username,
+                ReceiverEmail = receiverEmail,
+                Subject = subject,
+                Message = message,
+                SourceType = "PasswordReset",
+                SentAt = DateTime.UtcNow,
+                Status = "Sent"
+            };
+            await _emailRepository.AddEmailAsync(emailRecord);
+        }
+        catch (Exception ex)
+        {
+            // Ghi email với trạng thái thất bại
+            var emailRecord = new Email
+            {
+                SenderEmail = username,
+                ReceiverEmail = receiverEmail,
+                Subject = subject,
+                Message = message,
+                SourceType = "PasswordReset",
+                SentAt = DateTime.UtcNow,
+                Status = "Failed"
+            };
+            await _emailRepository.AddEmailAsync(emailRecord);
+            Console.WriteLine($"Không gửi được email đặt lại mật khẩu: {ex.Message}");
+            throw;
+        }
     }
 }
