@@ -82,4 +82,28 @@ public class NotificationController : ControllerBase
         }
         return NoContent();
     }
+    
+    [HttpGet("paginated")]
+    public async Task<ActionResult<IEnumerable<NotificationDto>>> GetPaginatedNotification([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var notification = await _notificationService.GetAllAsync();
+        var totalItems = notification.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var pagedNotificationList = notification.Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new
+        {
+            Data = pagedNotificationList,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
+
 }

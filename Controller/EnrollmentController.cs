@@ -77,4 +77,26 @@ public class EnrollmentController : ControllerBase
         }
         return NoContent();
     }
+    [HttpGet("paginated")]
+    public async Task<ActionResult<IEnumerable<EnrollmentDto>>> GetPaginatedEnrollment([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var enrollment = await _enrollmentService.GetAllAsync();
+        var totalItems = enrollment.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var pagedEnrollmentList = enrollment.Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new
+        {
+            Data = pagedEnrollmentList,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
 }

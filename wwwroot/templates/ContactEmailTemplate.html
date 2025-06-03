@@ -1,68 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Email</title>
+    <title>Liên hệ từ khách hàng</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            background-color: #007bff;
-            color: #ffffff;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px 8px 0 0;
-        }
-        .content {
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .footer {
-            text-align: center;
-            padding: 10px;
-            font-size: 12px;
-            color: #777;
-        }
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; color: #212529; }
+        .container { width: 100%; max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { background-color: #28a745; color: #ffffff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header img { max-width: 150px; margin-bottom: 10px; }
+        .content { padding: 20px; }
+        .content p { margin: 10px 0; line-height: 1.6; }
+        .content .info { background-color: #f1f3f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #28a745; color: #ffffff; text-decoration: none; border-radius: 5px; text-align: center; }
+        .btn:hover { background-color: #218838; }
+        .footer { text-align: center; padding: 15px; font-size: 12px; color: #6c757d; background-color: #f8f9fa; border-radius: 0 0 8px 8px; }
+        @media screen and (max-width: 600px) {
+            .container { padding: 10px; }
+            .content { padding: 10px; }
+            .header img { max-width: 120px; }
+            .btn { padding: 8px 16px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
+        <img src="https://res.cloudinary.com/dybzjxgt4/image/upload/v1748871402/wyv05wcsbyurb6gym6tf.png" alt="Logo Công ty" style="width: 100px; height: auto; margin-bottom: 10px;">
+  
         <h2>Liên hệ từ khách hàng</h2>
     </div>
     <div class="content">
-        <p><strong>Người gửi:</strong> {{ {senderEmail}</p>
-        <p><strong>Chủ đề:</strong> {subject}</p>
+        <div class="info">
+            <p><strong>Người gửi:</strong> {senderEmail}</p>
+            <p><strong>Chủ đề:</strong> {subject}</p>
+        </div>
         <p><strong>Nội dung:</strong></p>
         <p>{message}</p>
-        <p><a href="mailto:{senderEmail}" class="button">Trả lời</a></p>
+        <p style="text-align: center;">
+            <a href="mailto:{senderEmail}" class="btn">Trả lời</a>
+        </p>
     </div>
     <div class="footer">
-        <p>Email được gửi từ hệ thống của chúng tôi</p>
-        <p>&copy; 2025 Công ty của bạn</p>
+        <p>Email được gửi từ hệ thống của {companyName}</p>
+        <p>© 2025 {companyName}. All rights reserved.</p>
     </div>
 </div>
 </body>
