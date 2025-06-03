@@ -76,4 +76,26 @@ public class CommentController : ControllerBase
         }
         return NoContent();
     }
+    [HttpGet("paginated")]
+    public async Task<ActionResult<IEnumerable<CommentDto>>> GetPaginatedComment([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var comment = await _commentService.GetAllAsync();
+        var totalItems = comment.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var pagedCommentList = comment.Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new
+        {
+            Data = pagedCommentList,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
 }

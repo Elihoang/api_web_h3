@@ -180,4 +180,26 @@ public class QuizController : ControllerBase
             return StatusCode(500, $"Lỗi server: {ex.Message}");
         }
     }
+    [HttpGet("paginated")]
+    public async Task<ActionResult<IEnumerable<QuizDTO>>> GetPaginatedQuiz([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var quiz = await _quizService.GetAllAsync();
+        var totalItems = quiz.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var pagedQuizList = quiz.Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var result = new
+        {
+            Data = pagedQuizList,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            CurrentPage = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
 }

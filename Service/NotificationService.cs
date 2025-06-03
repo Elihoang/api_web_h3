@@ -91,7 +91,7 @@ public class NotificationService
     
     public async Task<NotificationDto> CreateAsync(CreateNotificationDto createNotificationDto)
     {
-        var validTypes = new[] { "LessonApproval", "NewMessage", "CourseEnrollment" };
+        var validTypes = new[] { "LessonApproval", "NewMessage", "CourseEnrollment" ,"CourseActivation","CourseDeactivation"};
         if (!validTypes.Contains(createNotificationDto.Type))
         {
             throw new ArgumentException("Loại thông báo không hợp lệ. Phải là 'LessonApproval', 'NewMessage', hoặc 'CourseEnrollment'.");
