@@ -1,56 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Confirmation</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Xác nhận thanh toán</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #dfe3e8; /* Nền xám nhạt */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             color: #333;
         }
+
         .container {
             max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 40px auto;
+            background-color: #f1f3f5; /* Container xám sáng */
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
         }
+
         .header {
-            background-color: #28a745;
-            color: #ffffff;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px 8px 0 0;
-        }
-        .content {
+            background: linear-gradient(to right, #28a745, #218838); /* Xanh lá cây đậm */
             padding: 20px;
-            line-height: 1.6;
-        }
-        .footer {
             text-align: center;
-            padding: 10px;
-            font-size: 12px;
-            color: #777;
+            color: #fff;
         }
-        .button {
+
+        .header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .content p {
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .details {
+            background-color: #ffffff;
+            border: 2px solid #495057;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .details li {
+            list-style: none;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .details li strong {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
+            width: 140px;
+            color: #111;
         }
-        .payment-details {
-            margin-top: 20px;
+
+        .button-wrapper {
+            text-align: center;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: #e9ecef;
+            text-align: center;
             padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+            font-size: 13px;
+            color: #666;
         }
     </style>
 </head>
@@ -60,19 +98,21 @@
         <h2>Xác nhận thanh toán</h2>
     </div>
     <div class="content">
-        <p>Kính gửi {receiverEmail},</p>
-        <p>Chúng tôi đã nhận được thanh toán của bạn. Dưới đây là chi tiết:</p>
-        <div class="payment-details">
-            <p><strong>Mã giao dịch:</strong> {transactionId}</p>
-            <p><strong>Số tiền:</strong> {amount}</p>
-            <p><strong>Ngày thanh toán:</strong> {paymentDate}</p>
-            <p><strong>Phương thức:</strong> {paymentMethod}</p>
+        <p>Kính gửi <a href="mailto:{receiverEmail}" style="color: #007bff; text-decoration: none;"><strong>{receiverEmail}</strong></a>,</p>
+        <p>Chúng tôi đã nhận được thanh toán của bạn. Dưới đây là chi tiết giao dịch:</p>
+        <ul class="details">
+            <li><strong>Mã giao dịch:</strong> {transactionId}</li>
+            <li><strong>Số tiền:</strong> {amount}</li>
+            <li><strong>Ngày thanh toán:</strong> {paymentDate}</li>
+            <li><strong>Phương thức:</strong> {paymentMethod}</li>
+        </ul>
+        <div class="button-wrapper">
+            <a href="{receiptUrl}" class="button">Xem biên lai</a>
         </div>
-        <p><a href="{paymentReceiptUrl}" class="button">Xem biên lai</a></p>
     </div>
     <div class="footer">
-        <p>Email được gửi từ hệ thống thanh toán của chúng tôi</p>
-        <p>&copy; 2025 Công ty của bạn</p>
+        Email này được gửi tự động từ hệ thống thanh toán. Vui lòng không trả lời lại email này.<br/>
+        © 2025 Công ty của bạn. Mọi quyền được bảo lưu.
     </div>
 </div>
 </body>

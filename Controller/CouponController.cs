@@ -36,10 +36,15 @@ public class CouponController : ControllerBase
     [HttpGet("code/{code}")]
     public async Task<ActionResult<CouponDto>> GetCouponByCode(string code)
     {
+        if (string.IsNullOrEmpty(code))
+        {
+            return BadRequest(new { message = "Mã coupon không được để trống." });
+        }
+
         var coupon = await _couponService.GetByCodeAsync(code);
         if (coupon == null)
         {
-            return NotFound();
+            return NotFound(new { message = $"Mã coupon {code} không tồn tại." });
         }
         return Ok(coupon);
     }

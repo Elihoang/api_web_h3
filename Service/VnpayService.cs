@@ -11,6 +11,8 @@ using API_WebH3.Models;
 using API_WebH3.Repository;
 using API_WebH3.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace API_WebH3.Services;
 
@@ -24,6 +26,7 @@ public class VnpayService
     private readonly SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
     private readonly SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
     private readonly ICouponRepository _couponRepository;
+
     public VnpayService(
         IConfiguration configuration,
         OrderService orderService,
@@ -48,7 +51,8 @@ public class VnpayService
         if (string.IsNullOrEmpty(_configuration["Vnpay:BaseUrl"])) throw new ArgumentException("Vnpay:BaseUrl is not configured.");
         if (string.IsNullOrEmpty(_configuration["Vnpay:PaymentBackReturnUrl"])) throw new ArgumentException("Vnpay:PaymentBackReturnUrl is not configured.");
         if (string.IsNullOrEmpty(_configuration["Frontend:BaseUrl"])) throw new ArgumentException("Frontend:BaseUrl is not configured.");
-        Console.WriteLine("VnPay and Frontend configuration validated successfully.");
+        if (string.IsNullOrEmpty(_configuration["EmailTemplate:Path"])) throw new ArgumentException("EmailTemplate:Path is not configured.");
+        Console.WriteLine("VnPay, Frontend, and Email configuration validated successfully.");
     }
 
     public string CreatePaymentUrl(OrderDto order, HttpContext context)
@@ -89,7 +93,7 @@ public class VnpayService
         catch (Exception ex)
         {
             Console.WriteLine($"Error in CreatePaymentUrl: {ex.Message}\nStackTrace: {ex.StackTrace}");
-            throw; // Ném lại ngoại lệ để xử lý ở mức cao hơn
+            throw;
         }
     }
 
@@ -169,42 +173,56 @@ public class VnpayService
                     }
 
                     var user = await _userRepository.GetByIdAsync(order.UserId);
-                    if (user != null && !string.IsNullOrEmpty(user.Email))
+                    if (user == null)
                     {
-                        Console.WriteLine($"🔹 Tìm thấy người dùng: Id={user.Id}, Email={user.Email}");
-                        var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
-                        var couponDetails = "";
-                        foreach (var detail in order.OrderDetails.Where(d => d.CouponId.HasValue))
-                        {
-                            var coupon = await _couponRepository.GetByIdAsync(detail.CouponId.Value);
-                            couponDetails += $"<li>Mã coupon: {coupon?.Code ?? "N/A"}, Giảm giá: {(detail.DiscountAmount ?? 0):N0} VND</li>";
-                        }
-                        var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
-                                    <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
-                                    <p><strong>Thông tin đơn hàng:</strong></p>
-                                    <ul>
-                                        <li>Mã đơn hàng: {order.Id}</li>
-                                        <li>Tổng tiền: {order.Amount:N0} VND</li>
-                                        <li>Thời gian: {order.CreatedAt}</li>
-                                    </ul>
-                                    <p><strong>Chi tiết đơn hàng:</strong></p>
-                                    <ul>
-                                        {string.Join("", order.OrderDetails.Select(d => $"<li>Khóa học ID: {d.CourseId}, Giá: {d.Price:N0} VND, Giảm giá: {(d.DiscountAmount ?? 0):N0} VND</li>"))}
-                                        {couponDetails}
-                                    </ul>
-                                    <p>Trân trọng,<br>H3 xin cảm ơn</p>";
-                        try
-                        {
-                            await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Lỗi khi gửi email thông báo: {ex.Message}");
-                        }
+                        Console.WriteLine($"User not found: UserId={order.UserId}");
+                        redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
+                                     $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
+                                     $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
+                                     $"&vnp_ResponseCode={vnpResponseCode}";
+                        return new RedirectResult(redirectUrl);
                     }
-                    else
+
+                    if (string.IsNullOrEmpty(user.Email))
                     {
-                        Console.WriteLine($" Email của người dùng trống hoặc không tìm thấy: UserId={order.UserId}");
+                        Console.WriteLine($"User email is empty: UserId={order.UserId}");
+                        redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
+                                     $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
+                                     $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
+                                     $"&vnp_ResponseCode={vnpResponseCode}";
+                        return new RedirectResult(redirectUrl);
+                    }
+
+                    Console.WriteLine($"🔹 Found user: Id={user.Id}, Email={user.Email}");
+                    var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
+
+                    try
+                    {
+                        var templatePath = Path.Combine(Directory.GetCurrentDirectory(), _configuration["EmailTemplate:Path"]);
+                        Console.WriteLine($"Attempting to read email template from: {templatePath}");
+                        if (!File.Exists(templatePath))
+                        {
+                            Console.WriteLine($"Email template not found at: {templatePath}");
+                            throw new FileNotFoundException($"Email template file not found at {templatePath}");
+                        }
+
+                        var templateContent = await File.ReadAllTextAsync(templatePath);
+                        var paymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss");
+                        var body = templateContent
+                            .Replace("{receiverEmail}", user.Email)
+                            .Replace("{transactionId}", order.Id)
+                            .Replace("{amount}", $"{order.Amount:N0} VND")
+                            .Replace("{paymentDate}", paymentDate)
+                            .Replace("{paymentMethod}", "VNPAY");
+
+                        Console.WriteLine($"Email body prepared: {body}");
+                        await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
+                        Console.WriteLine($"Email sent successfully to {user.Email}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to send email to {user.Email}: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                        // Continue with success redirect even if email fails
                     }
 
                     redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
@@ -224,13 +242,13 @@ public class VnpayService
                     break;
             }
 
-            Console.WriteLine("Redirect URL: " + redirectUrl);
+            Console.WriteLine($"Redirect URL: {redirectUrl}");
             return new RedirectResult(redirectUrl);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error in PaymentExecuteAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
-            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=ServerError");
+            return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=ServerError&message={WebUtility.UrlEncode(ex.Message)}");
         }
     }
 
