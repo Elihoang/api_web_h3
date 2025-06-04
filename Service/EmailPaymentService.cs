@@ -1,7 +1,7 @@
 using System;
+using System.Net;
+using System.Net.Mail;
 using System.Threading.Tasks;
-using MailKit.Net.Smtp;
-using MimeKit;
 using Microsoft.Extensions.Configuration;
 using API_WebH3.Models;
 using API_WebH3.Repository;
@@ -11,19 +11,38 @@ namespace API_WebH3.Services
     public class EmailPaymentService
     {
         private readonly IConfiguration _configuration;
-        private readonly IEmailRepository _emailRepository; // Thêm dòng này
+        private readonly IEmailRepository _emailRepository;
 
         public EmailPaymentService(IConfiguration configuration, IEmailRepository emailRepository)
         {
             _configuration = configuration;
-            _emailRepository = emailRepository; // Khởi tạo
+            _emailRepository = emailRepository;
+            ValidateSmtpConfiguration();
+        }
+
+        private void ValidateSmtpConfiguration()
+        {
+            var requiredKeys = new[] { "SmtpSettings:Server", "SmtpSettings:Port", "SmtpSettings:Username", 
+                                      "SmtpSettings:Password", "SmtpSettings:SenderName", "SmtpSettings:SenderEmail" };
+            foreach (var key in requiredKeys)
+            {
+                if (string.IsNullOrEmpty(_configuration[key]))
+                {
+                    throw new InvalidOperationException($"Missing SMTP configuration: {key}");
+                }
+            }
+            if (!int.TryParse(_configuration["SmtpSettings:Port"], out _))
+            {
+                throw new InvalidOperationException($"Invalid SMTP port: {_configuration["SmtpSettings:Port"]}");
+            }
+            Console.WriteLine("SMTP configuration validated successfully.");
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             try
             {
-                Console.WriteLine($"🔹 Bắt đầu gửi email đến: {toEmail}");
+                Console.WriteLine($"🔹 Starting to send email to: {toEmail}, Subject: {subject}");
 
                 var smtpServer = _configuration["SmtpSettings:Server"];
                 var smtpPort = int.Parse(_configuration["SmtpSettings:Port"]);
@@ -32,28 +51,27 @@ namespace API_WebH3.Services
                 var senderName = _configuration["SmtpSettings:SenderName"];
                 var senderEmail = _configuration["SmtpSettings:SenderEmail"];
 
-                var email = new MimeMessage();
-                email.From.Add(new MailboxAddress(senderName, senderEmail));
-                email.To.Add(MailboxAddress.Parse(toEmail));
-                email.Subject = subject;
-
-                var bodyBuilder = new BodyBuilder { HtmlBody = body };
-                email.Body = bodyBuilder.ToMessageBody();
-
-                if (string.IsNullOrEmpty(smtpServer) || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+                var smtpClient = new SmtpClient(smtpServer)
                 {
-                    throw new InvalidOperationException("Cấu hình SMTP không đầy đủ. Vui lòng kiểm tra SmtpSettings.");
-                }
+                    Port = smtpPort,
+                    Credentials = new NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true
+                };
 
-                using var smtp = new SmtpClient();
-                await smtp.ConnectAsync(smtpServer, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-                await smtp.AuthenticateAsync(smtpUser, smtpPass);
-                await smtp.SendAsync(email);
-                await smtp.DisconnectAsync(true);
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(smtpUser, senderName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
 
-                Console.WriteLine($"Email đã gửi thành công đến {toEmail}");
+                mailMessage.To.Add(toEmail);
 
-                // Ghi email vào cơ sở dữ liệu
+                Console.WriteLine($"Connecting to SMTP server: {smtpServer}:{smtpPort}");
+                await smtpClient.SendMailAsync(mailMessage);
+                Console.WriteLine($"Email sent successfully to {toEmail}");
+
                 var emailRecord = new Email
                 {
                     SenderEmail = senderEmail,
@@ -68,7 +86,8 @@ namespace API_WebH3.Services
             }
             catch (Exception ex)
             {
-                // Ghi email với trạng thái thất bại
+                Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}\nStackTrace: {ex.StackTrace}");
+
                 var emailRecord = new Email
                 {
                     SenderEmail = _configuration["SmtpSettings:SenderEmail"],
@@ -80,8 +99,7 @@ namespace API_WebH3.Services
                     Status = "Failed"
                 };
                 await _emailRepository.AddEmailAsync(emailRecord);
-                Console.WriteLine($"Lỗi khi gửi email đến {toEmail}: {ex.Message}");
-                throw;
+                throw new Exception($"Failed to send email: {ex.Message}", ex);
             }
         }
     }
