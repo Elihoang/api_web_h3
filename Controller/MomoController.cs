@@ -27,47 +27,56 @@ public class PaymentMomoController : ControllerBase
         _enrollmentService = enrollmentService;
     }
 
+
     [HttpPost("create")]
     public async Task<ActionResult<object>> CreatePayment([FromBody] CreateOrderDto orderDto)
     {
-        Console.WriteLine($"Nhận yêu cầu MOMO: {JsonSerializer.Serialize(orderDto)}");
+        Console.WriteLine($"Received MOMO request: {JsonSerializer.Serialize(orderDto)}");
 
         try
         {
             if (orderDto == null || orderDto.UserId == Guid.Empty || !orderDto.OrderDetails.Any())
-                return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
+                return BadRequest("Invalid order data.");
 
             orderDto.Status = orderDto.Amount == 0 ? "Paid" : "Pending";
             var createdOrder = await _orderService.CreateOrderWithDetailsAsync(orderDto);
 
             if (createdOrder == null)
-                return StatusCode(500, "Không thể tạo đơn hàng.");
+                return StatusCode(500, "Failed to create order.");
 
             if (orderDto.Amount == 0)
             {
                 foreach (var detail in orderDto.OrderDetails)
                 {
-                    await _enrollmentService.CreateAsync(new CreateEnrollmentDto
+                    var existingEnrollment = await _enrollmentService.GetByUserAndCourseAsync(orderDto.UserId, detail.CourseId);
+                    if (existingEnrollment == null)
                     {
-                        UserId = orderDto.UserId,
-                        CourseId = detail.CourseId,
-                        Status = "Enrolled"
-                    });
+                        await _enrollmentService.CreateAsync(new CreateEnrollmentDto
+                        {
+                            UserId = orderDto.UserId,
+                            CourseId = detail.CourseId,
+                            Status = "Enrolled"
+                        });
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Enrollment already exists for UserId: {orderDto.UserId}, CourseId: {detail.CourseId}");
+                    }
                 }
 
-                return Ok(new { orderId = createdOrder.Id, isFree = true, message = "Đăng ký thành công" });
+                return Ok(new { orderId = createdOrder.Id, isFree = true, message = "Registration successful" });
             }
 
             var paymentUrl = await _momoService.CreatePaymentUrlAsync(createdOrder);
             if (string.IsNullOrEmpty(paymentUrl))
-                return StatusCode(500, "Không thể tạo URL thanh toán.");
+                return StatusCode(500, "Failed to create payment URL.");
 
             return Ok(new { paymentUrl, orderId = createdOrder.Id, isFree = false });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Lỗi trong CreatePayment (Momo): {ex.Message}\nStackTrace: {ex.StackTrace}");
-            return StatusCode(500, $"Lỗi server: {ex.Message}");
+            Console.WriteLine($"Error in CreatePayment (Momo): {ex.Message}\nStackTrace: {ex.StackTrace}");
+            return StatusCode(500, $"Server error: {ex.Message}");
         }
     }
 
