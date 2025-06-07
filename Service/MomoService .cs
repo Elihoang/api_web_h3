@@ -235,23 +235,26 @@ public class MomoService
                         var user = await _userRepository.GetByIdAsync(order.UserId);
                         if (user != null && !string.IsNullOrEmpty(user.Email))
                         {
+                            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), _configuration["EmailTemplate:Path"]);
+                            Console.WriteLine($"Attempting to read email template from: {templatePath}");
+                            if (!File.Exists(templatePath))
+                            {
+                                Console.WriteLine($"Email template not found at: {templatePath}");
+                                throw new FileNotFoundException($"Email template file not found at {templatePath}");
+                            }
                             var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
-                            var body = $@"<h2>Chúc mừng bạn đã thanh toán thành công!</h2>
-                                    <p>Cảm ơn bạn đã đăng ký khóa học của chúng tôi.</p>
-                                    <ul>
-                                        <li>Mã đơn hàng: {order.Id}</li>
-                                        <li>Tổng tiền: {order.Amount:N0} VND</li>
-                                    </ul>";
-                            try
-                            {
-                                await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
-                                Console.WriteLine($"Sent confirmation email to {user.Email} for order {order.Id}");
-                            }
-                            catch (Exception emailEx)
-                            {
-                                Console.WriteLine($"Failed to send email for order {order.Id}: {emailEx.Message}\nStackTrace: {emailEx.StackTrace}");
-                                // Continue processing even if email fails
-                            }
+                            var templateContent = await File.ReadAllTextAsync(templatePath);
+                            var paymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss");
+                            var body = templateContent
+                                .Replace("{receiverEmail}", user.Email)
+                                .Replace("{transactionId}", order.Id)
+                                .Replace("{amount}", $"{order.Amount:N0} VND")
+                                .Replace("{paymentDate}", paymentDate)
+                                .Replace("{paymentMethod}", "MOMO");
+
+                            Console.WriteLine($"Email body prepared: {body}");
+                            await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
+                            Console.WriteLine($"Email sent successfully to {user.Email}");
                         }
 
                         transaction.Complete();
