@@ -64,4 +64,30 @@ public class EnrollmentRepository: IEnrollmentRepository
             await _context.SaveChangesAsync();
         }
     }
+    public async Task DeleteEnrollmentAsync(Guid userId, string courseId)
+    {
+        var enrollment = await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+        if (enrollment != null)
+        {
+            _context.Enrollments.Remove(enrollment);
+            await _context.SaveChangesAsync();
+        }
+    }
+    public async Task<Enrollment> GetEnrollmentAsync(Guid userId, string courseId)
+    {
+        return await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+    }
+
+    public async Task UpdateEnrollmentStatusAsync(Guid userId, string courseId, string status)
+    {
+        var enrollment = await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+        if (enrollment != null)
+        {
+            enrollment.Status = status;
+            await _context.SaveChangesAsync();
+        }
+    }
 }
