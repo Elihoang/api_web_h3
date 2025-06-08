@@ -10,15 +10,18 @@ public class OrderService
     private readonly IOrderRepository _orderRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly ICouponRepository _couponRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
 
     public OrderService(
         IOrderRepository orderRepository, 
         ICourseRepository courseRepository, 
-        ICouponRepository couponRepository)
+        ICouponRepository couponRepository,
+        IEnrollmentRepository enrollmentRepository)
     {
         _orderRepository = orderRepository;
         _courseRepository = courseRepository;
         _couponRepository = couponRepository;
+        _enrollmentRepository = enrollmentRepository;
     }
 
     public async Task<OrderDto> CreateOrderWithDetailsAsync(CreateOrderDto orderDto)
@@ -131,8 +134,28 @@ public class OrderService
     {
         var order = await _orderRepository.GetByIdAsync(id);
         if (order == null) throw new ArgumentException("Đơn hàng không tồn tại.");
+
         order.Status = status;
         await _orderRepository.UpdateAsync(order);
+
+        var orderDetails = await _orderRepository.GetOrderDetailsByOrderIdAsync(id);
+        foreach (var detail in orderDetails)
+        {
+            if (status.ToLower() == "cancelled")
+            {
+                // Xóa enrollment khi trạng thái là Cancelled (giữ nguyên logic hiện tại)
+                await _enrollmentRepository.DeleteEnrollmentAsync(order.UserId, detail.CourseId);
+            }
+            else if (status.ToLower() == "failed" || status.ToLower() == "pending")
+            {
+                // Cập nhật trạng thái enrollment thành Failed
+                var enrollment = await _enrollmentRepository.GetEnrollmentAsync(order.UserId, detail.CourseId);
+                if (enrollment != null)
+                {
+                    await _enrollmentRepository.UpdateEnrollmentStatusAsync(order.UserId, detail.CourseId, "Failed");
+                }
+            }
+        }
     }
 
     public async Task<(List<OrderDto> Orders, int TotalItems)> GetAllOrdersAsync(int pageNumber, int pageSize)
