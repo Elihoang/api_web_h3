@@ -141,19 +141,21 @@ public class OrderService
         var orderDetails = await _orderRepository.GetOrderDetailsByOrderIdAsync(id);
         foreach (var detail in orderDetails)
         {
-            if (status.ToLower() == "cancelled")
+            if (status == "Cancelled")
             {
                 // Xóa enrollment khi trạng thái là Cancelled (giữ nguyên logic hiện tại)
                 await _enrollmentRepository.DeleteEnrollmentAsync(order.UserId, detail.CourseId);
             }
-            else if (status.ToLower() == "failed" || status.ToLower() == "pending")
+            else if (status == "Failed" || status == "Pending")
             {
-                // Cập nhật trạng thái enrollment thành Failed
                 var enrollment = await _enrollmentRepository.GetEnrollmentAsync(order.UserId, detail.CourseId);
-                if (enrollment != null)
+                if (enrollment == null)
                 {
-                    await _enrollmentRepository.UpdateEnrollmentStatusAsync(order.UserId, detail.CourseId, "Failed");
+                    Console.WriteLine($"Enrollment không tìm thấy cho UserId: {order.UserId}, CourseId: {detail.CourseId}");
+                    // Hoặc ghi log vào hệ thống logging của bạn
+                    continue; // Bỏ qua nếu không tìm thấy enrollment
                 }
+                await _enrollmentRepository.UpdateEnrollmentStatusAsync(order.UserId, detail.CourseId, "Failed");
             }
         }
     }
