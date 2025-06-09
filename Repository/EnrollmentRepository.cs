@@ -82,12 +82,25 @@ public class EnrollmentRepository: IEnrollmentRepository
 
     public async Task UpdateEnrollmentStatusAsync(Guid userId, string courseId, string status)
     {
-        var enrollment = await _context.Enrollments
-            .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
-        if (enrollment != null)
+        try
         {
-            enrollment.Status = status;
-            await _context.SaveChangesAsync();
+            var enrollment = await _context.Enrollments
+                .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+            if (enrollment != null)
+            {
+                enrollment.Status = status;
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"Cập nhật trạng thái enrollment thành công: UserId={userId}, CourseId={courseId}, Status={status}");
+            }
+            else
+            {
+                Console.WriteLine($"Không tìm thấy enrollment: UserId={userId}, CourseId={courseId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi cập nhật trạng thái enrollment: {ex.Message}");
+            throw;
         }
     }
 }

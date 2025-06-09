@@ -97,7 +97,7 @@ public class EnrollmentService
             UserId = createEnrollmentDto.UserId,
             CourseId = createEnrollmentDto.CourseId,
             EnrolledAt = DateTime.UtcNow,
-            Status = createEnrollmentDto.Status ?? "Enrolled", // Sử dụng Status từ DTO
+            Status = createEnrollmentDto.Status ?? "Enrolled",
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
         };
 
