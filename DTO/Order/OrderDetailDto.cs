@@ -10,7 +10,6 @@ public class OrderDetailDto
     [Required]
     [Range(0, double.MaxValue, ErrorMessage = "Giá phải lớn hơn hoặc bằng 0")]
     public decimal Price { get; set; }
-
     public Guid? CouponId { get; set; }
 
     [Range(0, double.MaxValue, ErrorMessage = "Số tiền giảm giá phải lớn hơn hoặc bằng 0")]

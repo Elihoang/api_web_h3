@@ -2,6 +2,7 @@
 using System.Text.Json;
 using API_WebH3.Configurations;
 using API_WebH3.Data;
+using API_WebH3.Helper;
 using API_WebH3.Repositories;
 using API_WebH3.Repository;
 using API_WebH3.Service;
@@ -9,6 +10,7 @@ using API_WebH3.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using API_WebH3.Hubs; // Thêm namespace cho ChatHub
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,10 +30,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("CloudinarySettings"));
 
-
 // 🔹 Cấu hình logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Services.AddSignalR();
 builder.Logging.AddDebug();
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
@@ -87,7 +89,7 @@ builder.Services.AddScoped<VnpayService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<EmailPaymentService>();
 builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<IUserQuizAnswerRepository,UserQuizAnswerRepository>();
+builder.Services.AddScoped<IUserQuizAnswerRepository, UserQuizAnswerRepository>();
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<QuizService>();
 builder.Services.AddScoped<PhotoService>();
@@ -97,6 +99,7 @@ builder.Services.AddScoped<FilterService>();
 builder.Services.AddScoped<MomoService>();
 builder.Services.AddScoped<ContactEmailService>();
 builder.Services.AddScoped<IEmailRepository, EmailRepository>();
+builder.Services.AddScoped<ExcelExportHelper>();
 
 // 🔹 Cấu hình CORS
 builder.Services.AddCors(options =>
@@ -194,5 +197,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub"); // Thêm ánh xạ điểm cuối SignalR
 
 app.Run();

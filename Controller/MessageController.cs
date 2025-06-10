@@ -1,25 +1,31 @@
 using API_WebH3.DTO.Message;
 using API_WebH3.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using API_WebH3.Hubs;
 
-namespace API_WebH3.Controller;
+namespace API_WebH3.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class MessageController : ControllerBase
 {
     private readonly MessageService _messageService;
-    public MessageController(MessageService messageService)
+    private readonly IHubContext<ChatHub> _hubContext;
+
+    public MessageController(MessageService messageService, IHubContext<ChatHub> hubContext)
     {
         _messageService = messageService;
+        _hubContext = hubContext;
     }
-    
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessages()
     {
         var messages = await _messageService.GetAllAsync();
         return Ok(messages);
     }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<MessageDto>> GetMessage(Guid id)
     {
@@ -30,13 +36,14 @@ public class MessageController : ControllerBase
         }
         return Ok(message);
     }
-    
+
     [HttpGet("chat/{chatId}")]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessagesByChat(Guid chatId)
     {
         var messages = await _messageService.GetByChatIdAsync(chatId);
         return Ok(messages);
     }
+
     [HttpPost]
     public async Task<ActionResult<MessageDto>> CreateMessage(CreateMessageDto createMessageDto)
     {
@@ -44,10 +51,14 @@ public class MessageController : ControllerBase
         {
             return BadRequest(ModelState);
         }
-        
+
         var messageDto = await _messageService.CreateAsync(createMessageDto);
+        await _hubContext.Clients.Group(createMessageDto.ChatId.ToString())
+            .SendAsync("ReceiveMessage", messageDto);
+
         return CreatedAtAction(nameof(GetMessage), new { id = messageDto.Id }, messageDto);
     }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<MessageDto>> UpdateMessage(Guid id, UpdateMessageDto updateMessageDto)
     {
@@ -63,7 +74,7 @@ public class MessageController : ControllerBase
         }
         return Ok(messageDto);
     }
-    
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMessage(Guid id)
     {
