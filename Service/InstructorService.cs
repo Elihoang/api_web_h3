@@ -29,10 +29,6 @@ public class InstructorService
             ProfileImage = i.ProfileImage,
             Role = i.Role,
             CreatedAt = i.CreatedAt,
-            IpAddress = i.IpAddress,
-            DeviceName = i.DeviceName,
-            GoogleId = i.GoogleId,
-            IsGoogleAccount = i.IsGoogleAccount
         });
     }
     public async Task<InstructorDto> GetInstructorByIdAsync(Guid id)
@@ -52,10 +48,6 @@ public class InstructorService
             ProfileImage = instructor.ProfileImage,
             Role = instructor.Role,
             CreatedAt = instructor.CreatedAt,
-            IpAddress = instructor.IpAddress,
-            DeviceName = instructor.DeviceName,
-            GoogleId = instructor.GoogleId,
-            IsGoogleAccount = instructor.IsGoogleAccount
         };
     }
     public async Task<InstructorDto> CreateInstructorAsync(CreateInstructorDto createInstructorDto)
@@ -87,10 +79,6 @@ public class InstructorService
             ProfileImage = createInstructorDto.ProfileImage,
             Role = createInstructorDto.Role,
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"),
-            IpAddress = createInstructorDto.IpAddress,
-            DeviceName = createInstructorDto.DeviceName,
-            GoogleId = createInstructorDto.GoogleId,
-            IsGoogleAccount = createInstructorDto.IsGoogleAccount
         };
 
         await _instructorRepository.CreateAsync(newInstructor);
@@ -105,10 +93,7 @@ public class InstructorService
             ProfileImage = newInstructor.ProfileImage,
             Role = newInstructor.Role,
             CreatedAt = newInstructor.CreatedAt,
-            IpAddress = newInstructor.IpAddress,
-            DeviceName = newInstructor.DeviceName,
-            GoogleId = newInstructor.GoogleId,
-            IsGoogleAccount = newInstructor.IsGoogleAccount
+
         };
     }
     public async Task<InstructorDto> UpdateInstructorAsync(Guid id, UpdateInstructorDto updateInstructorDto)
@@ -118,11 +103,7 @@ public class InstructorService
         {
             return null;
         }
-
-        if (updateInstructorDto.Role != "Instructor")
-        {
-            throw new ArgumentException("Role phải là Instructor.");
-        }
+        
 
         // Kiểm tra email trùng lặp (nếu email thay đổi)
         if (updateInstructorDto.Email != existingInstructor.Email)
@@ -145,10 +126,6 @@ public class InstructorService
             ? DateTime.SpecifyKind(updateInstructorDto.BirthDate.Value, DateTimeKind.Utc)
             : null;
         existingInstructor.ProfileImage = updateInstructorDto.ProfileImage;
-        existingInstructor.IpAddress = updateInstructorDto.IpAddress;
-        existingInstructor.DeviceName = updateInstructorDto.DeviceName;
-        existingInstructor.GoogleId = updateInstructorDto.GoogleId;
-        existingInstructor.IsGoogleAccount = updateInstructorDto.IsGoogleAccount;
 
         await _instructorRepository.UpdateAsync(existingInstructor);
 
@@ -162,10 +139,6 @@ public class InstructorService
             ProfileImage = existingInstructor.ProfileImage,
             Role = existingInstructor.Role,
             CreatedAt = existingInstructor.CreatedAt,
-            IpAddress = existingInstructor.IpAddress,
-            DeviceName = existingInstructor.DeviceName,
-            GoogleId = existingInstructor.GoogleId,
-            IsGoogleAccount = existingInstructor.IsGoogleAccount
         };
     }
     public async Task<bool> DeleteInstructorAsync(Guid id)

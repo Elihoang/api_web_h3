@@ -47,10 +47,10 @@ public class StudentService
             Phone = user.Phone,
             Role = user.Role
         };
-    }
+      }
 
     public async Task<StudentDto> CreateStudentAsync(CreateStudentDto user)
-    {
+     {
         var newStudent = new User
         {
             FullName = user.FullName,
@@ -75,7 +75,7 @@ public class StudentService
             Phone = newStudent.Phone,
             Role = newStudent.Role
         };
-    }
+      } 
 
     public async Task<UpdateStudentDto> UpdateStudentAsync(UpdateStudentDto updateStudentDto, string id)
     {

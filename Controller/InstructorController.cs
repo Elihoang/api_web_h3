@@ -10,9 +10,11 @@ namespace API_WebH3.Controller;
 public class InstructorController : ControllerBase
 {
     private readonly InstructorService _instructorService;
-    public InstructorController(InstructorService instructorService)
+    private readonly PhotoService _photoService;
+    public InstructorController(InstructorService instructorService, PhotoService photoService)
     {
         _instructorService = instructorService;
+        _photoService = photoService;
     }
     
     [HttpGet]
@@ -71,17 +73,16 @@ public class InstructorController : ControllerBase
         }
         return NoContent();
     }
-    [HttpPost("{id}/avatar")]
-    public async Task<ActionResult<string>> UploadAvatar(Guid id, IFormFile file)
+    [HttpPost("upload-image")]
+    public async Task<IActionResult> UploadImage(IFormFile file)
     {
-        try
-        {
-            var filePath = await _instructorService.UploadAvatarAsync(file, id);
-            return Ok(filePath);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var imageUrl = await _photoService.UploadImageAsync(file);
+        if (imageUrl == null)
+            return BadRequest("Upload failed.");
+
+        return Ok(new { url = imageUrl });
     }
 }
