@@ -7,148 +7,124 @@ namespace API_WebH3.Service;
 public class StudentService
 {
     private readonly IStudentRepository _studentRepository;
-      private readonly IWebHostEnvironment _env;
+    private readonly IWebHostEnvironment _env;
 
-      public StudentService(IStudentRepository studentRepository, IWebHostEnvironment env)
-      {
-         _studentRepository = studentRepository;
-         _env = env;
-      }
+    public StudentService(IStudentRepository studentRepository, IWebHostEnvironment env)
+    {
+        _studentRepository = studentRepository;
+        _env = env;
+    }
 
-      public async Task<IEnumerable<StudentDto>> GetAllStudentsAsync()
-      {
-         var students = await _studentRepository.GetAllAsync();
-         return students.Select(s => new StudentDto
-         {
+    public async Task<IEnumerable<StudentDto>> GetAllStudentsAsync()
+    {
+        var students = await _studentRepository.GetAllAsync();
+        return students.Select(s => new StudentDto
+        {
             Id = s.Id.ToString(),
             FullName = s.FullName,
             Email = s.Email,
-            BirthDate = s.BirthDate.HasValue
-            ? s.BirthDate.Value.ToString("dd/MM/yyyy")
-            : null,
+            BirthDate = s.BirthDate,
             ProfileImage = s.ProfileImage,
+            Phone =  s.Phone,
             Role = s.Role
-         });
-      }
+        });
+    }
 
-      public async Task<StudentDto> GetStudentByIdAsync(string id)
-      {
-         var user = await _studentRepository.GetByIdAsync(id);
-         return new StudentDto
-         {
+    public async Task<StudentDto> GetStudentByIdAsync(string id)
+    {
+        var user = await _studentRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            throw new Exception("Student not found");
+        }
+        return new StudentDto
+        {
             Id = user.Id.ToString(),
             FullName = user.FullName,
             Email = user.Email,
-            BirthDate = user.BirthDate.HasValue
-            ? user.BirthDate.Value.ToString("yyyy-MM-dd")
-            : null,
+            BirthDate = user.BirthDate,
             ProfileImage = user.ProfileImage,
+            Phone = user.Phone,
             Role = user.Role
-         };
-      }
+        };
+    }
 
-      public async Task<StudentDto> CreateStudentAsync(CreateStudentDto user)
-      {
-            var newStudent = new User
-            {
+    public async Task<StudentDto> CreateStudentAsync(CreateStudentDto user)
+    {
+        var newStudent = new User
+        {
             FullName = user.FullName,
             Email = user.Email,
-            Password = user.Password,
+            Password = BCrypt.Net.BCrypt.HashPassword(user.Password),
             Role = user.Role,
-            BirthDate = user.BirthDate != null ? DateTime.Parse(user.BirthDate) : null,
-            Phone = user.Phone
-         };
+            BirthDate = user.BirthDate.HasValue
+                ? DateTime.SpecifyKind(user.BirthDate.Value, DateTimeKind.Utc)
+                : null,
+            ProfileImage = user.ProfileImage,
+            Phone = user.Phone,
+        };
 
-         if (user.BirthDate != null && user.BirthDate != "")
-         {
-            newStudent.BirthDate = DateTime.Parse(user.BirthDate);
-         }
-         
-         await _studentRepository.CreateAsync(newStudent);
-         return new StudentDto
-         {
+        await _studentRepository.CreateAsync(newStudent);
+        return new StudentDto
+        {
             Id = newStudent.Id.ToString(),
             FullName = newStudent.FullName,
             Email = newStudent.Email,
-            BirthDate = newStudent.BirthDate.HasValue
-             ? newStudent.BirthDate.Value.ToString("yyyy-MM-dd")
-             : null,
+            BirthDate = newStudent.BirthDate,
             ProfileImage = newStudent.ProfileImage,
+            Phone = newStudent.Phone,
             Role = newStudent.Role
-         };
-      }
+        };
+    }
 
-        public async Task<UpdateStudentDto> UpdateStudentAsync(UpdateStudentDto updateStudentDto, string id)
+    public async Task<UpdateStudentDto> UpdateStudentAsync(UpdateStudentDto updateStudentDto, string id)
+    {
+        var existingStudent = await _studentRepository.GetByIdAsync(id);
+        if (existingStudent == null)
         {
-            var existingStudent = await _studentRepository.GetByIdAsync(id);
-            if (existingStudent == null)
-            {
-               AppLogger.LogError("Student not found.");
-               throw new Exception("Student not found");
-            }
-
-            existingStudent.FullName = updateStudentDto.FullName;
-            existingStudent.Email = updateStudentDto.Email;
-
-            if (updateStudentDto.BirthDate != null)
-            {
-                // Phân tích chuỗi thời gian và chuyển sang UTC
-                var parsedDate = DateTime.Parse(updateStudentDto.BirthDate);
-                existingStudent.BirthDate = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
-            }
-
-            // Chỉ cập nhật mật khẩu nếu có giá trị mới và mã hóa nó
-            if (!string.IsNullOrEmpty(updateStudentDto.Password))
-            {
-                existingStudent.Password = BCrypt.Net.BCrypt.HashPassword(updateStudentDto.Password);
-            }
-
-            await _studentRepository.UpdateAsync(existingStudent);
-
-            return new UpdateStudentDto
-            {
-                FullName = existingStudent.FullName,
-                Email = existingStudent.Email,
-                BirthDate = existingStudent.BirthDate.HasValue
-                    ? existingStudent.BirthDate.Value.ToString("yyyy-MM-ddTHH:mm:ssZ")
-                    : null
-            };
+            throw new Exception("Student not found");
         }
-        public async Task<bool> DeleteStudentAsync(string id)
-      {
-         return await _studentRepository.DeleteAsync(id);
-      }
 
-      public async Task<string> UploadAvatarAsync(IFormFile file, string id)
-      {
-         if (file == null || file.Length == 0)
-         {
-            AppLogger.LogError("No file uploaded.");
-            throw new ArgumentException("No file uploaded");
-         }
+        // Chỉ cập nhật các trường được gửi
+        existingStudent.FullName = updateStudentDto.FullName ?? existingStudent.FullName;
+        existingStudent.Email = updateStudentDto.Email ?? existingStudent.Email;
 
-         // Tạo thư mục uploads nếu chưa có
-         string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-         if (!Directory.Exists(uploadsFolder))
-            Directory.CreateDirectory(uploadsFolder);
+        // Cập nhật BirthDate chỉ nếu có giá trị
+        if (updateStudentDto.BirthDate.HasValue)
+        {
+            existingStudent.BirthDate = DateTime.SpecifyKind(updateStudentDto.BirthDate.Value, DateTimeKind.Utc);
+        }
+        
+        if (!string.IsNullOrEmpty(updateStudentDto.ProfileImage))
+        {
+            existingStudent.ProfileImage = updateStudentDto.ProfileImage;
+        }
+        
+        if (!string.IsNullOrEmpty(updateStudentDto.Phone))
+        {
+            existingStudent.Phone = updateStudentDto.Phone;
+        }
+        
+        if (!string.IsNullOrEmpty(updateStudentDto.Password))
+        {
+            existingStudent.Password = BCrypt.Net.BCrypt.HashPassword(updateStudentDto.Password);
+        }
 
-         // Tạo tên file duy nhất
-         string uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-         string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+        await _studentRepository.UpdateAsync(existingStudent);
 
-         // Lưu file vào thư mục
-         using (var stream = new FileStream(filePath, FileMode.Create))
-         {
-            await file.CopyToAsync(stream);
-         }
+        return new UpdateStudentDto
+        {
+            FullName = existingStudent.FullName,
+            Email = existingStudent.Email,
+            Phone = existingStudent.Phone,
+            ProfileImage = existingStudent.ProfileImage,
+            BirthDate = existingStudent.BirthDate,
+            Password = null 
+        };
+    }
 
-         var user = await _studentRepository.GetByIdAsync(id);
-         if (user != null)
-         {
-            user.ProfileImage = "/uploads/" + uniqueFileName;
-            await _studentRepository.UpdateAsync(user);
-         }
-
-         return "/uploads/" + uniqueFileName;
-      }
+    public async Task<bool> DeleteStudentAsync(string id)
+    {
+        return await _studentRepository.DeleteAsync(id);
+    }
 }
