@@ -29,14 +29,9 @@ public class FilterController : ControllerBase
             var (courses, total, totalPages) = await _filterService.FilterCoursesAsync(
                 category, minPrice, maxPrice, minRating, page, limit);
 
-            if (!courses.Any())
-            {
-                return NotFound(new { Message = "Không tìm thấy khóa học nào." });
-            }
-
             return Ok(new
             {
-                Message = "Lọc khóa học thành công.",
+                Message = courses.Any() ? "Lọc khóa học thành công." : "Không tìm thấy khóa học nào.",
                 Data = new
                 {
                     Courses = courses,
@@ -52,7 +47,7 @@ public class FilterController : ControllerBase
             { 
                 Message = "Lỗi khi lọc khóa học.", 
                 Error = ex.Message,
-                StackTrace = ex.StackTrace // Thêm để debug
+                StackTrace = ex.StackTrace
             });
         }
     }

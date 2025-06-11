@@ -31,7 +31,8 @@ public class FilterService
                 InstructorId = c.InstructorId,
                 CategoryId = c.CategoryId,
                 CreatedAt = c.CreatedAt,
-                Contents = c.Contents
+                Contents = c.Contents,
+                
             }).ToList();
 
             return (courseDtos, total, totalPages);

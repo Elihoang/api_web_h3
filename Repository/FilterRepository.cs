@@ -26,6 +26,7 @@ public class FilterRepository : IFilterRepository
                     Course = course,
                     AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0
                 })
+            .Where(c=>c.Course.Activate=="Active")
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(category))
