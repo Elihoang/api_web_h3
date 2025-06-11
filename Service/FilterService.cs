@@ -38,6 +38,7 @@ public class FilterService
         }
         catch (Exception ex)
         {
+            AppLogger.LogError($"Lỗi lọc khóa học: {ex.Message}");
             throw;
         }
     }

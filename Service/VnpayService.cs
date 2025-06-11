@@ -61,7 +61,7 @@ public class VnpayService
         {
             if (order.Amount < 0 || string.IsNullOrEmpty(order.Id) || order.UserId == Guid.Empty)
             {
-                Console.WriteLine($"Invalid order data: Amount={order.Amount}, Id={order.Id}, UserId={order.UserId}");
+                AppLogger.LogError($"Invalid order data: Amount={order.Amount}, Id={order.Id}, UserId={order.UserId}");
                 throw new ArgumentException("Dữ liệu đơn hàng không hợp lệ: Amount, Id hoặc UserId không đúng.");
             }
 
@@ -81,18 +81,18 @@ public class VnpayService
             _requestData.Add("vnp_OrderType", "billpayment");
             _requestData.Add("vnp_ReturnUrl", _configuration["Vnpay:PaymentBackReturnUrl"]);
             _requestData.Add("vnp_TxnRef", order.Id.ToString());
-
-            Console.WriteLine("Request data for payment URL:");
+            
+            string dataRequest = "";
             foreach (var (key, value) in _requestData)
             {
-                Console.WriteLine($"{key}: {value}");
+                dataRequest += $"{key}: {value}\n";
             }
-
+            AppLogger.LogInfo($"Request data for payment URL: {dataRequest}");
             return CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in CreatePaymentUrl: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in CreatePaymentUrl: {ex.Message}\nStackTrace: {ex.StackTrace}");
             throw;
         }
     }
@@ -112,14 +112,14 @@ public class VnpayService
 
             if (!_responseData.ContainsKey("vnp_TxnRef"))
             {
-                Console.WriteLine("Missing vnp_TxnRef in response data.");
+                AppLogger.LogError("Missing vnp_TxnRef in response data.");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingOrderId");
             }
 
             var txnRefRaw = GetResponseData("vnp_TxnRef");
             if (string.IsNullOrWhiteSpace(txnRefRaw))
             {
-                Console.WriteLine($"Invalid vnp_TxnRef format: {GetResponseData("vnp_TxnRef")}");
+                AppLogger.LogError($"Invalid vnp_TxnRef format: {GetResponseData("vnp_TxnRef")}");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidOrderId");
             }
             var orderId = txnRefRaw;
@@ -130,23 +130,23 @@ public class VnpayService
 
             if (string.IsNullOrEmpty(vnpSecureHash))
             {
-                Console.WriteLine("Missing vnp_SecureHash in response data.");
+                AppLogger.LogError("Missing vnp_SecureHash in response data.");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingSignature");
             }
 
             var checkSignature = ValidateSignature(vnpSecureHash, _configuration["Vnpay:HashSecret"]);
-            Console.WriteLine($"Signature validation: {checkSignature}");
+            AppLogger.LogInfo($"Signature validation: {checkSignature}");
 
             var order = await _orderService.GetOrderById(orderId);
             if (order == null)
             {
-                Console.WriteLine($"Order not found: Id={orderId}");
+                AppLogger.LogError($"Order not found: Id={orderId}");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=OrderNotFound");
             }
 
             if (!checkSignature)
             {
-                Console.WriteLine($"Invalid signature for order: Id={orderId}");
+                AppLogger.LogError($"Invalid signature for order: Id={orderId}");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidSignature");
             }
 
@@ -154,7 +154,7 @@ public class VnpayService
             switch (vnpResponseCode)
             {
                 case "00":
-                    Console.WriteLine($"Payment successful for order: Id={orderId}");
+                    AppLogger.LogSuccess($"Payment successful for order: Id={orderId}");
                     await _orderService.UpdateOrderStatus(orderId, "Paid");
 
                     foreach (var detail in order.OrderDetails)
@@ -162,7 +162,7 @@ public class VnpayService
                         var existingEnrollment = await _enrollementService.GetByUserAndCourseAsync(order.UserId, detail.CourseId);
                         if (existingEnrollment == null)
                         {
-                            Console.WriteLine($"Creating enrollment for UserId={order.UserId}, CourseId={detail.CourseId}");
+                            AppLogger.LogInfo($"Creating enrollment for UserId={order.UserId}, CourseId={detail.CourseId}");
                             await _enrollementService.CreateAsync(new CreateEnrollmentDto
                             {
                                 UserId = order.UserId,
@@ -175,7 +175,7 @@ public class VnpayService
                     var user = await _userRepository.GetByIdAsync(order.UserId);
                     if (user == null)
                     {
-                        Console.WriteLine($"User not found: UserId={order.UserId}");
+                        AppLogger.LogError($"User not found: UserId={order.UserId}");
                         redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
                                      $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
                                      $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
@@ -185,7 +185,7 @@ public class VnpayService
 
                     if (string.IsNullOrEmpty(user.Email))
                     {
-                        Console.WriteLine($"User email is empty: UserId={order.UserId}");
+                        AppLogger.LogError($"User email is empty: UserId={order.UserId}");
                         redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
                                      $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
                                      $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
@@ -193,35 +193,48 @@ public class VnpayService
                         return new RedirectResult(redirectUrl);
                     }
 
-                    Console.WriteLine($"🔹 Found user: Id={user.Id}, Email={user.Email}");
-                    var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
+                    AppLogger.LogInfo($"Found user: Id={user.Id}, Email={user.Email}");
 
+
+                    // Send confirmation email
+                    var orderDetail = await _orderService.GetOrderDetailsByOrderIdAsync(order.Id);
+                    var instructor = await _userRepository.GetByIdAsync(orderDetail.FirstOrDefault().Course.InstructorId);
                     try
                     {
                         var templatePath = Path.Combine(Directory.GetCurrentDirectory(), _configuration["EmailTemplate:Path"]);
-                        Console.WriteLine($"Attempting to read email template from: {templatePath}");
+                        AppLogger.LogError($"Attempting to read email template from: {templatePath}");
                         if (!File.Exists(templatePath))
                         {
-                            Console.WriteLine($"Email template not found at: {templatePath}");
+                            AppLogger.LogError($"Email template not found at: {templatePath}");
                             throw new FileNotFoundException($"Email template file not found at {templatePath}");
                         }
-
+                        var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
                         var templateContent = await File.ReadAllTextAsync(templatePath);
                         var paymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss");
+                        var courseAccessUrl =
+                            $"{_configuration["Frontend:BaseUrl"]}/details/{orderDetail.FirstOrDefault().CourseId}";
                         var body = templateContent
+                            .Replace("{invoiceId}", order.Id)
+                            .Replace("{courseName}", orderDetail.FirstOrDefault()?.Course?.Title?? "Khóa học không xác định")
+                            .Replace("{issueDate}", order.CreatedAt)
+                            .Replace("{studentName}", user.FullName)
+                            .Replace("{studentEmail}", user.Email)
                             .Replace("{receiverEmail}", user.Email)
                             .Replace("{transactionId}", order.Id)
                             .Replace("{amount}", $"{order.Amount:N0} VND")
                             .Replace("{paymentDate}", paymentDate)
-                            .Replace("{paymentMethod}", "VNPAY");
+                            .Replace("{paymentMethod}", "VNPay")
+                            .Replace("{instructorName}", instructor.FullName)
+                            .Replace("{startDate}", paymentDate)
+                            .Replace("{courseAccessUrl}", courseAccessUrl);
 
-                        Console.WriteLine($"Email body prepared: {body}");
+                        AppLogger.LogInfo($"Email body prepared: {body}");
                         await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
-                        Console.WriteLine($"Email sent successfully to {user.Email}");
+                        AppLogger.LogSuccess($"Email sent successfully to {user.Email}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Failed to send email to {user.Email}: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                        AppLogger.LogError($"Failed to send email to {user.Email}: {ex.Message}\nStackTrace: {ex.StackTrace}");
                         // Continue with success redirect even if email fails
                     }
 
@@ -231,23 +244,23 @@ public class VnpayService
                                  $"&vnp_ResponseCode={vnpResponseCode}";
                     break;
                 case "24":
-                    Console.WriteLine($"Payment cancelled for order: Id={orderId}");
+                    AppLogger.LogInfo($"Payment cancelled for order: Id={orderId}");
                     await _orderService.UpdateOrderStatus(orderId, "Cancelled");
                     redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=cancelled";
                     break;
                 default:
-                    Console.WriteLine($"Payment failed for order: Id={orderId}, ResponseCode={vnpResponseCode}");
+                    AppLogger.LogError($"Payment failed for order: Id={orderId}, ResponseCode={vnpResponseCode}");
                     await _orderService.UpdateOrderStatus(orderId, "Failed");
                     redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-failure?reason=failed&vnp_ResponseCode={vnpResponseCode}";
                     break;
             }
 
-            Console.WriteLine($"Redirect URL: {redirectUrl}");
+            AppLogger.LogSuccess($"Redirect URL: {redirectUrl}");
             return new RedirectResult(redirectUrl);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in PaymentExecuteAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in PaymentExecuteAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
             return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=ServerError&message={WebUtility.UrlEncode(ex.Message)}");
         }
     }

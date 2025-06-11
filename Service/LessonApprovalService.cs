@@ -56,12 +56,12 @@ public class LessonApprovalService
         var lesson = await _lessonRepository.GetLessonById(createLessonApprovalDto.LessonId);
         if (lesson == null)
         {
-            throw new ArgumentException("Lesson not found.");
+            AppLogger.LogError("Lesson not found.");
         }
         var admin = await _userRepository.GetByIdAsync(createLessonApprovalDto.AdminId);
         if (admin == null || admin.Role != "Admin")
         {
-            throw new ArgumentException("Admin not found or user is not an Admin.");
+            AppLogger.LogError("Admin not found or user is not an Admin.");
         }
         var lessonApproval = new LessonApproval
         {
@@ -97,12 +97,12 @@ public class LessonApprovalService
         var lesson = await _lessonRepository.GetLessonById(updateLessonApprovalDto.LessonId);
         if (lesson == null)
         {
-            throw new ArgumentException("Lesson not found.");
+            AppLogger.LogError("Lesson not found.");
         }
         var admin = await _userRepository.GetByIdAsync(updateLessonApprovalDto.AdminId);
         if (admin == null || admin.Role != "Admin")
         {
-            throw new ArgumentException("Admin not found or user is not an Admin.");
+            AppLogger.LogError("Admin not found or user is not an Admin.");
         }
         lessonApproval.LessonId = updateLessonApprovalDto.LessonId;
         lessonApproval.AdminId = updateLessonApprovalDto.AdminId;

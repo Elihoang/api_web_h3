@@ -94,12 +94,12 @@ public class NotificationService
         var validTypes = new[] { "LessonApproval", "NewMessage", "CourseEnrollment" ,"CourseActivation","CourseDeactivation"};
         if (!validTypes.Contains(createNotificationDto.Type))
         {
-            throw new ArgumentException("Loại thông báo không hợp lệ. Phải là 'LessonApproval', 'NewMessage', hoặc 'CourseEnrollment'.");
+            AppLogger.LogError("Loại thông báo không hợp lệ. Phải là 'LessonApproval', 'NewMessage', hoặc 'CourseEnrollment'.");
         }
 
         if ((createNotificationDto.RelatedEntityId != null) != (createNotificationDto.RelatedEntityType != null))
         {
-            throw new ArgumentException("RelatedEntityId và RelatedEntityType phải được cung cấp cùng nhau hoặc đều rỗng.");
+            AppLogger.LogError("RelatedEntityId và RelatedEntityType phải được cung cấp cùng nhau hoặc đều rỗng.");
         }
 
         // Không cần parse RelatedEntityId nữa vì đã là string?
@@ -113,7 +113,7 @@ public class NotificationService
         }
         else if (!createNotificationDto.UserIds.Any())
         {
-            throw new ArgumentException("Phải chỉ định ít nhất một người dùng để nhận thông báo.");
+            AppLogger.LogError("Phải chỉ định ít nhất một người dùng để nhận thông báo.");
         }
 
         // Kiểm tra tính hợp lệ của userIds
@@ -122,7 +122,7 @@ public class NotificationService
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
-                throw new ArgumentException($"Không tìm thấy người dùng với ID {userId}.");
+                AppLogger.LogError($"Không tìm thấy người dùng với ID {userId}.");
             }
         }
 
@@ -175,14 +175,14 @@ public class NotificationService
         var notification = await _notificationRepository.GetByIdAsync(notificationId);
         if (notification == null)
         {
-            throw new ArgumentException("Không tìm thấy thông báo");
+            AppLogger.LogError("Không tìm thấy thông báo");
         }
 
         var userNotification = notification.UserNotifications
             .FirstOrDefault(un => un.UserId == userId);
         if (userNotification == null)
         {
-            throw new ArgumentException("Người dùng không có thông báo này");
+            AppLogger.LogError("Người dùng không có thông báo này");
         }
 
         userNotification.IsRead = true;

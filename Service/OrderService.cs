@@ -28,38 +28,38 @@ public class OrderService
     {
         // Kiểm tra dữ liệu đầu vào
         if (orderDto.OrderDetails.Any(d => string.IsNullOrEmpty(d.CourseId)))
-            throw new ArgumentException("CourseId không được để trống trong OrderDetails.");
+            AppLogger.LogError("CourseId không được để trống trong OrderDetails.");
 
         // Kiểm tra xem CourseId có tồn tại
         foreach (var detailDto in orderDto.OrderDetails)
         {
             if (!await _courseRepository.ExistsAsync(detailDto.CourseId))
-                throw new ArgumentException($"CourseId {detailDto.CourseId} không tồn tại.");
+                AppLogger.LogError($"CourseId {detailDto.CourseId} không tồn tại.");
 
             // Kiểm tra và áp dụng coupon nếu có
             if (detailDto.CouponId.HasValue)
             {
                 var coupon = await _couponRepository.GetByIdAsync(detailDto.CouponId.Value);
                 if (coupon == null)
-                    throw new ArgumentException($"CouponId {detailDto.CouponId} không tồn tại.");
+                    AppLogger.LogError($"CouponId {detailDto.CouponId} không tồn tại.");
 
                 if (!coupon.IsActive || DateTime.UtcNow < coupon.StartDate || DateTime.UtcNow > coupon.EndDate)
-                    throw new ArgumentException("Mã coupon không hợp lệ hoặc đã hết hạn.");
+                    AppLogger.LogError("Mã coupon không hợp lệ hoặc đã hết hạn.");
 
                 if (coupon.CurrentUsage >= coupon.MaxUsage)
-                    throw new ArgumentException("Mã coupon đã được sử dụng hết lượt.");
+                    AppLogger.LogError("Mã coupon đã được sử dụng hết lượt.");
 
                 // Kiểm tra số tiền giảm giá
                 var expectedDiscount = detailDto.Price * coupon.DiscountPercentage / 100;
                 if (detailDto.DiscountAmount != expectedDiscount)
-                    throw new ArgumentException("Số tiền giảm giá không khớp với phần trăm giảm của coupon.");
+                    AppLogger.LogError("Số tiền giảm giá không khớp với phần trăm giảm của coupon.");
             }
         }
 
         // Tính tổng số tiền đơn hàng
         decimal totalAmount = orderDto.OrderDetails.Sum(d => d.Price - (d.DiscountAmount ?? 0));
         if (orderDto.Amount != totalAmount)
-            throw new ArgumentException("Tổng số tiền đơn hàng không khớp với chi tiết đơn hàng.");
+            AppLogger.LogError("Tổng số tiền đơn hàng không khớp với chi tiết đơn hàng.");
 
         var order = new Order
         {
@@ -133,7 +133,7 @@ public class OrderService
     public async Task UpdateOrderStatus(string id, string status)
     {
         var order = await _orderRepository.GetByIdAsync(id);
-        if (order == null) throw new ArgumentException("Đơn hàng không tồn tại.");
+        if (order == null) AppLogger.LogError("Đơn hàng không tồn tại.");
 
         order.Status = status;
         await _orderRepository.UpdateAsync(order);
@@ -151,7 +151,7 @@ public class OrderService
                 var enrollment = await _enrollmentRepository.GetEnrollmentAsync(order.UserId, detail.CourseId);
                 if (enrollment == null)
                 {
-                    Console.WriteLine($"Enrollment không tìm thấy cho UserId: {order.UserId}, CourseId: {detail.CourseId}");
+                    AppLogger.LogInfo($"Enrollment không tìm thấy cho UserId: {order.UserId}, CourseId: {detail.CourseId}");
                     // Hoặc ghi log vào hệ thống logging của bạn
                     continue; // Bỏ qua nếu không tìm thấy enrollment
                 }

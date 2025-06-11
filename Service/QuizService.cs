@@ -42,7 +42,11 @@ public class QuizService
     public async Task<QuizDTO> GetByIdAsync(string id)
     {
         var quiz = await _quizRepository.GetByIdAsync(id);
-        if (quiz == null) throw new KeyNotFoundException("Quiz không tìm thấy.");
+        if (quiz == null)
+        {
+            AppLogger.LogError($"Quiz không tìm thấy với Id: {id}");
+            throw new KeyNotFoundException("Quiz không tìm thấy.");
+        }
 
         return new QuizDTO
         {
@@ -59,7 +63,11 @@ public class QuizService
     public async Task<IEnumerable<QuizDTO>> GetByLessonIdAsync(string lessonId)
     {
         var lesson = await _lessonRepository.GetLessonById(lessonId);
-        if (lesson == null) throw new KeyNotFoundException("Bài học không tìm thấy.");
+        if (lesson == null) 
+        {
+            AppLogger.LogError($"Bài học không tìm thấy với Id: {lessonId}");
+            throw new KeyNotFoundException("Bài học không tìm thấy.");
+        }
 
         var quizzes = await _quizRepository.GetByLessonIdAsync(lessonId);
         var quizDtos = new List<QuizDTO>();
@@ -84,18 +92,30 @@ public class QuizService
     try
     {
         if (string.IsNullOrWhiteSpace(createQuizDto.Question))
+        {
+            AppLogger.LogInfo("Câu hỏi không được để trống.");
             throw new ArgumentException("Câu hỏi không được để trống.");
+        }
 
         if (createQuizDto.Options == null || createQuizDto.Options.Count < 2)
+        {
+            AppLogger.LogInfo("Quiz phải có ít nhất 2 lựa chọn.");
             throw new ArgumentException("Quiz phải có ít nhất 2 lựa chọn.");
+        }
 
         if (string.IsNullOrWhiteSpace(createQuizDto.CorrectAnswer))
+        {
+            AppLogger.LogInfo("Đáp án đúng không được để trống.");
             throw new ArgumentException("Đáp án đúng không được để trống.");
+        }
 
         if (!createQuizDto.Options.Contains(createQuizDto.CorrectAnswer))
+        {
+            AppLogger.LogInfo("Đáp án đúng phải nằm trong danh sách lựa chọn.");
             throw new ArgumentException("Đáp án đúng phải nằm trong danh sách lựa chọn.");
+        }
 
-        Console.WriteLine($"Checking LessonId: {createQuizDto.LessonId}");
+        AppLogger.LogInfo($"Checking LessonId: {createQuizDto.LessonId}");
         var lesson = await _lessonRepository.GetLessonById(createQuizDto.LessonId);
         if (lesson == null) throw new KeyNotFoundException("Bài học không tìm thấy.");
 
@@ -110,7 +130,7 @@ public class QuizService
             CreatedAt = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") // Server tự tạo
         };
 
-        Console.WriteLine($"Saving Quiz with Id: {quiz.Id}");
+        AppLogger.LogInfo($"Saving Quiz with Id: {quiz.Id}");
         var createdQuiz = await _quizRepository.AddAsync(quiz);
 
         return new QuizDTO
@@ -126,7 +146,7 @@ public class QuizService
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error in CreateAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+        AppLogger.LogError($"Error in CreateAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
         throw;
     }
 }
@@ -134,19 +154,35 @@ public class QuizService
     public async Task<QuizDTO> UpdateAsync(string id, QuizDTO quizDto)
     {
         var existingQuiz = await _quizRepository.GetByIdAsync(id);
-        if (existingQuiz == null) throw new KeyNotFoundException("Quiz không tìm thấy.");
+        if (existingQuiz == null)
+        {
+            AppLogger.LogError($"Quiz không tìm thấy với Id: {id}");
+            throw new KeyNotFoundException("Quiz không tìm thấy.");
+        }
 
         if (string.IsNullOrWhiteSpace(quizDto.Question))
+        {
+            AppLogger.LogError("Câu hỏi không được để trống.");
             throw new ArgumentException("Câu hỏi không được để trống.");
+        }
 
         if (quizDto.Options == null || quizDto.Options.Count < 2)
+        {
+            AppLogger.LogError("Quiz phải có ít nhất 2 lựa chọn.");
             throw new ArgumentException("Quiz phải có ít nhất 2 lựa chọn.");
+        }
 
         if (string.IsNullOrWhiteSpace(quizDto.CorrectAnswer))
+        {
+            AppLogger.LogError("Đáp án đúng không được để trống.");
             throw new ArgumentException("Đáp án đúng không được để trống.");
+        }
 
         if (!quizDto.Options.Contains(quizDto.CorrectAnswer))
+        {
+            AppLogger.LogError("Đáp án đúng phải nằm trong danh sách lựa chọn.");
             throw new ArgumentException("Đáp án đúng phải nằm trong danh sách lựa chọn.");
+        }
 
         var lesson = await _lessonRepository.GetLessonById(quizDto.LessonId);
         if (lesson == null) throw new KeyNotFoundException("Bài học không tìm thấy.");
@@ -183,13 +219,16 @@ public class QuizService
         {
             var quiz = await _quizRepository.GetByIdAsync(quizId);
             if (quiz == null)
+            {
+                AppLogger.LogError($"Quiz không tìm thấy với Id: {quizId}");
                 throw new KeyNotFoundException("Quiz không tìm thấy.");
+            }
 
             return quiz.CorrectAnswer.Equals(userAnswer, StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in CheckAnswerAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in CheckAnswerAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
             throw;
         }
     }
@@ -200,7 +239,10 @@ public class QuizService
         {
             var quiz = await _quizRepository.GetByIdAsync(quizId);
             if (quiz == null)
+            {
+                AppLogger.LogError($"Quiz không tìm thấy với Id: {quizId}");
                 throw new KeyNotFoundException("Quiz không tìm thấy.");
+            }
 
             var isCorrect = quiz.CorrectAnswer.Equals(userAnswer, StringComparison.OrdinalIgnoreCase);
 
@@ -235,7 +277,7 @@ public class QuizService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in SaveUserAnswerAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in SaveUserAnswerAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
             throw;
         }
     }
@@ -252,7 +294,7 @@ public class QuizService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in DeleteUserAnswersByLessonIdAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in DeleteUserAnswersByLessonIdAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
             throw;
         }
     }
@@ -275,7 +317,7 @@ public class QuizService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in GetUserAnswersByLessonIdAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in GetUserAnswersByLessonIdAsync: {ex.Message}\nStackTrace: {ex.StackTrace}");
             throw;
         }
     }

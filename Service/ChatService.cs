@@ -87,24 +87,24 @@ public class ChatService
         var user1 = await _userRepository.GetByIdAsync(createChatDto.User1Id);
         if (user1 == null)
         {
-            throw new ArgumentException("User1 not found.");
+            AppLogger.LogError("User1 không tìm thấy.");
         }
 
         var user2 = await _userRepository.GetByIdAsync(createChatDto.User2Id);
         if (user2 == null)
         {
-            throw new ArgumentException("User2 not found.");
+            AppLogger.LogError("Tài này này vô hiệu hóa");
         }
 
         if (createChatDto.User1Id == createChatDto.User2Id)
         {
-            throw new ArgumentException("User1 and User2 must be different.");
+            AppLogger.LogError("User1 và User2 phải khác nhau.");
         }
 
         var existingChat = await _chatRepository.GetByUsersAsync(createChatDto.User1Id, createChatDto.User2Id);
         if (existingChat != null)
         {
-            throw new ArgumentException("A chat between these users already exists.");
+            AppLogger.LogError("Cuộc trò chuyện giữa những người dùng này đã tồn tại.");
         }
 
         var chat = new Chat

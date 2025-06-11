@@ -6,6 +6,8 @@ using API_WebH3.Repository;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Collections.Concurrent;
+using API_WebH3.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace API_WebH3.Services
 {
@@ -26,35 +28,34 @@ namespace API_WebH3.Services
             _configuration = configuration;
             _emailService = emailService;
             _env = env;
-            Console.WriteLine("AuthService initialized");
         }
 
         public async Task<(AuthResponseDto? Result, string? ErrorMessage)> LoginAsync(Login loginDto)
         {
             try
             {
-                Console.WriteLine($"Logging in user: {loginDto.Email}");
+                AppLogger.LogInfo($"Logging in user: {loginDto.Email}");
                 var user = await _userRepository.GetByEmailAsync(loginDto.Email);
                 if (user == null)
                 {
-                    Console.WriteLine($"User not found: {loginDto.Email}");
+                    AppLogger.LogError($"User not found: {loginDto.Email}");
                     return (null, "Email không tồn tại");
                 }
 
-                Console.WriteLine($"Verifying password for: {loginDto.Email}");
+                AppLogger.LogInfo($"Verifying password for: {loginDto.Email}");
                 if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
                 {
-                    Console.WriteLine($"Invalid password for: {loginDto.Email}");
+                    AppLogger.LogError($"Invalid password for: {loginDto.Email}");
                     return (null, "Mật khẩu không đúng");
                 }
 
-                Console.WriteLine($"Generating JWT for: {loginDto.Email}");
+                AppLogger.LogInfo($"Generating JWT for: {loginDto.Email}");
                 string token = GenerateJwtToken(user);
                 return (new AuthResponseDto { Token = token, Role = user.Role }, null);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Login error: {ex.Message}\n{ex.StackTrace}");
+                AppLogger.LogError($"Login error: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
@@ -63,10 +64,10 @@ namespace API_WebH3.Services
         {
             try
             {
-                Console.WriteLine($"Registering user: {registerDto.Email}");
+                AppLogger.LogInfo($"Registering user: {registerDto.Email}");
                 if (await _userRepository.GetByEmailAsync(registerDto.Email) != null)
                 {
-                    Console.WriteLine($"Email already exists: {registerDto.Email}");
+                    AppLogger.LogError($"Email already exists: {registerDto.Email}");
                     return false;
                 }
 
@@ -81,15 +82,15 @@ namespace API_WebH3.Services
                     Phone = registerDto.Phone
                 };
 
-                Console.WriteLine($"Adding user: {user.Email}");
+                AppLogger.LogInfo($"Adding user: {user.Email}");
                 await _userRepository.AddAsync(user);
                 await _userRepository.SaveChangesAsync();
-                Console.WriteLine($"User registered: {user.Email}");
+                AppLogger.LogInfo($"User registered: {user.Email}");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Register error: {ex.Message}\n{ex.StackTrace}");
+                AppLogger.LogError($"Register error: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
@@ -119,7 +120,7 @@ namespace API_WebH3.Services
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
-            Console.WriteLine($"Generated JWT for {user.Email}: {tokenString}");
+            AppLogger.LogInfo($"Generated JWT for {user.Email}: {tokenString}");
             return tokenString;
         }
 
@@ -164,20 +165,20 @@ namespace API_WebH3.Services
                 var filePath = Path.Combine(_env.WebRootPath, "templates", "OtpTemplate.html");
                 if (!File.Exists(filePath))
                 {
-                    Console.WriteLine($"Template not found: {filePath}");
-                    throw new FileNotFoundException("Email template not found");
+                    AppLogger.LogError($"Template not found: {filePath}");
                 }
 
                 string subject = "Khôi phục mật khẩu";
                 var emailBody = await File.ReadAllTextAsync(filePath);
-                emailBody = emailBody.Replace("{{OTP}}", resetCode);
+                emailBody = emailBody.Replace("{{OTP}}", resetCode)
+                    .Replace("{fullName}", user.FullName);
 
                 await _emailService.SendPasswordResetEmailAsync(email, subject, emailBody);
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ForgotPassword error: {ex.Message}\n{ex.StackTrace}");
+                AppLogger.LogError($"ForgotPassword error: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
@@ -186,17 +187,17 @@ namespace API_WebH3.Services
         {
             try
             {
-                Console.WriteLine($"Resetting password for: {email}");
+                AppLogger.LogInfo($"Resetting password for: {email}");
                 if (!_resetCodes.TryGetValue(email, out var storedCode))
                 {
-                    Console.WriteLine($"No OTP found for: {email}");
+                    AppLogger.LogError($"No OTP found for: {email}");
                     return false;
                 }
 
-                Console.WriteLine($"Stored OTP: {storedCode.ResetCode}, Provided OTP: {resetCode}");
+                AppLogger.LogInfo($"Stored OTP: {storedCode.ResetCode}, Provided OTP: {resetCode}");
                 if (storedCode.ResetCode != resetCode || storedCode.ExpiryTime < DateTime.UtcNow)
                 {
-                    Console.WriteLine($"Invalid or expired OTP for: {email}");
+                    AppLogger.LogError($"Invalid or expired OTP for: {email}");
                     return false;
                 }
 
@@ -205,18 +206,18 @@ namespace API_WebH3.Services
                 var user = await _userRepository.GetByEmailAsync(email);
                 if (user == null)
                 {
-                    Console.WriteLine($"User not found: {email}");
+                    AppLogger.LogError($"User not found: {email}");
                     return false;
                 }
 
                 user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
                 await _userRepository.SaveChangesAsync();
-                Console.WriteLine($"Password reset for: {email}");
+                AppLogger.LogInfo($"Password reset for: {email}");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ResetPassword error: {ex.Message}\n{ex.StackTrace}");
+                AppLogger.LogError($"ResetPassword error: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }

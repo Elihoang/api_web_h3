@@ -94,7 +94,7 @@ public class MomoService
         var payUrl = json["payUrl"]?.ToString();
         if (string.IsNullOrEmpty(payUrl))
         {
-            Console.WriteLine($"Momo payment failed: {responseContent}");
+            AppLogger.LogError($"Momo payment failed: {responseContent}");
             throw new Exception("Không thể tạo URL thanh toán Momo.");
         }
 
@@ -109,12 +109,12 @@ public class MomoService
             var resultCode = query["resultCode"].ToString();
             var signature = query["signature"].ToString();
 
-            Console.WriteLine($"MoMo callback received: orderId={orderId}, resultCode={resultCode}");
-            Console.WriteLine($"Full callback parameters: {string.Join(", ", query.Select(x => $"{x.Key}={x.Value}"))}");
+            AppLogger.LogInfo($"MoMo callback received: orderId={orderId}, resultCode={resultCode}");
+            AppLogger.LogInfo($"Full callback parameters: {string.Join(", ", query.Select(x => $"{x.Key}={x.Value}"))}");
 
             if (string.IsNullOrEmpty(orderId) || string.IsNullOrEmpty(resultCode) || string.IsNullOrEmpty(signature))
             {
-                Console.WriteLine("Missing required query parameters in MoMo callback.");
+                AppLogger.LogError("Missing required query parameters in MoMo callback.");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=MissingParameters");
             }
 
@@ -136,13 +136,13 @@ public class MomoService
 
             var generatedSignature = HmacSha256(_configuration["Momo:SecretKey"], rawData);
 
-            Console.WriteLine($"Raw data for signature: {rawData}");
-            Console.WriteLine($"Generated signature: {generatedSignature}");
-            Console.WriteLine($"Received signature: {signature}");
+            AppLogger.LogInfo($"Raw data for signature: {rawData}");
+            AppLogger.LogInfo($"Generated signature: {generatedSignature}");
+            AppLogger.LogInfo($"Received signature: {signature}");
 
             if (!string.Equals(signature, generatedSignature, StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine($"Invalid signature. Expected: {generatedSignature}, Received: {signature}");
+                AppLogger.LogError($"Invalid signature. Expected: {generatedSignature}, Received: {signature}");
                 
                 // Thử một cách khác nếu signature không khớp - sử dụng accessKey từ config
                 var alternativeRawData = $"accessKey={_configuration["Momo:AccessKey"]}" +
@@ -160,35 +160,35 @@ public class MomoService
                                        $"&transId={query["transId"]}";
 
                 var alternativeSignature = HmacSha256(_configuration["Momo:SecretKey"], alternativeRawData);
-                Console.WriteLine($"Alternative raw data: {alternativeRawData}");
-                Console.WriteLine($"Alternative signature: {alternativeSignature}");
+                AppLogger.LogInfo($"Alternative raw data: {alternativeRawData}");
+                AppLogger.LogInfo($"Alternative signature: {alternativeSignature}");
 
                 if (!string.Equals(signature, alternativeSignature, StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine($"Both signature attempts failed. Transaction may still be valid, proceeding with caution...");
+                    AppLogger.LogError($"Both signature attempts failed. Transaction may still be valid, proceeding with caution...");
                     // Có thể comment dòng return này nếu muốn bỏ qua validation signature tạm thời
                     // return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=InvalidSignature");
                 }
                 else
                 {
-                    Console.WriteLine("Alternative signature verification successful!");
+                    AppLogger.LogSuccess("Alternative signature verification successful!");
                 }
             }
             else
             {
-                Console.WriteLine("Signature verification successful!");
+                AppLogger.LogSuccess("Signature verification successful!");
             }
 
             var order = await _orderService.GetOrderById(orderId);
             if (order == null)
             {
-                Console.WriteLine($"Order not found: {orderId}");
+                AppLogger.LogInfo($"Order not found: {orderId}");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=OrderNotFound");
             }
 
             if (order.Status == "Paid")
             {
-                Console.WriteLine($"Order {orderId} already processed as Paid.");
+                AppLogger.LogInfo($"Order {orderId} already processed as Paid.");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}");
             }
 
@@ -217,53 +217,66 @@ public class MomoService
                                         Status = "Enrolled"
                                     };
                                     await _enrollmentService.CreateAsync(enrollmentDto);
-                                    Console.WriteLine($"Created enrollment for UserId: {order.UserId}, CourseId: {detail.CourseId}");
+                                    AppLogger.LogInfo($"Created enrollment for UserId: {order.UserId}, CourseId: {detail.CourseId}");
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"Enrollment already exists for UserId: {order.UserId}, CourseId: {detail.CourseId}");
+                                    AppLogger.LogInfo($"Enrollment already exists for UserId: {order.UserId}, CourseId: {detail.CourseId}");
                                 }
                             }
                             catch (DbUpdateException dbEx)
                             {
-                                Console.WriteLine($"Database error creating enrollment for CourseId: {detail.CourseId}, UserId: {order.UserId}. Error: {dbEx.Message}\nStackTrace: {dbEx.StackTrace}");
+                                AppLogger.LogDbError($"Database error: {dbEx}", dbEx);
                                 throw new Exception($"Failed to create enrollment for CourseId: {detail.CourseId}", dbEx);
                             }
                         }
 
                         // Send confirmation email
                         var user = await _userRepository.GetByIdAsync(order.UserId);
+                        var orderDetail = await _orderService.GetOrderDetailsByOrderIdAsync(order.Id);
+                        var instructor = await _userRepository.GetByIdAsync(orderDetail.FirstOrDefault().Course.InstructorId);
+                        
                         if (user != null && !string.IsNullOrEmpty(user.Email))
                         {
                             var templatePath = Path.Combine(Directory.GetCurrentDirectory(), _configuration["EmailTemplate:Path"]);
-                            Console.WriteLine($"Attempting to read email template from: {templatePath}");
+                            AppLogger.LogInfo($"Attempting to read email template from: {templatePath}");
                             if (!File.Exists(templatePath))
                             {
-                                Console.WriteLine($"Email template not found at: {templatePath}");
+                                AppLogger.LogError($"Email template not found at: {templatePath}");
                                 throw new FileNotFoundException($"Email template file not found at {templatePath}");
                             }
                             var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
                             var templateContent = await File.ReadAllTextAsync(templatePath);
                             var paymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss");
+                            var courseAccessUrl =
+                                $"{_configuration["Frontend:BaseUrl"]}/details/{orderDetail.FirstOrDefault().CourseId}";
                             var body = templateContent
+                                .Replace("{invoiceId}", order.Id)
+                                .Replace("{courseName}", orderDetail.FirstOrDefault()?.Course?.Title?? "Khóa học không xác định")
+                                .Replace("{issueDate}", order.CreatedAt)
+                                .Replace("{studentName}", user.FullName)
+                                .Replace("{studentEmail}", user.Email)
                                 .Replace("{receiverEmail}", user.Email)
                                 .Replace("{transactionId}", order.Id)
                                 .Replace("{amount}", $"{order.Amount:N0} VND")
                                 .Replace("{paymentDate}", paymentDate)
-                                .Replace("{paymentMethod}", "MOMO");
+                                .Replace("{paymentMethod}", "MOMO")
+                                .Replace("{instructorName}", instructor.FullName)
+                                .Replace("{startDate}", paymentDate)
+                                .Replace("{courseAccessUrl}", courseAccessUrl);
 
-                            Console.WriteLine($"Email body prepared: {body}");
+                            AppLogger.LogInfo($"Email body prepared: {body}");
                             await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
-                            Console.WriteLine($"Email sent successfully to {user.Email}");
+                            AppLogger.LogSuccess($"Email sent successfully to {user.Email}");
                         }
 
                         transaction.Complete();
-                        Console.WriteLine($"Successfully processed order {orderId} with enrollments.");
+                        AppLogger.LogSuccess($"Successfully processed order {orderId} with enrollments.");
                         return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing order {orderId} in transaction: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                        AppLogger.LogError($"Error processing order {orderId} in transaction: {ex.Message}\nStackTrace: {ex.StackTrace}");
                         throw;
                     }
                 }
@@ -280,13 +293,13 @@ public class MomoService
                     "1003" => "Giao dịch thất bại do thông tin thanh toán không hợp lệ",
                     _ => $"Giao dịch thất bại: {query["message"]}"
                 };
-                Console.WriteLine($"MoMo transaction failed with resultCode {resultCode}: {errorMessage}");
+                AppLogger.LogError($"MoMo transaction failed with resultCode {resultCode}: {errorMessage}");
                 return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error={Uri.EscapeDataString(errorMessage)}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in MoMo PaymentCallback: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            AppLogger.LogError($"Error in MoMo PaymentCallback: {ex.Message}\nStackTrace: {ex.StackTrace}");
             return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-failure?error=ServerError");
         }
     }

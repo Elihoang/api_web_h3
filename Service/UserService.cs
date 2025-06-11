@@ -187,11 +187,13 @@ public class UserService
     {
         if (updatePasswordDto == null)
         {
+            AppLogger.LogError("Dữ liệu cập nhật mật khẩu không được null.");
             throw new ArgumentNullException(nameof(updatePasswordDto), "Dữ liệu cập nhật không được null.");
         }
 
         if (updatePasswordDto.Password != updatePasswordDto.ConfirmPassword)
         {
+            AppLogger.LogError("Mật khẩu xác nhận không khớp.");
             throw new ArgumentException("Mật khẩu xác nhận không khớp.");
         }
 
@@ -206,14 +208,14 @@ public class UserService
             // Băm mật khẩu mới
             user.Password = BCrypt.Net.BCrypt.HashPassword(updatePasswordDto.Password);
 
-            Console.WriteLine($"Đã cập nhật mật khẩu cho người dùng: {user.Id}");
+            AppLogger.LogSuccess($"Đã cập nhật mật khẩu cho người dùng: {user.Id}");
 
             await _userRepository.UpdateAsync(user);
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Lỗi khi cập nhật mật khẩu: {ex.Message}");
+            AppLogger.LogError($"Lỗi khi cập nhật mật khẩu: {ex.Message}");
             return false;
         }
     }
