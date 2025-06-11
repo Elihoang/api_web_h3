@@ -69,7 +69,7 @@ public class PostService
         var user = await _userRepository.GetByIdAsync(createPostDto.UserId);
         if (user == null)
         {
-            throw new ArgumentException("User not found.");
+            AppLogger.LogError("User not found.");
         }
 
         var post = new Post
@@ -177,7 +177,7 @@ public class PostService
     {
         if (string.IsNullOrWhiteSpace(urlImage))
         {
-            throw new ArgumentException("URL ảnh không được để trống.");
+            AppLogger.LogError("URL ảnh không được để trống.");
         }
         
         var post = await _postRepository.GetPostByIdAsync(id);
@@ -211,7 +211,8 @@ public class PostService
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Không thể cập nhật ảnh bài đăng.", ex);
+            AppLogger.LogError("Không thể cập nhật ảnh bài đăng.", ex);
+            throw;
         }
     }
 }

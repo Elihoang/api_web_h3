@@ -57,16 +57,16 @@ public class ImageService
         public async Task<string> UploadPostImageAsync(Guid postId, IFormFile image)
         {
             if (image == null || image.Length == 0)
-                throw new ArgumentException("Vui lòng cung cấp tệp ảnh.");
+                AppLogger.LogError("Vui lòng cung cấp tệp ảnh.");
 
             var post = await _repository.GetPostByIdAsync(postId);
             if (post == null)
-                throw new ArgumentException("Không tìm thấy bài viết.");
+                AppLogger.LogError("Không tìm thấy bài viết.");
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
             var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
-                throw new ArgumentException("Định dạng ảnh không được hỗ trợ. Chỉ chấp nhận .jpg, .jpeg, .png, .gif.");
+                AppLogger.LogError("Định dạng ảnh không được hỗ trợ. Chỉ chấp nhận .jpg, .jpeg, .png, .gif.");
 
             var fileName = $"{Guid.NewGuid()}{extension}";
             var filePath = Path.Combine(_imageStoragePath, fileName);

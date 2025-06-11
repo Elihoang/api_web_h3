@@ -14,6 +14,13 @@ using API_WebH3.Hubs; // Thêm namespace cho ChatHub
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cấu hình logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+// Giảm mức log của EF Core
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning); // hoặc Information
+
 // 🔹 Lấy chuỗi kết nối từ appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))

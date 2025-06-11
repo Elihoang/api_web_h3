@@ -69,6 +69,7 @@ public class ReviewService
     {
         if (string.IsNullOrEmpty(courseId))
         {
+            AppLogger.LogError($"CourseId cannot be null or empty.");
             throw new ArgumentException("CourseId cannot be null or empty.", nameof(courseId));
         }
         var reviews = await _reviewRepository.GetReviewsByCourseIdAsync(courseId);
@@ -89,6 +90,7 @@ public class ReviewService
     {
         if (userId == Guid.Empty)
         {
+            AppLogger.LogError($"UserId cannot be empty.");
             throw new ArgumentException("UserId cannot be empty.", nameof(userId));
         }
         var reviews = await _reviewRepository.GetReviewsByUserIdAsync(userId);
@@ -110,12 +112,14 @@ public class ReviewService
         var user = await _userRepository.GetByIdAsync(createReviewDto.UserId);
         if (user == null)
         {
+            AppLogger.LogError("User not found.");
             throw new ArgumentException("User not found.");
         }
 
         var course = await _courseRepository.GetByIdAsync(createReviewDto.CourseId);
         if (course == null)
         {
+            AppLogger.LogError("Course not found.");
             throw new ArgumentException("Course not found.");
         }
 
@@ -158,7 +162,7 @@ public class ReviewService
         await _reviewRepository.UpdateReviewAsync(review);
 
         var user = await _userRepository.GetByIdAsync(review.UserId); // Lấy thông tin User
-        Console.WriteLine(review.User.FullName);
+        AppLogger.LogInfo($"Tên người đánh giá: {review.User.FullName}");
         return new ReviewDto
         {
             Id = review.Id,

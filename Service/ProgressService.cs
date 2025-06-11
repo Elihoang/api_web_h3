@@ -73,26 +73,28 @@ public class ProgressService
 
     public async Task<ProgressDto> CreateAsync(CreateProgressDto createProgressDto)
     {
-        Console.WriteLine($"Kiểm tra User: userId={createProgressDto.UserId}");
+        AppLogger.LogInfo($"Kiểm tra User: userId={createProgressDto.UserId}");
         var user = await _userRepository.GetByIdAsync(createProgressDto.UserId);
         if (user == null)
         {
-            throw new ArgumentException("User not found.");
+            AppLogger.LogInfo("User not found.");
         }
-        Console.WriteLine($"User tồn tại: userId={createProgressDto.UserId}");
+        AppLogger.LogInfo($"User tồn tại: userId={createProgressDto.UserId}");
 
-        Console.WriteLine($"Kiểm tra Lesson: lessonId={createProgressDto.LessonId}");
+        AppLogger.LogInfo($"Kiểm tra Lesson: lessonId={createProgressDto.LessonId}");
         var lesson = await _lessonRepository.GetLessonById(createProgressDto.LessonId);
         if (lesson == null)
         {
+            AppLogger.LogError("Lesson not found.");
             throw new ArgumentException("Lesson not found.");
         }
-        Console.WriteLine($"Lesson tồn tại: lessonId={createProgressDto.LessonId}");
+        AppLogger.LogInfo($"Lesson tồn tại: lessonId={createProgressDto.LessonId}");
 
         Console.WriteLine($"Kiểm tra tiến trình hiện có: userId={createProgressDto.UserId}, lessonId={createProgressDto.LessonId}");
         var existingProgress = await _progressRepository.GetByUserAndLessonAsync(createProgressDto.UserId, createProgressDto.LessonId);
         if (existingProgress != null)
         {
+            AppLogger.LogError("Progress for this user and lesson already exists.");
             throw new ArgumentException("Progress for this user and lesson already exists.");
         }
 
@@ -104,6 +106,7 @@ public class ProgressService
 
         if (createProgressDto.CompletionPercentage < 0 || createProgressDto.CompletionPercentage > 100)
         {
+            AppLogger.LogError("Completion percentage must be between 0 and 100.");
             throw new ArgumentException("Completion percentage must be between 0 and 100.");
         }
 
@@ -144,11 +147,13 @@ public class ProgressService
         var validStatuses = new[] { "not started", "in progress", "completed" };
         if (!validStatuses.Contains(updateProgressDto.Status.ToLower()))
         {
+            AppLogger.LogError("Invalid status. Must be 'not started', 'in progress', or 'completed'.");
             throw new ArgumentException("Invalid status. Must be 'not started', 'in progress', or 'completed'.");
         }
 
         if (updateProgressDto.CompletionPercentage < 0 || updateProgressDto.CompletionPercentage > 100)
         {
+            AppLogger.LogError("Completion percentage must be between 0 and 100.");
             throw new ArgumentException("Completion percentage must be between 0 and 100.");
         }
 

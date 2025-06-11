@@ -83,7 +83,8 @@ public class StudentService
             var existingStudent = await _studentRepository.GetByIdAsync(id);
             if (existingStudent == null)
             {
-                throw new Exception("Student not found");
+               AppLogger.LogError("Student not found.");
+               throw new Exception("Student not found");
             }
 
             existingStudent.FullName = updateStudentDto.FullName;
@@ -121,7 +122,10 @@ public class StudentService
       public async Task<string> UploadAvatarAsync(IFormFile file, string id)
       {
          if (file == null || file.Length == 0)
+         {
+            AppLogger.LogError("No file uploaded.");
             throw new ArgumentException("No file uploaded");
+         }
 
          // Tạo thư mục uploads nếu chưa có
          string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");

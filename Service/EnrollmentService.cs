@@ -77,19 +77,19 @@ public class EnrollmentService
         var user = await _userRepository.GetByIdAsync(createEnrollmentDto.UserId);
         if (user == null)
         {
-            throw new ArgumentException("User not found.");
+            AppLogger.LogError("User not found.");
         }
 
         var course = await _courseRepository.GetByIdAsync(createEnrollmentDto.CourseId);
         if (course == null)
         {
-            throw new ArgumentException("Course not found.");
+            AppLogger.LogError("Course not found.");
         }
 
         var existingEnrollment = await _enrollmentRepository.GetByUserAndCourseAsync(createEnrollmentDto.UserId, createEnrollmentDto.CourseId);
         if (existingEnrollment != null)
         {
-            throw new ArgumentException("User is already enrolled in this course.");
+            AppLogger.LogError("User is already enrolled in this course.");
         }
 
         var enrollment = new Enrollment

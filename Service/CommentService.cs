@@ -139,13 +139,13 @@ public class CommentService
         var user = await _userRepository.GetByIdAsync(createCommentDto.UserId);
         if (user == null)
         {
-            throw new ArgumentException("User not found.");
+            AppLogger.LogError("User not found.");
         }
 
         var post = await _postRepository.GetPostByIdAsync(createCommentDto.PostId);
         if (post == null)
         {
-            throw new ArgumentException("Post not found.");
+            AppLogger.LogError("Post not found.");
         }
 
         // Lấy và kiểm tra bình luận cha trước khi tạo
@@ -155,11 +155,11 @@ public class CommentService
             parentComment = await _commentRepository.GetCommentByIdAsync(createCommentDto.ParentCommentId.Value);
             if (parentComment == null)
             {
-                throw new ArgumentException("Parent comment not found.");
+                AppLogger.LogError("Parent comment not found.");
             }
             if (parentComment.PostId != createCommentDto.PostId)
             {
-                throw new ArgumentException("Parent comment does not belong to the specified post.");
+                AppLogger.LogError("Parent comment does not belong to the specified post.");
             }
         }
 

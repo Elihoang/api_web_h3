@@ -28,21 +28,21 @@ namespace API_WebH3.Services
             {
                 if (string.IsNullOrEmpty(_configuration[key]))
                 {
-                    throw new InvalidOperationException($"Missing SMTP configuration: {key}");
+                    AppLogger.LogError($"Missing SMTP configuration: {key}");
                 }
             }
             if (!int.TryParse(_configuration["SmtpSettings:Port"], out _))
             {
                 throw new InvalidOperationException($"Invalid SMTP port: {_configuration["SmtpSettings:Port"]}");
             }
-            Console.WriteLine("SMTP configuration validated successfully.");
+            AppLogger.LogSuccess("SMTP configuration validated successfully.");
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             try
             {
-                Console.WriteLine($"🔹 Starting to send email to: {toEmail}, Subject: {subject}");
+                AppLogger.LogInfo($"🔹 Starting to send email to: {toEmail}, Subject: {subject}");
 
                 var smtpServer = _configuration["SmtpSettings:Server"];
                 var smtpPort = int.Parse(_configuration["SmtpSettings:Port"]);
@@ -68,9 +68,9 @@ namespace API_WebH3.Services
 
                 mailMessage.To.Add(toEmail);
 
-                Console.WriteLine($"Connecting to SMTP server: {smtpServer}:{smtpPort}");
+                AppLogger.LogSuccess($"Connecting to SMTP server: {smtpServer}:{smtpPort}");
                 await smtpClient.SendMailAsync(mailMessage);
-                Console.WriteLine($"Email sent successfully to {toEmail}");
+                AppLogger.LogSuccess($"Email sent successfully to {toEmail}");
 
                 var emailRecord = new Email
                 {
@@ -86,8 +86,6 @@ namespace API_WebH3.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}\nStackTrace: {ex.StackTrace}");
-
                 var emailRecord = new Email
                 {
                     SenderEmail = _configuration["SmtpSettings:SenderEmail"],
@@ -99,7 +97,7 @@ namespace API_WebH3.Services
                     Status = "Failed"
                 };
                 await _emailRepository.AddEmailAsync(emailRecord);
-                throw new Exception($"Failed to send email: {ex.Message}", ex);
+                AppLogger.LogError($"Failed to send email to {toEmail}: {ex.Message}\nStackTrace: {ex.StackTrace}");
             }
         }
     }

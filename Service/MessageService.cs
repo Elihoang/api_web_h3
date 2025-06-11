@@ -66,18 +66,18 @@ public class MessageService
         var chat = await _chatRepository.GetByIdAsync(createMessageDto.ChatId);
         if (chat == null)
         {
-            throw new ArgumentException("Chat not found.");
+            AppLogger.LogError("Chat not found.");
         }
 
         var sender = await _userRepository.GetByIdAsync(createMessageDto.SenderId);
         if (sender == null)
         {
-            throw new ArgumentException("Sender not found.");
+            AppLogger.LogError("Sender not found.");
         }
 
         if (createMessageDto.SenderId != chat.User1Id && createMessageDto.SenderId != chat.User2Id)
         {
-            throw new ArgumentException("Sender must be a participant in the chat.");
+            AppLogger.LogError("Sender must be a participant in the chat.");
         }
 
         var message = new Message

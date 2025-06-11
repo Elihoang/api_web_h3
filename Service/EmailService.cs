@@ -26,12 +26,12 @@ public class EmailService
 
         if (string.IsNullOrEmpty(portString))
         {
-            throw new ArgumentException("Cổng SMTP không có trong appsettings.json.");
+            AppLogger.LogError("Cổng SMTP không có trong appsettings.json.");
         }
         
         if (!int.TryParse(portString, out int smtpPort))
         {
-            throw new ArgumentException($"Cổng SMTP không hợp lệ: '{portString}'. Vui lòng kiểm tra appsettings.json.");
+            AppLogger.LogError($"Cổng SMTP không hợp lệ: '{portString}'. Vui lòng kiểm tra appsettings.json.");
         }
 
         var smtpClient = new SmtpClient(smtpServer)
@@ -54,7 +54,7 @@ public class EmailService
         try
         {
             await smtpClient.SendMailAsync(mailMessage);
-            Console.WriteLine($"Email đặt lại mật khẩu đã gửi đến {receiverEmail}");
+            AppLogger.LogSuccess($"Email đặt lại mật khẩu đã gửi đến {receiverEmail}");
 
             // Ghi email vào cơ sở dữ liệu
             var emailRecord = new Email
@@ -83,7 +83,7 @@ public class EmailService
                 Status = "Failed"
             };
             await _emailRepository.AddEmailAsync(emailRecord);
-            Console.WriteLine($"Không gửi được email đặt lại mật khẩu: {ex.Message}");
+            AppLogger.LogError($"Không gửi được email đặt lại mật khẩu: {ex.Message}");
             throw;
         }
     }
