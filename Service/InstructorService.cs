@@ -103,8 +103,6 @@ public class InstructorService
         {
             return null;
         }
-        
-
         // Kiểm tra email trùng lặp (nếu email thay đổi)
         if (updateInstructorDto.Email != existingInstructor.Email)
         {
@@ -125,7 +123,10 @@ public class InstructorService
         existingInstructor.BirthDate = updateInstructorDto.BirthDate.HasValue
             ? DateTime.SpecifyKind(updateInstructorDto.BirthDate.Value, DateTimeKind.Utc)
             : null;
-        existingInstructor.ProfileImage = updateInstructorDto.ProfileImage;
+        if (!string.IsNullOrEmpty(updateInstructorDto.ProfileImage))
+        {
+            existingInstructor.ProfileImage = updateInstructorDto.ProfileImage;
+        }
 
         await _instructorRepository.UpdateAsync(existingInstructor);
 
