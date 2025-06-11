@@ -10,10 +10,12 @@ namespace API_WebH3.Controller;
 public class StudentController : ControllerBase
 {
     private readonly StudentService _studentService;
+    private readonly PhotoService _photoService;
 
-    public StudentController(StudentService studentService)
+    public StudentController(StudentService studentService, PhotoService photoService)
     {
         _studentService = studentService;
+        _photoService = photoService;
     }
 
     [HttpGet]
@@ -53,12 +55,18 @@ public class StudentController : ControllerBase
         var student = await _studentService.DeleteStudentAsync(id);
         return Ok(student);
     }
-
-    [HttpPost("upload-avatar/{id}")]
-    [Authorize]
-    public async Task<IActionResult> UploadAvatar(IFormFile file, string id)
+    
+    [HttpPost("upload-image")]
+    // [Authorize(Roles = "Instructor")]
+    public async Task<IActionResult> UploadImage(IFormFile file)
     {
-        var result = await _studentService.UploadAvatarAsync(file, id);
-        return Ok(result);
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var imageUrl = await _photoService.UploadImageAsync(file);
+        if (imageUrl == null)
+            return BadRequest("Upload failed.");
+
+        return Ok(new { url = imageUrl });
     }
 }
