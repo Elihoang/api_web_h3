@@ -233,6 +233,9 @@ public class MomoService
 
                         // Send confirmation email
                         var user = await _userRepository.GetByIdAsync(order.UserId);
+                        var orderDetail = await _orderService.GetOrderDetailsByOrderIdAsync(order.Id);
+                        var instructor = await _userRepository.GetByIdAsync(orderDetail.FirstOrDefault().Course.InstructorId);
+                        
                         if (user != null && !string.IsNullOrEmpty(user.Email))
                         {
                             var templatePath = Path.Combine(Directory.GetCurrentDirectory(), _configuration["EmailTemplate:Path"]);
@@ -245,12 +248,22 @@ public class MomoService
                             var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
                             var templateContent = await File.ReadAllTextAsync(templatePath);
                             var paymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss");
+                            var courseAccessUrl =
+                                $"{_configuration["Frontend:BaseUrl"]}/details/{orderDetail.FirstOrDefault().CourseId}";
                             var body = templateContent
+                                .Replace("{invoiceId}", order.Id)
+                                .Replace("{courseName}", orderDetail.FirstOrDefault()?.Course?.Title?? "Khóa học không xác định")
+                                .Replace("{issueDate}", order.CreatedAt)
+                                .Replace("{studentName}", user.FullName)
+                                .Replace("{studentEmail}", user.Email)
                                 .Replace("{receiverEmail}", user.Email)
                                 .Replace("{transactionId}", order.Id)
                                 .Replace("{amount}", $"{order.Amount:N0} VND")
                                 .Replace("{paymentDate}", paymentDate)
-                                .Replace("{paymentMethod}", "MOMO");
+                                .Replace("{paymentMethod}", "MOMO")
+                                .Replace("{instructorName}", instructor.FullName)
+                                .Replace("{startDate}", paymentDate)
+                                .Replace("{courseAccessUrl}", courseAccessUrl);
 
                             Console.WriteLine($"Email body prepared: {body}");
                             await _emailPaymentService.SendEmailAsync(user.Email, subject, body);

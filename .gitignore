@@ -296,3 +296,5 @@ __pycache__/
 appsettings.json
 appsettings.Development.json
 
+# Logs
+logs/

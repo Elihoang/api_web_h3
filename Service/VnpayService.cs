@@ -194,8 +194,11 @@ public class VnpayService
                     }
 
                     Console.WriteLine($"🔹 Found user: Id={user.Id}, Email={user.Email}");
-                    var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
 
+
+                    // Send confirmation email
+                    var orderDetail = await _orderService.GetOrderDetailsByOrderIdAsync(order.Id);
+                    var instructor = await _userRepository.GetByIdAsync(orderDetail.FirstOrDefault().Course.InstructorId);
                     try
                     {
                         var templatePath = Path.Combine(Directory.GetCurrentDirectory(), _configuration["EmailTemplate:Path"]);
@@ -205,15 +208,25 @@ public class VnpayService
                             Console.WriteLine($"Email template not found at: {templatePath}");
                             throw new FileNotFoundException($"Email template file not found at {templatePath}");
                         }
-
+                        var subject = $"Thanh toán thành công - Đơn hàng #{order.Id}";
                         var templateContent = await File.ReadAllTextAsync(templatePath);
                         var paymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss");
+                        var courseAccessUrl =
+                            $"{_configuration["Frontend:BaseUrl"]}/details/{orderDetail.FirstOrDefault().CourseId}";
                         var body = templateContent
+                            .Replace("{invoiceId}", order.Id)
+                            .Replace("{courseName}", orderDetail.FirstOrDefault()?.Course?.Title?? "Khóa học không xác định")
+                            .Replace("{issueDate}", order.CreatedAt)
+                            .Replace("{studentName}", user.FullName)
+                            .Replace("{studentEmail}", user.Email)
                             .Replace("{receiverEmail}", user.Email)
                             .Replace("{transactionId}", order.Id)
                             .Replace("{amount}", $"{order.Amount:N0} VND")
                             .Replace("{paymentDate}", paymentDate)
-                            .Replace("{paymentMethod}", "VNPAY");
+                            .Replace("{paymentMethod}", "VNPay")
+                            .Replace("{instructorName}", instructor.FullName)
+                            .Replace("{startDate}", paymentDate)
+                            .Replace("{courseAccessUrl}", courseAccessUrl);
 
                         Console.WriteLine($"Email body prepared: {body}");
                         await _emailPaymentService.SendEmailAsync(user.Email, subject, body);
