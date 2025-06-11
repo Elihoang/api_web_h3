@@ -41,7 +41,6 @@ builder.Services.Configure<CloudinarySettings>(
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.AddSignalR();
-builder.Logging.AddDebug();
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 // 🔹 Thêm Controllers và hỗ trợ JSON

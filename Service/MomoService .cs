@@ -272,7 +272,7 @@ public class MomoService
 
                         transaction.Complete();
                         AppLogger.LogSuccess($"Successfully processed order {orderId} with enrollments.");
-                        return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}");
+                        return new RedirectResult($"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}?amount={((int)(order.Amount * 100))}");
                     }
                     catch (Exception ex)
                     {
