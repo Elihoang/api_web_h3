@@ -177,9 +177,9 @@ public class VnpayService
                     {
                         AppLogger.LogError($"User not found: UserId={order.UserId}");
                         redirectUrl = $"{_configuration["Frontend:BaseUrl"]}/payment-success/{orderId}" +
-                                     $"?vnp_Amount={GetResponseData("vnp_Amount")}" +
-                                     $"&vnp_OrderInfo={WebUtility.UrlEncode(orderInfo)}" +
-                                     $"&vnp_ResponseCode={vnpResponseCode}";
+                                      $"?amount={GetResponseData("vnp_Amount")}" +
+                                      $"&orderInfo={WebUtility.UrlEncode(orderInfo)}" +
+                                      $"&responseCode={vnpResponseCode}";
                         return new RedirectResult(redirectUrl);
                     }
 
