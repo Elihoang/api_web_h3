@@ -84,12 +84,9 @@ public class StudentService
         {
             throw new Exception("Student not found");
         }
-
-        // Chỉ cập nhật các trường được gửi
+        
         existingStudent.FullName = updateStudentDto.FullName ?? existingStudent.FullName;
         existingStudent.Email = updateStudentDto.Email ?? existingStudent.Email;
-
-        // Cập nhật BirthDate chỉ nếu có giá trị
         if (updateStudentDto.BirthDate.HasValue)
         {
             existingStudent.BirthDate = DateTime.SpecifyKind(updateStudentDto.BirthDate.Value, DateTimeKind.Utc);
