@@ -42,7 +42,8 @@ namespace API_WebH3.Helper
                     // Lọc theo khoảng thời gian
                     if (startDate.HasValue && endDate.HasValue)
                     {
-                        return orderDate >= startDate.Value && orderDate <= endDate.Value;
+                        var adjustedEndDate = endDate.Value.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+                        return orderDate >= startDate.Value && orderDate <= adjustedEndDate;
                     }
                     // Lọc theo ngày cụ thể
                     else if (startDate.HasValue)
