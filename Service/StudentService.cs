@@ -51,6 +51,11 @@ public class StudentService
 
     public async Task<StudentDto> CreateStudentAsync(CreateStudentDto user)
      {
+         var existingUser = await _studentRepository.GetByEmailAsync(user.Email);
+         if (existingUser != null)
+         {
+             throw new ArgumentException("Email đã được sử dụng.");
+         }
         var newStudent = new User
         {
             FullName = user.FullName,
@@ -82,11 +87,20 @@ public class StudentService
         var existingStudent = await _studentRepository.GetByIdAsync(id);
         if (existingStudent == null)
         {
-            throw new Exception("Student not found");
+            throw new Exception("Không tìm thấy sinh viên");
         }
         
+        if (!string.IsNullOrEmpty(updateStudentDto.Email) && updateStudentDto.Email != existingStudent.Email)
+        {
+            var studentWithEmail = await _studentRepository.GetByEmailAsync(updateStudentDto.Email);
+            if (studentWithEmail != null)
+            {
+                throw new Exception("Email đã được sử dụng bởi sinh viên khác");
+            }
+            existingStudent.Email = updateStudentDto.Email;
+        }
+      
         existingStudent.FullName = updateStudentDto.FullName ?? existingStudent.FullName;
-        existingStudent.Email = updateStudentDto.Email ?? existingStudent.Email;
         if (updateStudentDto.BirthDate.HasValue)
         {
             existingStudent.BirthDate = DateTime.SpecifyKind(updateStudentDto.BirthDate.Value, DateTimeKind.Utc);
